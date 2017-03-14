@@ -1,0 +1,1254 @@
+---
+title: "Statistical Rethinking"
+output:
+  html_document: default
+  html_notebook: default
+---
+# Statistical Rethinking Notes and Exercises
+
+
+```{r}
+library(rethinking)
+
+rstan_options(auto_write = TRUE)
+options(mc.cores = parallel::detectCores(logical = FALSE))
+
+# helper functions
+lmplot <- function(formula, model, fit.data, x.seq, plot.data,
+                   prob=.97) {
+  mu <- link(model, data=fit.data)
+  mu.mean <- apply(mu, 2, mean)
+  mu.ci <- apply(mu, 2, HPDI, prob=prob)
+  
+  h.sim <- sim(model, data=fit.data)
+  h.ci <- apply(h.sim, 2, HPDI, prob=prob)
+  
+  plot(formula, data=plot.data, col='slateblue')
+  lines(x.seq, mu.mean)
+  # confidence interval
+  lines(x.seq, mu.ci[1,], lty=2)
+  lines(x.seq, mu.ci[2,], lty=2)
+  # prediction interval
+  shade(h.ci, x.seq)
+}
+```
+
+```{r}
+get_posterior <- function(likelihood, prior) {
+  posterior <- likelihood * prior
+  posterior <- posterior / sum(posterior)
+  return(posterior)
+}
+```
+
+
+# Useful Functions
+
+* `rethinking::postcheck` default posterior validation function. Essentially
+fits training data.
+
+* `rethinking::glimmer` builds a `map`/`map2stan` style formula frmo `glm` 
+model formula
+
+* `rethinking::coerce_index` converts categories into numerical coding.
+
+* `rethinking::pairs` pair plot for model parameters.
+
+* `stats::quantile`
+
+* `base::by`
+
+**MAP** stands for **MAXIMUM A POSTERIOR**, fancy latin name for the mode 
+of the posterior distribution.
+
+# Chapter 3
+
+* **PI**, Percentile Intervals, p56. `rethinking::PI()`. Assigns equal 
+probability  mass to each tail. It does a good job describing the shape of 
+the distribution, **as long as it isn't too asymmetrical**. 
+
+* **HPDI**, Highest Posterior Density Interval, p56, `rethinking::HPDI()`. 
+It is the narrowest interval that contains the specified probablity mass.
+This is much better than `PI` for inference. 
+
+    + However, it is computationally more intensive
+    + suffers from **simulation variance**, i.e. sensitive to the number of 
+    samples drawn from the posterior.
+
+* We should not be using intervals to describe the posterior if the choice of
+which type of interval makes a difference. Bayesian estimates give the entire
+posterior distribution anyway.
+
+## Grid Approximation 
+
+```{r}
+# parameter grid
+grid.size <- 1000
+
+p_grid <- seq(from=0, to=1, length.out = grid.size)
+
+# un-informative prior
+prior <- rep(1, grid.size)
+
+# binomial likelihood, 8 successes out of 15 trials, with probability given 
+# by p_grid
+likelihood <- dbinom(8, size=15, prob = p_grid)
+
+posterior <- likelihood * prior
+posterior <- posterior / sum(posterior)
+
+# sample from p_grid, each paramter with probabilty specified in posterior
+samples <- sample(p_grid, prob = posterior, size=1e5, replace = TRUE)
+
+dens(samples)
+```
+
+Generating dummy data. 
+
+```{r}
+# sample from binomial distribution, 10 runs, each with 9 samples, with  
+# prob of success = 0.7
+rbinom(10, size=9, prob = .6)
+
+# 1e5 simulations, 9 samples each time, use probablity from the previous samples
+w <- rbinom(1e5, size = 9, prob = samples)
+table(w) / 1e5
+
+simplehist(w)
+```
+
+
+# Chapter 4 Linear Models
+
+How strong is a prior, p89 Overthinking it
+
+The amount of data implied by a prior can be computed for Gaussian posterior, 
+for $\mu \sim \mathcal{N}(178, 0.1)$: 
+
+$$
+\begin{aligned}
+\sigma_{post} &= 1 / \sqrt{n} \\
+\therefore n &= 1 / \sigma_{post}^2 \\
+\ n &= 1/(0.1)^2 = 100
+\end{aligned}
+$$
+
+## Confidence Interval, p102-106
+
+Once we have a fitted model, we draw samples from the parameter posterior 
+distributions to calcluate the fitted values along a sequence of possible 
+predictors. The PDF of such fitted values should mirror the PDF of parameter
+posterior distributions, i.e. more samples with values near the posterior MAP.
+
+The **link function** essentially calculates fitted values, using a model
+defined by the samples draw above. 
+
+Use `rethinking::link()` to get the fitted values. The link function 
+essentially uses MAP of the parameter posterior distribution to calculate
+the fitted value.
+
+Each fit in this result is a distribution of possible values (based on sample
+of parameters, say 1e4 nobs). 
+
+The **mean** of this distribution is the **fitted** value. 
+
+Its **HPDI** is the confidence interval band.
+
+## Prediction Interval, p107
+
+Similar to above:
+
+1. draw samples from the parameter posterior distributions. 
+
+2. generate a sequence of possible predictor values for fitting.
+
+3. for each data point from 2), draw random samples from a distribution
+defined by mean of fitted value (based on MAP parameters) and model 
+posterior variance.
+
+4. `rethinking::PI` or `rethinking::HPDI` of the results from 3) gives the 
+prediction interval for that data point.
+
+This can be down with `rethinking::sim`.
+
+# Chapter 5
+
+Plots that help with examining multivariate models, p126:
+
+1. Predictor residual plots, outcome vs residuals
+
+2. Counterfactual plots, hold other variables constant, fit with a range of 
+values for one predictor.
+
+3. Posterior prediction plots, predicted versus observed.
+
+Issues with linear regression
+
+1. Multicollinearity, correlated features, causing large intervals for 
+parameter estimates.
+
+2. Post-treatment Bias
+
+3. Overfitting
+
+# Chapter 6
+
+## Information Theory
+
+### Entropy 
+
+$$ H(p) = -\mathbb{E}(log(p_i)) = -\sum_{i=1}^{n}p_i log(p_i) $$
+
+### Cross Entropy
+
+$$ H(p, q) = -\sum_{i=1}^{n}p_{i}log(q_i) $$
+
+### Kullback-Leibler Divergence
+
+**Divergence** captures the additional uncertainty induced by using probabilties
+from one distribution to describe another distribution.
+
+$$ D_{KL} = \sum_i p_i(log(p_i) - log(q_i)) = \sum_i p_ilog\Big(\frac{p_i}{q_i}\Big) $$
+### Deviance
+
+From KL Divergence, in practice we do not know the true model, $p_i$. What we 
+care about instead is between two models, $q$ and $r$, which one is closer
+to $p$. By subtracting two KL divergence terms together, most of the terms
+involving $p$ are cancelled out. Hence we define deviance:
+
+$$ D(q) = -2\sum_{i}log(q_i) \approx D_{KL}-D_{KL} $$ 
+`stats::logLik` computes the log-probabilities, know as **log-likelihood of
+the data**. Hence: `deviance = -2 * logLik(model)`.
+
+
+When fitting multiple models for comparison, it is important that all models
+are fitted with the same set of data. Otherwise, models fitted with less data
+will have lower information criteria values, because they are asked to predict
+less. p196
+
+## Assumptions for AIC, DIC and WAIC
+
+**AIC**, page 189
+
+1. flat prior, or overwhelmed by likelihood (data)
+
+2. The posterior distribution is approximately multivariate Gaussian
+
+3. The sample size N is much larger than the number of parameters k
+
+**DIC**, page 190
+
+1. can handle informative priors
+
+2. still rquires 2 and 3 above like AIC
+
+**WAIC**, p191
+
+* Does not require posterior distribution to be multivariate Gaussian.
+
+* Often more accurate than DIC
+
+* `rethinking::compare()` compares models using WAIC. p199
+    + open points are WAIC
+    + filled points are in-sample deviance, (4) below
+    + dark line across WAIC points are the standard errors
+    + triangles show the differences between the model below it and the top 
+    model
+    + line across triangles are the standard deviation of the differences.
+
+Steps to calculate WAIC, p192 Overthinking box:
+
+1. fit model
+
+2. extract samples from model parameters
+
+3. for each smaple of parameters, create a posterior distribution, calculate
+density for each outcome. I.e. this steps calculates $Pr(y_i)$
+
+4. calculate **lppd** (log-pointwise-predictive-density), 
+$lppd=\sum_{i=1}^{N}log(Pr(y_i))$
+
+5. calculate the **effective number of paramters**, 
+$p_{WAIC}=\sum_{i=1}^{N}Var(y_i)$
+
+6. $WAIC = -2 (lppd - p_{WAIC})$
+
+
+* `rethinking::sim.train.test` can be used to run leave one out cross
+validation. p184. See instruction in Overthinking box on page 185 on parameters
+to parallelise the simulations. 
+
+* `rethinking::ensemble` can be used to calcluate model averaged results. 
+
+
+Notes from solutions for 6M1:
+
+* From most general to least general: WAIC, DIC, AIC. 
+
+* When the posterior predictive mean is a good representation of the posterior 
+predictive distribution, DIC and WAIC will tend to agree. 
+
+* When priors are effectively flat or overwhelmed by the amount of data, the DIC 
+and AIC will tend to agree.
+
+**Positive $\sigma$ trick**: model $log(\sigma)$ instead, therefore $\sigma$ is 
+$exp(x)$ which is always > 0.
+
+
+# Chapter 7
+
+1. Incorporating uncertainty for the linear model of slope $\gamma$, this must
+be calculated separately, i.e. not obvious from the model results. p221
+
+2. Symmetry of the lineary interaction
+
+* **Triptych plots**, p233
+
+# Chapter 8
+
+## MCMC
+
+* Samples directly from the joint posterior of a model without maximizing 
+anything
+* Without Gaussian posterior assumptions
+
+## Gibbs Sampling
+
+* Metropolis algorithm handles **symmetric** probabilities
+* Metropolis-Hastings allows **asymmetric** probabilities.
+* Gibbs Sampling is a variant of Metropolis-Hastings algo that use smarter
+proposals, therefore more efficient. 
+* Gibbs Sampling uses **conjugate pairs** of prior distributions and 
+likelihoods.
+* **Limitations**: 1) necesseity of using conjugate priors, b) tendency to 
+get stuck in the regions of posterior when the posterior distribution has 
+either highly correlated parameters or high dimensions.
+
+## HMC
+
+* Computationally more costly, but proposals are more efficient.
+* Requires continuous parameters
+* Needs to tune to a particular model and its data.
+
+* Use `rethinking::map2stan`
+    + parameter `chains=` to sample multiple chains.
+    + parameter `cores=` allow multi-core computation.
+    + parameter `iter=` total iterations
+    + `warmup=` iterations of warm-up phase. 
+    + For typical regression models, the motto is **four short chains to check, 
+    one long chain for inference**.
+    + Truncate normal distribution, keeping only positive values for priors. 
+    See page 265, syntax: `b ~ dnorm(2, 10) & T[0,],`
+* `rethinking::show` shows Deviance/DIC/WAIC for HMC the models.
+* `rethinking::stancode` shows the Stan definition of models.
+* Use `plot(model)` to show **Trace Plots**. Looking for:
+  * **stationarity**, i.e. stable mean, and
+  * **good mixing**, i.e. no autocorrelation.
+* `precis(model)` shows additional metrics:
+    + `n_eff` - effective number of independent samples
+    + `Rhat` - estimate of convergence of the Markov chains to the target 
+    distribution. It should approach 1.00. When this is > 1, usually it 
+    indicates that the chains have not converged. 1.1 is very bad. 
+    However, **invalid** chains can also approach 1.00
+    + These metrics should be used as signs of danger, but **never** proof of 
+    safty.
+* Highly correlated parameters require **more warm-up iterations** to 
+imporove `n_eff`.
+  
+* Flat prior can make HMC sampling slow or even fail. Weakly informed prior 
+can sometime solve the problem.
+* Often a model that is very slow to sample is **under-identified**.
+
+* Cauchy distribution has no mean or std because its fat tail. Mean and std 
+do not stablize as you sample the distribution.
+
+```{r}
+curve(dcauchy(x, location = 0, scale = 1), from=0, to=20)
+curve(dcauchy(x, location = 1, scale = 1), from=0, to=20, add=TRUE, col='green')
+curve(dcauchy(x, location = 0, scale = 2), from=0, to=20, add=TRUE, col='red')
+```
+
+
+* Exercise 8H5 is a great example to help understand the Metropolis algorithm.
+Although I have not yet figured out how to model the global flipping example
+with `map2stan`. 
+
+# Chapter 9
+
+## Logit / Logistic
+
+**Logit Function**
+
+$$ logit(p_i) = \log\frac{p_i}{1-p_i} $$
+
+In a GLM model, where logit is the link function, we model:
+
+$$ logit(p_i) = \log \frac{p_i}{1-p_i} = \alpha + \beta x_i $$
+
+After rearranging the above, we have the **Logistic Function**:
+
+$$ p = \frac{\exp(\alpha + \beta x_i)}{1 + \exp(\alpha + \beta x_i)} $$
+
+* Note that `map()` uses quadratic approximation, which enforces symmetric 
+uncertainty around the posterior mode, but the logistic regression often leads
+to asymmetric uncertainty. See solution to 10H1. 
+
+## Properties of Maximum Entropy, p267
+
+1. the distribution with the biggest entropy is the widest and least informative
+distribution.
+
+2. nature tends to produce empirical distributions that have high entropy.
+
+3. it tends to work. 
+
+4. It's the centre of gravity for the highly plausible distribution. p271
+
+* Bayesian updates is just like max entropy in that it produces the least
+informative distribution that is still **consistent with our assumptions**.
+
+## Definition of Maximum Entropy, p269
+
+The distribution that can happen the most ways is also the maximum entropy 
+distribution, which is the most conservative distribution that obeys its 
+constraints.
+
+## Proof of Gaussian maximum entropy
+
+Uses **KL Divergence** to show that,  the 
+**cross entropy** of Gaussian and another potential distribution $H(q, p)$, 
+is equal to the negative entropy of Gaussian $-H(p)$, and the negative of 
+this **cross entropy** is greater than the entropy of this other potential 
+distribution $H(q)$, which implies that the Gaussian entropy is also
+larger, i.e. $H(p) > H(q)$.
+
+## Max Entropy Constraints
+
+### Normal($\mu$, $\sigma$), p274
+
+`dnorm()`
+
+Density:
+
+$$ Pr(x) = \frac{1}{\sqrt{2\pi\sigma^2}} \exp\Bigg(\frac{-(x-\mu)^2}{2\sigma^2}\Bigg) $$
+
+Constraint:
+
+Fixed, finite variance. 
+
+#### Generalized Normal Distribution, p273
+
+### Binomal($n$, $p$), p275
+
+`dbinom()`
+
+When only two outcomes can happen and the probably of an outcome is constant
+across $n$ trials, then the probability of observing the events will be 
+binomally distributed.
+
+Density:
+
+$$ Pr(y \mid n, p) = C_n^y p^y (1-p)^{n-y} = \frac{n!}{y!(n-y)!} p^{y}(1-p)^{n-y} $$
+where $y$ is the number of event of interest, $n$ is the total number of
+trials, $p$ is the probability of $y$ at each trial.
+
+Binomal distribution has maximum entropy amongst all distribution that satisfy
+the following constraints:
+
+1. only two unordered events
+2. constant expected value
+
+```{r}
+curve(dbinom(x, 100, prob=.5), from=0, to=100, 
+      xlab = 'No. of Successes', ylab='Density', col='blue', ylim=c(0, .1))
+curve(dbinom(x, 100, prob=.25), from=0, to=100, add=TRUE, col='red')
+curve(dbinom(x, 100, prob=.75), from=0, to=100, add=TRUE, col='green')
+```
+
+
+### Poisson($\lambda$)
+
+`dpois`
+
+Special case of binomal. When the number of trials $n$ is very large (and
+usuall unkonwn), and the probability of success, $p$, is very small, then the
+binomal distribution converges to a Poisson distriubtion with expected rate of
+event per unit of time $\lambda = np$.
+
+In practice, it is used for counts that never get close to any theoratical 
+maximum.
+
+Same constraints as Binomal.
+
+Density:
+
+$$ Pr(\lambda) = \frac{\lambda^k e^{-\lambda}}{k!} $$
+where:
+* $\lambda$ - event rate, i.e. number of events in an interval, or average
+number of events per interval
+* $k$ - number of events in an interval, e.g. 0, 1, 2, 3, ...
+
+```{r}
+curve(dpois(x, lambda=10), from=1, to=100, n=100,
+      xlab = 'No. of Events Interested', ylab='Density', col='blue')
+      # ylim=c(0, 3), xlim=c(0, 3))
+curve(dpois(x, lambda=30), from=1, to=100, n=100, add=TRUE, col='red')
+curve(dpois(x, lambda=70), from=1, to=100, n=100, add=TRUE, col='green')
+```
+
+
+### Exponential($\lambda$), p282
+
+`dexp()`
+
+When the probability of an event is constant in time or across space, then the
+distribution of events tends towards exponential.
+
+Density:
+
+$$ Pr(\lambda, x) = \lambda e^{-\lambda x} \text{, for } x \geq 0$$
+
+Constraints:
+
+1. Constrained to be zero or positive (non-negative continuous)
+2. Fixed average displacement, $\lambda^{-1}$, where $\lambda$ is the rate of
+events.
+
+```{r}
+curve(dexp(x, rate=1), from=0, to=1, n=100,
+      xlab = 'Lambda', ylab='Density', col='blue', 
+      ylim=c(0, 3), xlim=c(0, 3))
+curve(dexp(x, rate=2), from=0, to=2, n=100, add=TRUE, col='red')
+curve(dexp(x, rate=3), from=0, to=3, n=100, add=TRUE, col='green')
+```
+
+
+### Gamma($\lambda$, $k$), 
+
+`dgamma`
+
+If an event can only happen after two or more exponentially distributed events
+happened, the resulting waiting time will be gamma distributed.
+
+More commonly defined with: 
+$\alpha$ - shape, $k$
+$\beta$ - rate, $\lambda$
+
+Density: [link](https://en.wikipedia.org/wiki/Gamma_distribution)
+
+$$ 
+\begin{aligned}
+Pr(x \mid \alpha, \beta) &= \frac{\beta^{\alpha}}{\Gamma(\alpha)}x^{\alpha-1}e^{-\beta x} \text{ , for } x \in (0, +\infty) \\
+\Gamma(n) &= (n - 1)! \text{ , for } n \in N^{+}
+\end{aligned}
+$$
+
+Constraints:
+
+1. Constrained to be zero or positive (non-negative continuous)
+2. same mean
+3. same average logarithm
+
+```{r}
+curve(dgamma(x, shape=1, rate=1), from=1, to=100, n=100,
+      xlab='No. of Events', ylab='Density', col='blue')
+curve(dgamma(x, shape=10, rate=1), from=1, to=100, n=100,
+      xlab='No. of Events', ylab='Density', col='red', add=TRUE)
+curve(dgamma(x, shape=10, rate=.5), from=1, to=100, n=100,
+      xlab='No. of Events', ylab='Density', col='green', add=TRUE)
+```
+
+
+
+## Geometric($n$, $p$), p328
+
+`dgeom`
+
+Typically used in **survival** or **event history analysis**. Used to predict 
+the number of events until a particular event of interest.
+
+Density function:
+
+$$ Pr(y \mid p) = p(1 - p)^{(y-1)} $$
+where $y$ is the number of time steps (events) until the terminating event
+occurred and $p$ is the probablity of that event in each time step.
+
+Constraints:
+
+1. Unbounded counts 
+2. Constant expected value
+
+```{r}
+curve(dgeom(x, prob=.1), from=1, to=100, n=100,
+      ylim=c(0, .3),
+      xlab='No. of Events', ylab='Density', col='blue')
+curve(dgeom(x, prob=.5), from=1, to=100, n=100, col='red', add=TRUE)
+curve(dgeom(x, prob=.75), from=1, to=100, n=100, col='green', add=TRUE)
+curve(dgeom(x, prob=.05), from=1, to=100, n=100, col='orange', add=TRUE)
+```
+
+
+
+# Chapter 10
+
+## Binomial Regression
+
+In general, the model is of the form of:
+
+$$
+\begin{aligned}
+y &\sim \mathbb{dbinom}(\text{num_of_trials}, \text{prob_of_success}) \\
+\mathbb{logit}(\text{prob_of_success}) &= \text{model forumla}
+\end{aligned}
+$$
+
+To model individual behaviour, we can use different intercepts for each group
+or individual. p299.
+
+### Aggregated Binomial
+
+When data is organized in aggregated format, we can change the value of 
+$\text{num_of_trials}$ to model the problems.
+
+The likelihood of aggregated binomial is different to disaggregated data 
+because in the case of aggregated data we need to deal with the $C_n^y$ 
+multiplier. See density function above.
+
+
+### Practial Issues
+
+Always good to use HMC ot check if quadratic approximation (QA) worked. 
+QA usually works well when:
+
+* intercepts are very far from zero
+* none of the predictors are strongly associated with the outcome
+
+`R`'s `glm` assumes **flat prior**, this can be problematic sometimes. Even very
+weakly regularizing prirors can resovle these issues. p311.
+
+**Ceiling and floor effect**, p296. When the intercept is large enough to 
+guarantee an outcome, increasing the odds furhter does very little to change
+the prediction.
+
+Tips from execrises:
+
+* Use `link()` to obtain fitted values for `p` in `dbinom(n, p)`.
+* Use `sim()` to obtain simulated results for `y` in the model.
+
+## Possion Regression
+
+Basic form:
+
+$$
+\begin{aligned}
+y &\sim \mathbb{Possion(\lambda_i)} \\
+\log(\lambda_i) &= \alpha + \beta x_i
+\end{aligned}
+$$
+
+The parameter $\lambda$ is the **expected value of the outcome** in Possion 
+regression.
+
+In principal the posterior distribution for a GLM may not be multivariate
+Gaussian, even if all your priors are Gaussian. p319
+
+** Exposure / Offset **: p312, implicitly $\lambda$ in Possion distribution is 
+equal to the expected number of events, $\mu$, **per unit time or distance**,
+$\tau$, i.e. $\lambda = \mu / \tau$. Hence, in a Possion linear model:
+
+$$
+\begin{aligned}
+y_i &\sim Poisson(\lambda_i) \\
+\log \lambda_i &= \log \frac{\mu_i}{\tau_i} = \alpha + \beta x_i \\
+\log \lambda_i &= \log\mu_i - \log\tau_i = \alpha + \beta x_i
+\end{aligned}
+$$
+
+Example on p322
+
+```
+# construct data. 
+# daily and weekly data points
+exposure <- c(rep(1, 30), rep(7, 4))
+mon <- c(rep(0, 30), rep(1, 4))
+
+y <- rpois(30, 1.5)
+y_new <- rpois(4, .5*7)
+y_all <-c(y, y_new)
+
+d <- data.frame(y=y_all, days=exposure, monastery=mon)
+d$log_days <- log(d$days)
+
+m <- map(
+  alist(
+    y~dpois(lambda), 
+    log(lambda) ~ log_days + a + b * monastery, 
+    a ~dnorm(0, 100), 
+    b~dnorm(0, 1)), 
+  data=d)
+
+m2 <- map2stan(m)
+
+precis(m)
+precis(m2)
+
+post <- extract.samples(m)
+lam_old <- exp(post$a)
+lam_new <- exp(post$a + post$b)
+precis(data.frame(old=lam_old, new=lam_new))
+```
+
+
+## Parameter Posterior Correlation
+
+Higher correlation results in large intervals for the posteriors, **which makes 
+explaining the model based on tables of parameters very difficult**.
+
+The **right way to look at the impact of parameters**, is to use the example
+shown on p316: extract samples, calculate fitted hypertheticall results 
+with and without a suspicious parameter, then see the probability of 
+differences.
+
+**Centering** the data may help to reduce this problem. It helps HMC also, 
+as high correlation makes the algo less efficient in sampling. 
+
+
+## Multinomial Regression
+
+It is a maximum entropy distribution when:
+
+* more than 2 types of unordered events
+* the probability of each event is constant across each trial
+
+**Two approaches**:
+
+1. Explicit approach using a generalization of the logit link.
+2. transforms the multinomial likelihood into a series of Possion likelihoods.
+
+### Multinomial Logit, p323
+
+$K$ scores, one for each event type. We compute the probabilities of a 
+particular type of event $k$ as:
+
+$$ Pr(k \mid s1, s2, ..., s_K) = \frac{\exp(s_k)}{\sum_{i=1}{K}\exp(s_i)} $$
+We need $K-1$ linear models to model $K$ types of events. Each model may or may
+not share the same predictors. These are all design choices. 
+
+
+## Geometric Regression, p328
+
+`dgeom` function. PDD:
+
+$$ Pr(y \mid p) = p(1-p)^{y-1} $$
+
+Maximum entropy for unbounded counts with constant expected value.
+
+Appropriate domain is for prediction the number of events until a particular
+event of interest.
+
+
+# Chapter 11
+
+## Ordered Categorical Outcomes
+
+### Log-cumulative Odds
+
+Calculation:
+```
+# 11M1
+
+# rating is event frequency
+rating <- c(12, 36, 7, 41)
+pr_k <- rating / sum(rating)
+
+cum_pr_k <- cumsum(pr_k)
+
+logit(cum_pr_k)
+```
+
+When adding predictors, the linear model is subtracted from the log odds
+(aka. logits/**log-cumulative-odds**), so that an increase in $\beta$ in the 
+linear model corresponds to an **increase** in the average reponse. p338.
+
+`rethinking::dordlogit(phi, cutpoints)` function for ordered logistic 
+differences. `phi` is the model formula, `cutpoints` are parameters.
+
+See example:
+
+```
+# show source
+dordlogit
+
+dordlogit(1:7, 0, 1:7)
+
+# this gives the same as above
+logistic(1:7) - c(0, logistic(1:6))
+
+# the following shows index 3 of the line above
+dordlogit(3, 0, 1:7)
+
+logistic(1:7)
+pordlogit(1:7, 0, 1:7)
+```
+
+Model example
+
+```
+data('Trolley')
+d <- Trolley
+d$female <- 1 - d$male
+
+m10 <- map2stan(
+  alist(
+    response ~ dordlogit(phi, cutpoints),
+    phi <- bc * contact + bi * intention + ba * action +
+      bci * contact * intention + bca * contact * action + 
+      bf * female + bfc * female * contact,
+    cutpoints ~ dnorm(0, 10),
+    c(bc, bi, ba, bci, bca, bf, bfc) ~ dnorm(0, 10)
+  ), 
+  data = d, chains=4, cores=4,
+  start=list(cutpoints=c(-2, -1, -.5, 0, .5, 1, 2))
+)
+```
+
+
+
+## Zero-Inflated Outcomes
+
+Ignoring zero-inflation will tend to **underestimate** the rate of events.
+
+
+### Zero-Inflated Poisson 
+
+`rethinking::dzipois(p, lambda)` - Zero-Inflated Possion prbability distribution, 
+defined as below:
+
+Two parameters: 
+
+* probability of zero event, $p$, 
+* Poisson rate $\lambda$
+
+$$ 
+\begin{aligned}
+Pr(y \mid p, \lambda) &= p \times 0 + (1-p) \times Pr(y \mid \lambda) \\
+Pr(y \mid p, \lambda) &= (1-p) \frac{\lambda^y \exp(-\lambda)}{y!} \\
+\end{aligned}
+$$
+
+See exercise 11H6 for a working model. Key point is how to produce predictions:
+
+* Use `link()` to fit new data, produce `p` and `lambda`.
+* mean of `lambda` is `mean((1-p)*lambda)`
+* PI or HPDI is `PI((1-p)*lambda)
+
+Example
+
+```
+library(rethinking)
+# 11H6
+data("Fish")
+d <- Fish 
+str(d)
+d$log_hours <- log(d$hours)
+
+m12 <- map(
+  alist(
+    fish_caught ~ dzipois(p, lambda),
+    logit(p) <- ap + bpp * persons + bcp * child,
+    log(lambda) <- log_hours + al + bp * persons + bc * child + bl * livebait,
+    ap ~ dnorm(0, 1),
+    c(bpp, bcp) ~ dnorm(0, 5),
+    al ~ dnorm(0, 10),
+    c(bp, bc, bl) ~ dnorm(0, 10)
+  ),
+  data=d
+)
+precis(m12)
+
+# Get prediction 
+d_pred <- data.frame(
+  log_hours=1,
+  persons=1,
+  child=0,
+  livebait=1
+)
+
+fish.link <- link(m12, data=d_pred)
+
+p <- fish.link$p
+lambda <- fish.link$lambda
+
+# expected_fish_mean
+mean((1-p)*lambda)
+# expected_fish_PI
+PI((1-p)*lambda)
+```
+
+
+### Zero-Inflationed Binomial probability distribution, derived in 11M3.
+
+Define the following:
+
+* $y$ number of successes
+* $n$ total no. of trials
+* $q$ probablity of success event at each trial
+* $p_0$ probability of zero event
+
+$$
+\begin{aligned}
+Pr(0, \mid p_0, q, n) &= p_0 + (1-p_0)q^0(1-q)^{n-0}\\
+Pr(y \mid p_0, q, n) &= p_0 \times 0 + (1-p_0) \frac{n!}{y!(n-y)!}q^y (1-q)^{n-y}\\
+Pr(y \mid p_0, q, n) &= (1-p_0) \frac{n!}{y!(n-y)!}q^y (1-q)^{n-y}
+\end{aligned}
+$$
+
+## Over-dispersed Outcomes
+
+### Beta-Binomial, p347
+
+Assumes each Binomial observation has its own probability of success.
+
+**Beta distribution** is a probability distribution for probabilities, defined
+by two parameters:
+
+1. average probability, $\bar{p}$,
+2. shape, $\theta$
+
+Max entropy for the same constraints as Binomial.
+
+`dbetabinom(no.trials, prob, theta)` function. 
+
+$prob$ and $\theta$ are parameters of beta distribution.
+
+## Under-dispersed Outcomes, p352, 11E4
+
+Typically happens when there is **autocorrelation**. 
+
+**State-dependent queuing models** studies these problems. Example is the
+Conway-Maxwell-Poisson aka COM-Poisson distribution.
+
+### Negative-Binomial / Gamma-Poisson, p350
+
+Assumes each Poisson count observation has its own rate, this rate comes from
+a gamma distribution.
+
+Max entropy for the same constraint as Poisson.
+
+`dgampois(lambda, scale)` function
+
+Using Gamma-Poisson versus Poisson will result in **more uncertainty** in the 
+posterior distributions, i.e. larger prediction intervals. This uncertainty 
+comes from the additional Gamma distribution, which allows **more plausible** 
+values for the parameters.
+
+**Gamma Distribution** defined by mean $\mu$ and scale $\theta$.
+
+### Do NOT use WAIC
+
+Fall back to DIC.
+
+
+# Chapter 12
+
+Multilevel models deserves to be the default for regression problems. They can
+reveal issues not captured by simple models. It's better to try multilevel first
+and then realise it is not necessary than to ignore potential issues.
+
+However, they instroduce additinal assumptions in the modelling process. 
+Using maximum entropy priors mitigates this issue somewhat.
+
+Multilevel models are also known as **hierarchical** and **mixed effects** 
+models. p357.
+
+## Pooling / Varying Effects
+
+Assume that the the same parameters across different clusters/groups are draw 
+from a common distribution. 
+
+Hyperparameters are learnt from data to determine how much regularization is
+eventually applied, i.e. it is **adaptive**.
+
+**Shrinkage** effects is stronger when empirical proportion in one bucket is 
+further away from the group mean. p362.
+
+**Complete Pooling** - use average of all clusters - **underfitting**.
+
+**No Pooling** - use individual clusters as standalone - **overfitting**.
+
+**Partial Pooling** - reduce effects of both above.
+
+**Benefits:**
+
+1. Improved estimates for repeat sampling. Single level models either maximally
+underfit or overfit the data.
+
+2. Improved estimates for imbalance in sampling. Prevents over-sampled clusters
+from dominating inference.
+
+3. Estimate of variation. Because variation across clusters is modelled 
+explicitly.
+
+4. Avoid averaging, retain variation. Avoid dangerous data transformations.
+
+### Concenration of Measures p360
+
+As models get more complex, concentration of measures phenomenon guarantees
+that the posterior mode will be far from the posterior median. This is the 
+reason why quadratic approximation doesn't work for multilevel models, but 
+MCMC does.
+
+### Cauchy Priors in Multilevel Models
+
+Usually work well in multilevel models. However, there are two contexts in 
+which they can be **problematic**.
+
+1. When there isn't much info in the data with which to estimate the variance.
+e.g. estimate variance from 5 clusters (ie. 5 observations).
+
+2. In non-linear models with logit and log links, **floor and ceiling** effects
+sometimes render extreme values of the variance equally plausible as more 
+realistic values. Results is that the sampling of variance parameters swings
+around over very large values, becuase Cauchy has very thick and long tail.
+So the chain becomes inefficient, even that it may still work.
+
+**To improve such models, use exponential priors instead.** Exponential 
+is also the maximum entropy prior for standard deviation, provided all we want
+to say a prior is the expected value.
+
+Gaussian priors shrinks more than Cauchy priors for extreme samples, see 
+exercise 12M3.
+
+## Multilevel Model Predictions
+
+Need to distinguish between 2 types of predictions (book classifies them into
+3 types but essentially 2, p382):
+
+1. **Retrodiction** and prediction for a **known** cluster
+2. Prediction for an **unknown** cluster
+
+### Retrodict / Known Clusters
+
+Retrodictions should not be expected to match samples, because of the shrinkage
+introduces. Should expect even a perfectly good model fit will differ from 
+the raw data in a **systematic** way that reflects shrinkage.
+
+Prediction for a known cluster should use the parameters specifically for 
+that cluster, such as its particular intercept (in addition to the group mean
+intercept).
+
+For both cases we can use `link()` and `sim()` directly. p377 also has examples
+showing useage without these functions.
+
+### Prediction for Unknown Clusters
+
+There is the effect and variance from the group, represented by the group 
+averages, as well as variation for a specific group, which is modelled / sampled
+from the distribution from pooling, defined by the hyperparameters.
+
+In this case we can use `link()` and `sim()` with `replace` argument. p379
+
+Code 12.35 is key here as it shows how to generate a sample from the pooling 
+distribution. In essense it does the following:
+
+1. extract samples from posterior
+2. generate random samples defined by hyperparameters in the extracted samples 
+above.
+3. pass random samples from step 2 to `link()` with `replace=`. Name for these
+random samples must match the one used in the model.
+
+Usually this results in wider intervals than a single-level model, as it models
+the variation across different clusters.
+
+# Chapter 13
+
+`rethinking::dmrnorm()` or `dmvnorm2()`, or `dmvnormNC()` for multinomial 
+distributions.
+
+`rethinking::LKJcorr(eta=2)` - weakly informative prior on $\rho$ that is 
+skeptical ofextreme correlations near -1 or 1.
+
+`rethinking::GPL2()` - Squared distance Gaussian process prior, p413
+
+## Varying Slope 
+
+### Covariance Matrices
+
+$$ S = diag(\sigma_i) \times R \times diag(\sigma_i) $$
+where $R$ is the correlation matrix. 
+
+### Non-Centered Parameterization, (NC)
+
+**Standardized adaptive prior** for varying effects models. Sometimes, NC are
+better but not always the case. See practice 13M3. 
+
+**NC tends to be better when the variation across clusters is very small - 
+close to zero, or poorly identified by the data.**
+
+For example standardizing both mean and variance of normal distribtions to be
+$\mathcal{N}(0, 1)$.
+
+In this form we no longer need the covariance matrix, but **only the correlation
+matrix**, since the scaler has been moved to the linear model. 
+
+It's possible to further extend this by using **Cholesky Decomposition** of
+the correlation matrix, $R=LL^T$. With this we can even take the correlation 
+out of the prior.
+
+Strategy is to sample a vector of uncorrelated z-scores and then multiply by 
+$L$ and the standard deviations to get the varying effects with correct scale
+and correlation. `dmvnormNC()` does this for us.
+
+Cost of non-centered forms: 
+
+1. looks more confusing.
+2. varying effects parameters emerge as z-scores, needs to be processed further
+to be interpreted. 
+3. Not all combinations of model structure and data beneifit from the 
+non-centered parameterization.
+
+## Gaussian Process Regression, p410
+
+For modeling **continuous categories**.
+
+Multivariate prior:
+
+$$
+\begin{aligned}
+\gamma &\sim \text{MVNormal}([0, \dots, 0], K) \\
+K_{ij} &= \eta^2\exp(-\rho^2 D_{ij}^2) + \delta_{ij}\sigma^2
+\end{aligned}
+$$
+
+Where $D_{ij}$ is input data, $\eta$, $\delta$ and $\sigma$ are parameters, 
+the model computes posterior distributions for these three parameters.
+
+$\eta^2$ is the maximum covariance between any two points (soceities in book
+example)
+
+$\delta_{ij}\sigma^2$ provides for extra covariance beyond $\eta^2$ when 
+$i = j$.
+
+Distribution for Gaussian Process with square distance: `GPL2()`
+
+From $K$ we can get the **correlation** matrix by using `cov2cor()`.
+
+**Automatic Relevance Determination** p419, can move a predictor into $K$.
+
+Best to model GP in `Stan` directly, or `GPstuff`. `Stan` manual on GP is 
+well written.
+
+New tools such as `GPflow` implements GP with `tensorflow`, which will 
+utilize the latest and new hardware.
+
+Use `WAIC` for model comparsing, particularly look at `pWAIC` (the effective
+number of parameters). Many times models with adaptive regularization end up
+with fewer effective parameters. See practice 13M4.
+
+Possion GLM models tend to have more free parameters then you might expect, 
+use `WAIC` and check `pWAIC`.
+
+# Chapter 14
+
+## Measurement Error
+
+Error can be modelled both on **outcome** and **predictor** variables. 
+
+In both cases, the observed values can be model with a distribution, 
+e.g. Normal, with the estimated mean of the distrubtion be the **new** 
+overall model outcome, and the standard error of the observed outcome becomes 
+the standard deviation of this distribution. 
+
+In other words, for outcome error modeling, 
+let observed outcomes be $D_{\text{observed}}$, 
+its **standard error** be $\sigma$, both are part of input data, 
+then we insert into the model:
+
+$$ D_{\text{observed}} \sim \mathcal{N}(D_{\text{estimated_param}}, \sigma) $$
+Result is that the samples with high standard errors are regularized more. 
+In other words, samples with lower standard errors have higher influence of
+the slope (parameter), whereas samples with higher standard errors are 
+influenced (regularized) more by the slope.
+
+Same applies to predictor error. The estimated predictor becomes part of the 
+main model. p430 example.
+
+```
+dlist <- list(
+  div_obs=d$Divorce,
+  div_sd=d$Divorce.SE,
+  mar_obs=d$Marriage,
+  mar_sd=d$Marriage.SE,
+  A=d$MedianAgeMarriage )
+
+m14.2 <- map2stan(
+  alist(
+      div_est ~ dnorm(mu,sigma),
+      mu <- a + bA*A + bR*mar_est[i],
+      div_obs ~ dnorm(div_est,div_sd),
+      mar_obs ~ dnorm(mar_est,mar_sd),
+      a ~ dnorm(0,10),
+      bA ~ dnorm(0,10),
+      bR ~ dnorm(0,10),
+      sigma ~ dcauchy(0,2.5)
+  ),
+  data=dlist , 
+  start=list(div_est=dlist$div_obs,mar_est=dlist$mar_obs) , 
+  WAIC=FALSE , iter=5000 , warmup=1000 , chains=3 , cores=3 , 
+  control=list(adapt_delta=0.95) 
+)
+```
+
+### How to do this with `map2stan()`, p428:
+
+* **WAIC should be turned off in `map2stan()` with `WAIC=FALSE` parameter.**
+WAIC will note compute correctly here. 
+
+* **Start values must be given,**, so that `map2stan()` konws how many 
+parameters it needs, can set start values for $D_{\text{estimated}}$ with 
+the observed values $D_{\text{observed}}$.
+
+* `control=list(adapt_delta=0.95)` - sets a higher **target acceptance rate**.
+
+
+## Imputation / Missing Data
+
+Imputing data, two methods:
+
+1. modeling missing data as random, **MCAR**, Missing Completely At Random
+2. Not at random.
+
+### MCAR
+
+Let assume $N_i$ is the predictor with missing value. 
+
+$$
+\begin{aligned}
+\mu_i =& \alpha + \beta_N N_i + \beta_M \log(M_i) \\
+N_i \sim& \mathcal{N}(\nu, \sigma_N) 
+\end{aligned}
+$$
+Note that the distrubutional assumption about the predictor that contains 
+missing values does not contain any information for each case. It **implicitly**
+assumes that missing values are **randomly** located among the cases. See
+exercise 14M1.
+
+
+### Model relationship amongst predictors
+
+Additional model between predictors. In this case, if there is some 
+relationship between the predictors, i.e. a slope, the imputed values will 
+reflect that trend.
+
+Note that we are making assumptions here. **Key is to try different assumptions
+and see how sensitive your inference is to them.**
+
+$$
+\begin{aligned}
+N_i \sim& \mathcal{N}(\nu, \sigma_N) \\
+\nu =& \alpha_N + \gamma_M \log(M_i)
+\end{aligned}
+$$
+
+When using imputation, there is usually more data, which results in **smaller**
+standard errors comparing models with WAIC.

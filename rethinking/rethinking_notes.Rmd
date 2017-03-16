@@ -31,9 +31,7 @@ lmplot <- function(formula, model, fit.data, x.seq, plot.data,
   # prediction interval
   shade(h.ci, x.seq)
 }
-```
 
-```{r}
 get_posterior <- function(likelihood, prior) {
   posterior <- likelihood * prior
   posterior <- posterior / sum(posterior)
@@ -1077,6 +1075,46 @@ skeptical ofextreme correlations near -1 or 1.
 $$ S = diag(\sigma_i) \times R \times diag(\sigma_i) $$
 where $R$ is the correlation matrix. 
 
+Example Model, p393-394:
+
+$$
+\begin{aligned}
+W_i \sim& \text{Normal}(\mu_i, \sigma)\\
+\mu_i =& \alpha_{CAFE[i]} + \beta_{CAFE[i]}A_i\\
+\Bigg[ \begin{array}{cc} \alpha_{CAFE[i]} \\ \beta_{CAFE[i]}  \end{array} \Bigg] 
+ \sim& \text{MVNormal}\Bigg(\Bigg[ \begin{array}{cc} \alpha \\ \beta  \end{array} 
+ \Bigg], S\Bigg) \\
+S =& \Bigg(
+\begin{array}{cc}
+\sigma_{\alpha} & 0\\
+0 & \sigma_{\beta}
+\end{array}
+\Bigg) R \Bigg(
+\begin{array}{cc}
+\sigma_{\alpha} & 0\\
+0 & \sigma_{\beta}
+\end{array}
+\Bigg)
+\end{aligned}
+$$
+
+```
+## R code 13.12
+m13.1 <- map2stan(
+    alist(
+        wait ~ dnorm( mu , sigma ),
+        mu <- a_cafe[cafe] + b_cafe[cafe]*afternoon,
+        c(a_cafe,b_cafe)[cafe] ~ dmvnorm2(c(a,b),sigma_cafe,Rho),
+        a ~ dnorm(0,10),
+        b ~ dnorm(0,10),
+        sigma_cafe ~ dcauchy(0,2),
+        sigma ~ dcauchy(0,2),
+        Rho ~ dlkjcorr(2)
+    ) ,
+    data=d ,
+    iter=5000 , warmup=2000 , chains=2 )
+```
+
 ### Non-Centered Parameterization, (NC)
 
 **Standardized adaptive prior** for varying effects models. Sometimes, NC are
@@ -1099,6 +1137,11 @@ Strategy is to sample a vector of uncorrelated z-scores and then multiply by
 $L$ and the standard deviations to get the varying effects with correct scale
 and correlation. `dmvnormNC()` does this for us.
 
+Benefits of non-centered parameterization:
+
+1. handles divergent iterations,
+2. samples more efficiently.
+
 Cost of non-centered forms: 
 
 1. looks more confusing.
@@ -1106,6 +1149,22 @@ Cost of non-centered forms:
 to be interpreted. 
 3. Not all combinations of model structure and data beneifit from the 
 non-centered parameterization.
+
+Example Model:
+
+$$
+\begin{aligned}
+L_i &\sim \text{Binomial}(1, p_i) \\
+logit(p_i) &= \mathcal{A}_i + (\mathcal{B}_{P, i} + \mathcal{B}_{PC}C_i)P_i \\
+\mathcal{A}_i &= \alpha + \alpha_{ACTOR[i]} + \alpha_{BLOCK[i]} \\
+\mathcal{B}_{P,i} &= \beta_P + \beta_{P,ACTOR[i]} + \beta_{P, BLOCK[i]} \\
+\mathcal{B}_{PC,i} &= \beta_{PC} + \beta_{PC,ACTOR[i]} + \beta_{PC, BLOCK[i]} \\
+\end{aligned}
+$$
+
+Why are there separate intercepts in the model above? Because if you expand 
+the second formula, you'll see that these intercepts form the parameters with 
+$P_i$ and $C_i P_i$.
 
 ## Gaussian Process Regression, p410
 
@@ -1133,7 +1192,11 @@ Distribution for Gaussian Process with square distance: `GPL2()`
 
 From $K$ we can get the **correlation** matrix by using `cov2cor()`.
 
-**Automatic Relevance Determination** p419, can move a predictor into $K$.
+**Automatic relevance determination** (p419) is the term used in machine 
+learning corre- sponding to the term “hierarchical modeling” in statistics. 
+In either case, the idea is that hyperparameters are estimated from data 
+(in Bayesian inference, via the joint posterior distribution) rather than 
+being preset.
 
 Best to model GP in `Stan` directly, or `GPstuff`. `Stan` manual on GP is 
 well written.

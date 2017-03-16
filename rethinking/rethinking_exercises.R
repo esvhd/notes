@@ -585,3 +585,132 @@ m4 <- map2stan(
   data=d, WAIC=F, chains=3, cores=3, iter=5e3, warmup = 2e3,
   control=list(adapt_level=.99)
 )
+
+
+## R code 13.22
+library(rethinking)
+data(chimpanzees)
+d <- chimpanzees
+d$recipient <- NULL
+d$block_id <- d$block
+
+m13.6 <- map2stan(
+  alist(
+    # likeliood
+    pulled_left ~ dbinom(1,p),
+    
+    # linear models
+    logit(p) <- A + (BP + BPC*condition)*prosoc_left,
+    A <- a + a_actor[actor] + a_block[block_id],
+    BP <- bp + bp_actor[actor] + bp_block[block_id],
+    BPC <- bpc + bpc_actor[actor] + bpc_block[block_id],
+    
+    # adaptive priors
+    c(a_actor,bp_actor,bpc_actor)[actor] ~
+      dmvnorm2(0,sigma_actor,Rho_actor),
+    c(a_block,bp_block,bpc_block)[block_id] ~
+      dmvnorm2(0,sigma_block,Rho_block),
+    
+    # fixed priors
+    c(a,bp,bpc) ~ dnorm(0,1),
+    sigma_actor ~ dcauchy(0,2),
+    sigma_block ~ dcauchy(0,2),
+    Rho_actor ~ dlkjcorr(4),
+    Rho_block ~ dlkjcorr(4)
+  ) , data=d , iter=5000 , warmup=1000 , chains=3 , cores=3 )
+
+precis(m13.6, depth=2)
+
+## R code 13.23
+m13.6NC <- map2stan(
+  alist(
+    pulled_left ~ dbinom(1,p),
+    logit(p) <- A + (BP + BPC*condition)*prosoc_left,
+    A <- a + a_actor[actor] + a_block[block_id],
+    BP <- bp + bp_actor[actor] + bp_block[block_id],
+    BPC <- bpc + bpc_actor[actor] + bpc_block[block_id],
+    # adaptive NON-CENTERED priors
+    c(a_actor,bp_actor,bpc_actor)[actor] ~
+      dmvnormNC(sigma_actor,Rho_actor),
+    c(a_block,bp_block,bpc_block)[block_id] ~
+      dmvnormNC(sigma_block,Rho_block),
+    c(a,bp,bpc) ~ dnorm(0,1),
+    sigma_actor ~ dcauchy(0,2),
+    sigma_block ~ dcauchy(0,2),
+    Rho_actor ~ dlkjcorr(4),
+    Rho_block ~ dlkjcorr(4)
+  ) , data=d , iter=5000 , warmup=1000 , chains=3 , cores=3 )
+
+m13.6NC2 <- map2stan(
+  alist(
+    pulled_left ~ dbinom(1,p),
+    logit(p) <- A + (BP + BPC*condition)*prosoc_left,
+    A <- a + a_actor[actor] + a_block[block_id],
+    BP <- bp_actor[actor] + bp_block[block_id],
+    BPC <- bpc_actor[actor] + bpc_block[block_id],
+    # adaptive NON-CENTERED priors
+    c(a_actor,bp_actor,bpc_actor)[actor] ~
+      dmvnormNC(sigma_actor,Rho_actor),
+    c(a_block,bp_block,bpc_block)[block_id] ~
+      dmvnormNC(sigma_block,Rho_block),
+    a ~ dnorm(0,1),
+    sigma_actor ~ dcauchy(0,2),
+    sigma_block ~ dcauchy(0,2),
+    Rho_actor ~ dlkjcorr(4),
+    Rho_block ~ dlkjcorr(4)
+  ) , data=d , iter=5000 , warmup=1000 , chains=3 , cores=3 )
+
+## R code 13.24
+# extract n_eff values for each model
+neff_c <- precis(m13.6,2)@output$n_eff
+neff_nc <- precis(m13.6NC,2)@output$n_eff
+neff_nc2 <- precis(m13.6NC2,2)@output$n_eff
+# plot distributions
+boxplot( list( 'm13.6'=neff_c , 'm13.6NC'=neff_nc,  'm13.6NC2'=neff_nc2) ,
+         ylab="effective samples" , xlab="model" )
+
+## R code 13.25
+precis( m13.6NC , depth=2 , pars=c("sigma_actor","sigma_block") )
+
+precis(m13.6NC, depth=2)
+precis(m13.6NC2, depth=2)
+
+compare(m13.6, m13.6NC, m13.6NC2)
+
+## R code 13.26
+p <- link(m13.6NC)
+str(p)
+
+## R code 13.27
+compare( m13.6NC , m12.5 )
+
+## R code 13.28
+m13.6nc1 <- map2stan(
+  alist(
+    pulled_left ~ dbinom(1,p),
+    
+    # linear models
+    logit(p) <- A + (BP + BPC*condition)*prosoc_left,
+    A <- a + za_actor[actor]*sigma_actor[1] +
+      za_block[block_id]*sigma_block[1],
+    BP <- bp + zbp_actor[actor]*sigma_actor[2] +
+      zbp_block[block_id]*sigma_block[2],
+    BPC <- bpc + zbpc_actor[actor]*sigma_actor[3] +
+      zbpc_block[block_id]*sigma_block[3],
+    
+    # adaptive priors
+    c(za_actor,zbp_actor,zbpc_actor)[actor] ~ dmvnorm(0,Rho_actor),
+    c(za_block,zbp_block,zbpc_block)[block_id] ~ dmvnorm(0,Rho_block),
+    
+    # fixed priors
+    c(a,bp,bpc) ~ dnorm(0,1),
+    sigma_actor ~ dcauchy(0,2),
+    sigma_block ~ dcauchy(0,2),
+    Rho_actor ~ dlkjcorr(4),
+    Rho_block ~ dlkjcorr(4)
+  ) ,
+  data=d ,
+  start=list( sigma_actor=c(1,1,1), sigma_block=c(1,1,1) ),
+  constraints=list( sigma_actor="lower=0", sigma_block="lower=0" ),
+  types=list( Rho_actor="corr_matrix", Rho_block="corr_matrix" ),
+  iter=5000 , warmup=1000 , chains=3 , cores=3 )

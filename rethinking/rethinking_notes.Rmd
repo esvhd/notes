@@ -332,7 +332,7 @@ either highly correlated parameters or high dimensions.
     + parameter `chains=` to sample multiple chains.
     + parameter `cores=` allow multi-core computation.
     + parameter `iter=` total iterations
-    + `warmup=` iterations of warm-up phase. 
+    + `warmup=` iterations of warm-up phase. These are thrown away.
     + For typical regression models, the motto is **four short chains to check, 
     one long chain for inference**.
     + Truncate normal distribution, keeping only positive values for priors. 
@@ -591,6 +591,8 @@ curve(dgeom(x, prob=.05), from=1, to=100, n=100, col='orange', add=TRUE)
 
 ## Binomial Regression
 
+Conventional link is **logit**.
+
 In general, the model is of the form of:
 
 $$
@@ -634,6 +636,8 @@ Tips from execrises:
 * Use `sim()` to obtain simulated results for `y` in the model.
 
 ## Possion Regression
+
+**Conventional link for Possion models is the log link.**
 
 Basic form:
 
@@ -732,10 +736,14 @@ $$ Pr(k \mid s1, s2, ..., s_K) = \frac{\exp(s_k)}{\sum_{i=1}{K}\exp(s_i)} $$
 We need $K-1$ linear models to model $K$ types of events. Each model may or may
 not share the same predictors. These are all design choices. 
 
+Model likelihood with `rethinking::dcategorical()`, such a model built on 
+multinomial distribution may be also called categorical regression model.
 
 ## Geometric Regression, p328
 
-`dgeom` function. PDD:
+Conventional link is also `logit`
+
+`stats::dgeom()` function. PDD:
 
 $$ Pr(y \mid p) = p(1-p)^{y-1} $$
 
@@ -1118,7 +1126,8 @@ m13.1 <- map2stan(
 ### Non-Centered Parameterization, (NC)
 
 **Standardized adaptive prior** for varying effects models. Sometimes, NC are
-better but not always the case. See practice 13M3. 
+better (avoids divergent iterations warning from `Stan`) but not always the 
+case. See practice 13M3. 
 
 **NC tends to be better when the variation across clusters is very small - 
 close to zero, or poorly identified by the data.**
@@ -1135,7 +1144,10 @@ out of the prior.
 
 Strategy is to sample a vector of uncorrelated z-scores and then multiply by 
 $L$ and the standard deviations to get the varying effects with correct scale
-and correlation. `dmvnormNC()` does this for us.
+and correlation. `dmvnormNC()` does this for us. Note with `dmvnormNC()`, only
+`sigma` and `Rho` (standard deviation and correlation) need to be provided.
+The mean should always be **in the model, not the prior**, for non-centered 
+parameterization.
 
 Benefits of non-centered parameterization:
 
@@ -1165,6 +1177,30 @@ $$
 Why are there separate intercepts in the model above? Because if you expand 
 the second formula, you'll see that these intercepts form the parameters with 
 $P_i$ and $C_i P_i$.
+
+Example code:
+
+```
+m13.6NC <- map2stan(
+  alist(
+    pulled_left ~ dbinom(1,p),
+    logit(p) <- A + (BP + BPC*condition)*prosoc_left,
+    A <- a + a_actor[actor] + a_block[block_id],
+    BP <- bp + bp_actor[actor] + bp_block[block_id],
+    BPC <- bpc + bpc_actor[actor] + bpc_block[block_id],
+    # adaptive NON-CENTERED priors
+    c(a_actor,bp_actor,bpc_actor)[actor] ~
+                            dmvnormNC(sigma_actor,Rho_actor),
+    c(a_block,bp_block,bpc_block)[block_id] ~
+                            dmvnormNC(sigma_block,Rho_block),
+    c(a,bp,bpc) ~ dnorm(0,1),
+    sigma_actor ~ dcauchy(0,2),
+    sigma_block ~ dcauchy(0,2),
+    Rho_actor ~ dlkjcorr(4),
+    Rho_block ~ dlkjcorr(4)
+  ), 
+  data=d , iter=5000 , warmup=1000 , chains=3 , cores=3 )
+```
 
 ## Gaussian Process Regression, p410
 
@@ -1296,6 +1332,24 @@ missing values does not contain any information for each case. It **implicitly**
 assumes that missing values are **randomly** located among the cases. See
 exercise 14M1.
 
+Example code:
+
+```
+m <- map2stan(
+  alist(
+    kcal ~ dnorm(mu, sigma),
+    mu <- a + bN*neocortex + bM*logmass,
+    neocortex ~ dnorm(nu, sigma_N),  # missing value drawn based on this line
+    a ~ dnorm(0, 100),
+    c(bN, bM) ~ dnorm(0, 10),
+    nu ~ dnorm(0.5, 1),
+    sigma_N ~ dcauchy(0, 1),
+    sigma ~ dcauchy(0, 1)
+  ),
+  data=data_list, iter=4e4, chains=2
+)
+```
+
 
 ### Model relationship amongst predictors
 
@@ -1315,3 +1369,22 @@ $$
 
 When using imputation, there is usually more data, which results in **smaller**
 standard errors comparing models with WAIC.
+
+Example code:
+
+```
+m <- map2stan(
+  alist(
+    kcal ~ dnorm(mu, sigma),
+    mu <- a + bN*neocortex + bM*logmass,
+    neocortex ~ dnorm(nu, sigma_N),
+    nu <- a_N + gM * logmass,        # this is the linear model
+    a ~ dnorm(0, 100),
+    c(bN, bM, gM) ~ dnorm(0, 10),
+    a_N ~ dnorm(0.5, 1),
+    sigma_N ~ dcauchy(0, 1),
+    sigma ~ dcauchy(0, 1)
+  ),
+  data=data_list, iter=4e4, chains=2
+)
+```

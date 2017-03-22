@@ -224,9 +224,22 @@ are fitted with the same set of data. Otherwise, models fitted with less data
 will have lower information criteria values, because they are asked to predict
 less. p196
 
-## Assumptions for AIC, DIC and WAIC
+## Information Criteria
 
-**AIC**, page 189
+Deviance provides a measure for in-sample / training data model evaluation. 
+We need a measure to evaluate models for for out-of-sample / test data. 
+This is where AIC, DIC and WAIC come in.
+
+The validity of these metrics depends upon the predictive task at hand.
+
+My opinion: these are metrics designed to estimate OOS deviance, not sure in 
+practice these work well. Maybe when you have lots of data, cross validation
+is just a more practical method to tune the models, and compare models based
+on test errors.
+
+### AIC, page 189
+
+AIC is reliable only when:
 
 1. flat prior, or overwhelmed by likelihood (data)
 
@@ -234,17 +247,42 @@ less. p196
 
 3. The sample size N is much larger than the number of parameters k
 
-**DIC**, page 190
+$$ AIC = D_{train} + 2p $$
+where $p$ is the number of free parameters to be estimated in the model.
+
+### DIC, page 190
 
 1. can handle informative priors
 
 2. still rquires 2 and 3 above like AIC
 
-**WAIC**, p191
+3. In the case of flat priors, DIC reduces to AIC.
+
+Because DIC also assumes multivariate Gaussian posterior distributon, if any 
+parameter in the posterior is substantially skewed, **and** also has a 
+substantial effect on the prediction, then DIC like AIC can go horribly wrong.
+
+$$ DIC = \bar{D} + (\bar{D} - \hat{D}) = \bar{D} + p_D $$
+Where:
+
+$D$ is the posterier distribution of deviance
+
+$\bar{D}$ is the average of $D$
+
+$\hat{D}$ is the deviance calculated at the posterier mean
+
+$p_D$, known as the penalty term, is just the expected distance between the 
+deviance in-sample and the deviance out-of-sample.
+
+### WAIC, p191
 
 * Does not require posterior distribution to be multivariate Gaussian.
 
 * Often more accurate than DIC
+
+WAIC requires splitting data into **independent** observations. In time series,
+where an observation may depend on the previous observation, this is **not**
+satisfied, in this case it is **not** clear what the calculated WAIC means.
 
 * `rethinking::compare()` compares models using WAIC. p199
     + open points are WAIC
@@ -264,19 +302,34 @@ Steps to calculate WAIC, p192 Overthinking box:
 density for each outcome. I.e. this steps calculates $Pr(y_i)$
 
 4. calculate **lppd** (log-pointwise-predictive-density), 
-$lppd=\sum_{i=1}^{N}log(Pr(y_i))$
+
+$$lppd=\sum_{i=1}^{N}\log(Pr(y_i))$$
 
 5. calculate the **effective number of paramters**, 
-$p_{WAIC}=\sum_{i=1}^{N}Var(y_i)$
 
-6. $WAIC = -2 (lppd - p_{WAIC})$
+$$p_{WAIC}=\sum_{i=1}^{N}Var(y_i)$$
 
+6. finally we have WAIC:
 
-* `rethinking::sim.train.test` can be used to run leave one out cross
+$$WAIC = -2 (lppd - p_{WAIC})$$
+
+**Bayes Factor** is a ratio of average likelihoods (the denominator in Bayes
+theorem). There are technical issues related to using bayes factor as a measure
+of OOS model evaluation.
+
+### Cross Validation, Ensemble Methods
+
+* `rethinking::sim.train.test()` can be used to run leave one out cross
 validation. p184. See instruction in Overthinking box on page 185 on parameters
 to parallelise the simulations. 
 
-* `rethinking::ensemble` can be used to calcluate model averaged results. 
+* `rethinking::ensemble()` can be used to calcluate model averaged results. 
+
+Example:
+
+```
+milk.ensemble <- ensemble(model1, model2, model3, data=d.predict)
+```
 
 
 Notes from solutions for 6M1:
@@ -290,7 +343,17 @@ predictive distribution, DIC and WAIC will tend to agree.
 and AIC will tend to agree.
 
 **Positive $\sigma$ trick**: model $log(\sigma)$ instead, therefore $\sigma$ is 
-$exp(x)$ which is always > 0.
+$exp(x)$ which is always > 0. Example:
+
+```
+a.start <- mean(d$kcal.per.g)
+sigma.start <- log(sd(d$kcal.per.g))  # input sigmal is in log scalue
+m6.11 <- map(
+  alist(
+      kcal.per.g ~ dnorm( a , exp(log.sigma) )
+  ) ,
+  data=d , start=list(a=a.start,log.sigma=sigma.start) )
+```
 
 
 # Chapter 7

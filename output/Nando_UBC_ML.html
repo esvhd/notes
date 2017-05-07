@@ -12786,8 +12786,8 @@ $$ h_i = \frac{1}{n} + \frac{(x - \bar{x})^2}{\sum_{i^{'}=1}^{n}(x_{i^{'}} - \ba
 <p><a href="https://en.wikipedia.org/wiki/Leverage_(statistics">https://en.wikipedia.org/wiki/Leverage_(statistics</a>)</p>
 <h3 id="Influential-Observations">Influential Observations<a class="anchor-link" href="#Influential-Observations">&#182;</a></h3><p>These have disproportional impact on the values of the model parameters. Identified by:</p>
 <ul>
-<li>Cook's distance (D stat) greater than $4/(n-p-1)$. In <code>R</code>: <code>plot(fit, which=4, cook.level=cutoff)</code></li>
-<li>Added variable plots, <code>avPlots(fit, ask=FALSE, id.method='identify')</code> in <code>car</code></li>
+<li><strong>Cook's distance (D stat)</strong> greater than $4/(n-p-1)$. In <code>R</code>: <code>plot(fit, which=4, cook.level=cutoff)</code></li>
+<li><strong>Added variable plots</strong>, <code>avPlots(fit, ask=FALSE, id.method='identify')</code> in <code>car</code></li>
 </ul>
 <p><strong>An outlier that also has high leverage is particularly dangerous.</strong> See <strong>ISLR</strong> p99.</p>
 <h3 id="Influence-Plot">Influence Plot<a class="anchor-link" href="#Influence-Plot">&#182;</a></h3><p>Combines all the above into <code>car</code>'s <code>influencePlot(fit, id.method='identify')</code>.</p>

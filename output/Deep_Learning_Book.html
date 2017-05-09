@@ -13734,7 +13734,8 @@ $$ W_{i,j} \sim U\bigg( -\sqrt{\frac{6}{m+n}}, \sqrt{\frac{6}{m+n}} \bigg) $$<p>
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Practical-Methodology">Practical Methodology<a class="anchor-link" href="#Practical-Methodology">&#182;</a></h1>
+<h1 id="Practical-Methodology">Practical Methodology<a class="anchor-link" href="#Practical-Methodology">&#182;</a></h1><p>Based on DL, material based on <a href="http://cs229.stanford.edu/materials/ML-advice.pdf">Andrew Ng</a></p>
+
 </div>
 </div>
 </div>
@@ -13749,6 +13750,103 @@ $$ W_{i,j} \sim U\bigg( -\sqrt{\frac{6}{m+n}}, \sqrt{\frac{6}{m+n}} \bigg) $$<p>
 $$ F = \frac{2pr}{p + r} $$<p><strong>AUC</strong>: Area under the Precision-Recall curve.</p>
 <p><strong>Coverage</strong>: is the fraction of examples for which the machine learning system is able to produce a response. It is possible to trade coverage for accuracy (the error rate of a system).</p>
 <p><strong>Define which performance metrics to improve ahead of time, then concentrate on improve it.</strong> Need to define goal post first.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Establish-an-end-to-end-system-ASAP">Establish an end-to-end system ASAP<a class="anchor-link" href="#Establish-an-end-to-end-system-ASAP">&#182;</a></h2><p>Choose model based on general category: feedforward network, convolutional network if input has known topological structure. Use ReLU/Leaky ReLU.</p>
+<p>If input or output is a sequence, use gated RNN, such as LSTM or GRU.</p>
+<p>Use <strong>SGD with momentum with a decaying learning rate</strong>. Or <strong>Adam</strong>. If optimization is problematic, use <strong>batch normalization</strong> quickly.</p>
+<p>Use <strong>early stopping</strong>. <strong>Dropout</strong> to regularize.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Gather-More-Data-or-Not">Gather More Data or Not<a class="anchor-link" href="#Gather-More-Data-or-Not">&#182;</a></h2><p>If <strong>training error</strong> is poor, no need to collect data, <strong>increase the size of the model</strong> by adding more layers or more hidden units to each layer. Or <strong>tune the model such as hyperparameters</strong>.</p>
+<p>If using large model and carefully tuned hyperparameters, training error is still high, then there may be <strong>data quality</strong> issues. Collect more data, clean the data, start again.</p>
+<p>If training error is acceptable but <strong>test error</strong> is not, <strong>collect more data</strong>.</p>
+<p>Plot curve showing relationship between <strong>training data size</strong> and <strong>generalization error rate</strong>. By extrapolating, one can predict how much additional training data would need to be gathered to reach a performance goals.</p>
+<p>Data size should be viewed in <strong>log scale</strong>, i.e. double the size of data between experiments.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Manual-Hyperparameter-Tuning">Manual Hyperparameter Tuning<a class="anchor-link" href="#Manual-Hyperparameter-Tuning">&#182;</a></h2><p>Primary goal: <strong>adjust the effective capacity of the model to match the complexity of the task</strong>.</p>
+<p>Effective capacity constrained by 3 factors:</p>
+<ol>
+<li>the representational capacity of the model.</li>
+<li>ability of the learning algothrim to successfully minimize the cost function used to train the model.</li>
+<li>the degree to which the cost function and the training procedure regularize the model.</li>
+</ol>
+<p>Generalization error is typically <strong>U-shaped</strong> when plotted against one of the hyperparameters.</p>
+<p>Not every hyperparameter will be able to explore the entire U-shaped curve.</p>
+<p>The effective capacity is highest when the <strong>learning rate</strong> is <strong>correct</strong> for the optimization problem. Learning rate has a U-shaped curve for training error.</p>
+<p>Tuning parameters other than the learning rate reuiqres monitoring both training and test error to diagnose whether your model is overfitting or underfitting.</p>
+<p>Test Error = Training Error + Gap between Training and Test Error</p>
+<p>Neural networks typically perform best when the <strong>training error is very low (thus when capacity is high)</strong>, so test error is primiarly driven by the gap between the two errors. <strong>Goal</strong> is to reduce this gapp without increasing training error faster than the gap decreases.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Automatic-Hyperparameter-Tuning">Automatic Hyperparameter Tuning<a class="anchor-link" href="#Automatic-Hyperparameter-Tuning">&#182;</a></h2><p><strong>Grid search</strong> typically involves picking values approximately on a log scale.</p>
+<p><strong>Random search</strong> typically reduces validation error much faster than grid search, in terms of the number of trials run by each method. Often this is <strong>repeated many times</strong> to refine the search based on the results of the first run.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Model-Based-Hyperparameter-Optimization">Model Based Hyperparameter Optimization<a class="anchor-link" href="#Model-Based-Hyperparameter-Optimization">&#182;</a></h2><p>No conclusive results yet for Bayesian hyperparameter optimization yet.</p>
+<p>One drawback common to most hyperparameter optimization algos is that they require for a training experiment to run to completion before they are able to extract any information from the experiment. Thus much less efficient.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Debugging-Strategy,-p424">Debugging Strategy, p424<a class="anchor-link" href="#Debugging-Strategy,-p424">&#182;</a></h2><p>Two ways:</p>
+<ul>
+<li>Design a case that is so simple that the correct behaviour can be predicted.</li>
+<li>design a test the exercises one part of the neural net implementation in isolation.</li>
+</ul>
+<p>Important tests:</p>
+<ul>
+<li>visualize the model in action</li>
+<li>visualize the worst mistakes</li>
+<li>Reason about software using training and test error (overfitting symptoms can be caused by model not saved right, test data not processed in the same way as training data, etc)</li>
+<li>Fit a tiny dataset</li>
+<li>Compare backprop derivatives to numerical derivatives: compare automatic differentiation to <strong>finite differences</strong></li>
+<li>Monitor histograms of activations and gradient. would like the magnitude of parameter updates over a minibatch to be around <strong>1% of the magnitude of the parameter</strong>, not 50% or 0.0001%.<ul>
+<li>sparse data results in some parameters to be updated very rarely.</li>
+</ul>
+</li>
+</ul>
 
 </div>
 </div>

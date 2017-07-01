@@ -165,3 +165,6 @@ export BLPAPI_ROOT=/home/zwl/lib/blpapi_cpp
 
 export FRED_API_KEY=4ab8daf548f583dcfa16a95383c1adbd
 
+export CUDA_DEVICE_ORDER="PCI_BUS_ID"
+export CUDA_VISIBLE_DEVICES=1
+

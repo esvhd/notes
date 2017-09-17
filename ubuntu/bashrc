@@ -158,7 +158,7 @@ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/zwl/lib/blpapi_cpp/Linux
 
 export LD_LIBRARY_PATH
 
-PYTHONPATH=~/git/pythonlib/:~/git/pyhistdata:~/git/pypbo:~/git/drivetools
+PYTHONPATH=~/git/pyblp:~/git/pythonlib/:~/git/pyhistdata:~/git/pypbo:~/git/drivetools
 export PYTHONPATH
 
 export BLPAPI_ROOT=/home/zwl/lib/blpapi_cpp
@@ -166,5 +166,5 @@ export BLPAPI_ROOT=/home/zwl/lib/blpapi_cpp
 export FRED_API_KEY=4ab8daf548f583dcfa16a95383c1adbd
 
 export CUDA_DEVICE_ORDER="PCI_BUS_ID"
-export CUDA_VISIBLE_DEVICES=1
+export CUDA_VISIBLE_DEVICES=1,0
 

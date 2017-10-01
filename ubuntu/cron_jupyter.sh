@@ -9,10 +9,11 @@ export BLPAPI_ROOT=/home/zwl/lib/blpapi_cpp
 
 export FRED_API_KEY=4ab8daf548f583dcfa16a95383c1adbd
 
-PYTHONPATH=/home/zwl/git/pythonlib/:/home/zwl/git/pyhistdata:/home/zwl/git/pypbo:/home/zwl/git/drivetools
+PYTHONPATH=/home/zwl/git/pyblp:/home/zwl/git/pythonlib/:/home/zwl/git/pyhistdata:/home/zwl/git/pypbo
+PYTHONPATH=$PYTHONPATH:/home/zwl/git/drivetools
 export PYTHONPATH
 
 export CUDA_DEVICE_ORDER="PCI_BUS_ID"
-export CUDA_VISIBLE_DEVICES=1
+export CUDA_VISIBLE_DEVICES=1,0
 
 /usr/anaconda3/bin/jupyter-notebook --no-browser --notebook-dir /home/zwl 1>/tmp/cron.jupyter 2> /tmp/cron.jupyter.err &

@@ -1,4 +1,5 @@
 {
+  "style": "numpy",
   "default_qstyle": "'''",
   "default_description": "",
   "default_summary": "",

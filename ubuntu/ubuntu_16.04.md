@@ -98,6 +98,14 @@ Also, I needed to **upgrade to the latest distribution linux kernel for the driv
     sudo apt-get upgrade       # Strictly upgrades the current packages
     sudo apt-get dist-upgrade  # Installs updates (new ones)
 
+## Update VIM
+
+This is needed to `.vimrc` setup, based on this [post](https://askubuntu.com/questions/284957/vi-getting-multiple-sorry-the-command-is-not-available-in-this-version-af/284960#284960).
+
+```
+sudo apt-get install vim-gui-common
+sudo apt-get install vim-runtime
+```
 
 ## Ubuntu Disable Suspend
 
@@ -382,6 +390,19 @@ Edit `.condarc` to reorder channel priorities.
 #### Password
 
 To setup a password for jupyter server, see [here](https://jupyter-notebook.readthedocs.io/en/stable/public_server.html)
+
+#### Matplotlib `figure.figsize`
+
+Jupyter notebook uses iPython for python kernels. Therefore we need to change: 
+```
+~/.ipython/profile_default/ipython_kernel_config.py
+```
+
+This is created through `ipython profile create`. Insert the following at the end of the file:
+
+```
+c.InlineBackend.rc = {'figure.figsize': (12, 4)}
+```
 
 #### Crontab
 

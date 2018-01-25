@@ -568,6 +568,10 @@ sudo apt-get install libelf-dev
 
 Run script in `~/bin/list_kernels.sh`. Find a kernel with `ii` tag at the beginning of the line, these are safe to remove. Also make sure to **never** remove a kernel currently in use!
 
+* rc: means it has already been removed.
+* ii: means installed, eligible for removal.
+* iU: DON’T REMOVE. It means not installed, but queued for install in apt.
+
 ```
 sudo dpkg --purge kernel-image-name
 ```

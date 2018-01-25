@@ -387,8 +387,10 @@ axes.grid           : True   # display grid or not
 #xtick.minor.top      : True   # draw x axis top minor ticks
 #xtick.minor.bottom   : True   # draw x axis bottom minor ticks
 
-#ytick.left           : True   # draw ticks on the left side
-#ytick.right          : False  # draw ticks on the right side
+ytick.left           : False   # draw ticks on the left side
+ytick.right          : True  # draw ticks on the right side
+ytick.labelleft      : False 
+ytick.labelright     : True 
 #ytick.major.size     : 3.5      # major tick size in points
 #ytick.minor.size     : 2      # minor tick size in points
 #ytick.major.width    : 0.8    # major tick width in points
@@ -437,7 +439,7 @@ grid.alpha       :   0.9       # transparency, between 0.0 and 1.0
 # See http://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure
 #figure.titlesize : large      # size of the figure title (Figure.suptitle())
 #figure.titleweight : normal   # weight of the figure title
-figure.figsize   : 14, 6   # figure size in inches
+figure.figsize   : 12, 4   # figure size in inches
 #figure.dpi       : 100      # figure dots per inch
 #figure.facecolor : white   # figure facecolor; 0.75 is scalar gray
 #figure.edgecolor : white   # figure edgecolor

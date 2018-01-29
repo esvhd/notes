@@ -318,7 +318,7 @@ Choose Y for creating symbolic link for `/usr/local/cuda`.
 * Add `/usr/local/cuda/bin` to `PATH`
 * Add `/usr/local/cuda/lib64` to `LD_LIBRARY_PATH`
 
-### cuDNN 6.0 for Cuda 8.0
+### cuDNN 7.0 for Cuda 9.0
 
 Download page [here](https://developer.nvidia.com/rdp/cudnn-download), download both runtime and dev libraries. Perhaps docs if you want to run the tests.
 
@@ -364,7 +364,7 @@ Edit `.condarc` to reorder channel priorities.
 
 ### Python packages
 
-    conda install pytorch torchvision cuda80 -c soumith
+    conda install pytorch torchvision cuda90 -c soumith
     conda install -c conda-forge hdbscan tabulate
     conda install -c joblib holoviews
     conda install -c conda-forge xarray cartopy pynio # for difficult to build cartopy and pynio.
@@ -423,6 +423,16 @@ Step:
 
 ```
 pip install jupyter_contrib_nbextensions
+```
+
+#### Showing Different Conda envs
+
+Anaconda stopped shipping this support by default. See [here](https://github.com/jupyter/jupyter/issues/245). As suggested, the instructions to manually include these are [here](http://ipython.readthedocs.io/en/stable/install/kernel_install.html#kernels-for-different-environments).
+
+Essentiall, first activate the new environment, run the following:
+
+```
+python -m ipykernel install --user --name myenv --display-name "Python (myenv)"
 ```
 
 ## RStudio

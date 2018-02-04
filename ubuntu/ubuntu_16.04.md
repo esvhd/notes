@@ -219,7 +219,12 @@ Then use `iostat -d 30 /dev/sda5` to monitor `/dev/sda5` with refresh every 30 s
     sudo apt-get install libssl-dev
     sudo apt-get install libcurl4-openssl-dev
 
+## Change Mouse Cursor Size
 
+```
+sudo apt-get install unity-tweak-tool
+```
+Then go to the tool, under Appearance > Cursors, change size.
 
 ## Unity 8
 

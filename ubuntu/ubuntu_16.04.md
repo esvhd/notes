@@ -329,6 +329,9 @@ Download page [here](https://developer.nvidia.com/rdp/cudnn-download), download 
 
 Installation guide [here](http://docs.nvidia.com/deeplearning/sdk/cudnn-install/index.html)
 
+Multiple versions of `cuda` can be installed at the some time. A symbolic link
+is created (`/usr/local/cuda`) to link to a `cuda` version chosen.
+
 ### PCIe Bus ERROR
 
 This was written for Nvidia drvier version 381.22.
@@ -398,7 +401,7 @@ To setup a password for jupyter server, see [here](https://jupyter-notebook.read
 
 #### Matplotlib `figure.figsize`
 
-Jupyter notebook uses iPython for python kernels. Therefore we need to change: 
+Jupyter notebook uses iPython for python kernels. Therefore we need to change:
 ```
 ~/.ipython/profile_default/ipython_kernel_config.py
 ```

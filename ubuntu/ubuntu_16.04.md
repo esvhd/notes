@@ -219,12 +219,14 @@ Then use `iostat -d 30 /dev/sda5` to monitor `/dev/sda5` with refresh every 30 s
     sudo apt-get install libssl-dev
     sudo apt-get install libcurl4-openssl-dev
 
-## Change Mouse Cursor Size
+## Change Mouse Cursor Size, Font Size
 
 ```
 sudo apt-get install unity-tweak-tool
 ```
 Then go to the tool, under Appearance > Cursors, change size.
+
+Go to Appearance -> Fonts, change size.
 
 ## Unity 8
 
@@ -528,10 +530,23 @@ Follow instructions on this [page](https://superuser.com/questions/1116767/chrom
 
     sudo gedit /usr/share/applications/google-chrome.desktop
 
-Change the following line:
+Find the line:
 
-    Exec=/usr/bin/google-chrome-stable --force-device-scale-factor=1.5 %U
+    Exec=/usr/bin/google-chrome-stable %U
 
+Change it to:
+
+    Exec=/usr/bin/google-chrome-stable --force-device-scale-factor=1.1 %U
+
+
+## Icon Size
+
+Based on post [here](https://askubuntu.com/questions/840613/how-to-change-desktop-icon-size-in-ubuntu-16-10)
+
+From the launcher, type "Nautilus", which will give you the file explorer
+under the confusing title "File". Then, go to Edit -> Preferences. (Do not go
+to File -> Properties!) "Icon View Defaults" and "List View Defaults" are
+there; use them.
 
 
 ## GCC v7
@@ -544,6 +559,32 @@ sudo apt-get update
 sudo apt-get install gcc-7
 ```
 
+For **gcc-7.3** use [jonathanf/gcc](https://launchpad.net/~jonathonf/+archive/ubuntu/gcc)
+
+```
+sudo add-apt-repository ppa:jonathonf/gcc
+sudo apt-get update
+sudo apt-get install gcc-7
+```
+
+
+## Manage PPA
+
+Go to Software & Updates -> Other Software, to disable a particular PPA
+
+Simple way:
+
+```
+sudo add-apt-repository --remove ppa:whatever/ppa
+```
+
+Or, see this [post](https://askubuntu.com/questions/307/how-can-ppas-be-removed)
+
+```
+sudo apt-get install ppa-purge
+# this would downgrade the software installed from tis PPA
+sudo ppa-purge ppa:whatever/ppa
+```
 
 
 ## Kernel Update

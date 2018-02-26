@@ -522,7 +522,29 @@ Packages installed:
     Python PEP8 Autoformat
     SublimeLinter
 
+### Sidebar / Tab Font size
 
+Install package: `PackageResourceViewer`
+
+Run `PackageResourceViewer`, edit `Adaptive.sublime-theme`.
+
+Code needed:
+
+```
+    {
+        "class": "sidebar_label",
+        "fg": ["background", 255, 255, 255, 0.8],
+        "font.size": 18
+    },
+    {
+        "class": "tab_label",
+        "fg": [152, 152, 152],
+        "font.size": 16,
+        "shadow_color": [0, 0, 0, 0.25],
+        "shadow_offset": [0, -1]
+    },
+
+```
 
 # Chrome Menu Bar Size
 
@@ -565,6 +587,15 @@ For **gcc-7.3** use [jonathanf/gcc](https://launchpad.net/~jonathonf/+archive/ub
 sudo add-apt-repository ppa:jonathonf/gcc
 sudo apt-get update
 sudo apt-get install gcc-7
+```
+
+### Change GCC version
+
+`update-alternatives`: lower priority number has higher priority.
+
+```
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 50
+sudo update-alternatives --config gcc
 ```
 
 

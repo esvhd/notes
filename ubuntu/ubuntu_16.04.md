@@ -397,9 +397,11 @@ Edit `.condarc` to reorder channel priorities.
 
 ### Jupyter Notebook
 
+
 #### Password
 
 To setup a password for jupyter server, see [here](https://jupyter-notebook.readthedocs.io/en/stable/public_server.html)
+
 
 #### Matplotlib `figure.figsize`
 
@@ -413,6 +415,17 @@ This is created through `ipython profile create`. Insert the following at the en
 ```
 c.InlineBackend.rc = {'figure.figsize': (12, 4)}
 ```
+
+
+#### Cell Width
+
+Cell width can be changed by editing `./jupyter/custom/custom.css` file.
+File content should be:
+
+```
+.container { width:90% !important; }
+```
+
 
 #### Crontab
 

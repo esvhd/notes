@@ -374,7 +374,7 @@ Edit `.condarc` to reorder channel priorities.
 
 ### Python packages
 
-    conda install pytorch torchvision cuda90 -c soumith
+    conda install pytorch torchvision cuda91 -c pytorch
     conda install -c conda-forge hdbscan tabulate
     conda install -c joblib holoviews
     conda install -c conda-forge xarray cartopy pynio # for difficult to build cartopy and pynio.
@@ -395,8 +395,17 @@ Edit `.condarc` to reorder channel priorities.
     cd filterpy
     python setup.py install
 
-### Jupyter Notebook
+2018-03-04: `tensorflow 1.6` currently uses cuda 9.0, whereas `pytorch 0.3.1`
+uses cuda 9.1.
 
+`keras`: install from github source, will also need to install `pyyaml`:
+
+```
+conda install pyyaml
+```
+
+
+### Jupyter Notebook
 
 #### Password
 
@@ -630,6 +639,18 @@ sudo apt-get install ppa-purge
 sudo ppa-purge ppa:whatever/ppa
 ```
 
+
+## APT Dependencies
+
+This [post](https://askubuntu.com/questions/140246/how-do-i-resolve-unmet-dependencies-after-adding-a-ppa) is great for trying to
+debug `apt` dependency issues.
+
+Very often dependency issues can be resolved by running the below. This
+worked for installing `openjdk-8-jdk` for compiling `tensorflow` from source.
+
+```
+sudo apt-get install -f
+```
 
 ## Kernel Update
 

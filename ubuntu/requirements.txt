@@ -1,0 +1,9 @@
+xarray
+joblib
+tqdm
+watermark
+hdbscan
+tabulate
+jupyter_contrib_nbextensions
+pyyaml
+google-api-python-client

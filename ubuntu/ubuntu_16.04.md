@@ -376,17 +376,19 @@ Edit `.condarc` to reorder channel priorities.
 
     conda install pytorch torchvision cuda91 -c pytorch
     conda install -c conda-forge hdbscan tabulate
-    conda install -c joblib holoviews
-    conda install -c conda-forge xarray cartopy pynio # for difficult to build cartopy and pynio.
+    conda install joblib holoviews
+    # for difficult to build cartopy and pynio.
+    conda install -c conda-forge xarray cartopy pynio
     conda install -c districtdatalabs yellowbrick
     conda install -c bokeh datashader
 
-    pip install hypertools seaborn tqdm watermark
+    pip install hypertools
+    conda install seaborn tqdm watermark
     pip install git+https://github.com/bashtage/arch.git
     pip install --upgrade google-api-python-client
 
     # 2to3 converter in jupyter
-    pip install jupyter_contrib_nbextensions
+    conda install jupyter_contrib_nbextensions
     # enable config page
     jupyter nbextensions_configurator enable --user
 

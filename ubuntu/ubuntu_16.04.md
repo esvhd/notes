@@ -387,8 +387,8 @@ Edit `.condarc` to reorder channel priorities.
     pip install git+https://github.com/bashtage/arch.git
     pip install --upgrade google-api-python-client
 
-    # 2to3 converter in jupyter
-    conda install jupyter_contrib_nbextensions
+    # 2to3 converter & AutoPEP 8 in jupyter
+    conda install jupyter_contrib_nbextensions autopep8
     # enable config page
     jupyter nbextensions_configurator enable --user
 
@@ -478,6 +478,9 @@ Install package with the following, found [here](https://support.rstudio.com/hc/
     sudo dpkg -i downloaded_file.deb
     sudo apt-get -f install
 
+To remove:
+
+    sudo dpkg --purge rstudio
 
 ### Rethinking / R
 
@@ -485,11 +488,21 @@ Create `.Rprofile` file and write the line below for MRO.
 
     options(repos = c(CRAN = "https://cran.revolutionanalytics.com"))
 
-`rstan` Installation [here](https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Mac-or-Linux)
-
-First run this, some packages needs openssl headers.
+Need to install a few libraries.
 
     sudo apt-get install libssl-dev
+    sudo apt-get install r-base
+
+    # needed for some packages
+    sudo apt-get install libgfortran4
+
+    # after upgrading to gcc 7.3
+    sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+    sudo apt-get install gfortran-7
+
+`rstan` Installation [here](https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Mac-or-Linux), make sure `.R/Makevars` file is set
+correctly.
+
 
 Then run in `R`:
 
@@ -704,3 +717,7 @@ sudo dpkg --purge kernel-image-name
 
 Remove any failed dependencies with `sudo dpkg --purge package_name`.
 
+## Chinese Input
+
+    sudo apt-get install sogoupinyin
+    sudo reboot

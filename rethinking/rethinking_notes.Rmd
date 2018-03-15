@@ -191,22 +191,45 @@ parameter estimates.
 
 # Chapter 6
 
+## Measuring Accuracy
+
+Maximizing the joint probability of data is the correct way to identify the 
+right model. E.g. Multiplying the probabilities of each correct prediction (i.e.
+computed by using the prob density function of the model of data).
+
+Taking the average is **not** the right way to do it.
+
 ## Information Theory
 
-### Entropy 
+The measurement of information should satisfy:
 
-$$ H(p) = -\mathbb{E}(log(p_i)) = -\sum_{i=1}^{n}p_i log(p_i) $$
+* should be continuous
+* should increase as the number of possible evens increases
+* should be additive
+
+### Entropy
+
+The probabilities $p_i$ of data is computed as as follows: first, have a 
+probabilistic model of the underlying event, this is a probability distribution,
+using its probability density function, compute the probability $p_i$ of data
+using this probabilistic model. 
+
+$$ H(p) = -\mathbb{E}(\log(p_i)) = -\sum_{i=1}^{n}p_i \log(p_i) $$
 
 ### Cross Entropy
 
-$$ H(p, q) = -\sum_{i=1}^{n}p_{i}log(q_i) $$
+Minimizing cross-entropy is essentially minimizing the distance between the 
+model and the underlying true distribution (which is unknown).
+
+$$ H(p, q) = -\sum_{i=1}^{n}p_{i}\log(q_i) $$
 
 ### Kullback-Leibler Divergence
 
 **Divergence** captures the additional uncertainty induced by using probabilties
 from one distribution to describe another distribution.
 
-$$ D_{KL} = \sum_i p_i(log(p_i) - log(q_i)) = \sum_i p_ilog\Big(\frac{p_i}{q_i}\Big) $$
+$$ D_{KL} = \sum_i p_i(\log(p_i) - \log(q_i)) = \sum_i p_i \log\Big(\frac{p_i}{q_i}\Big) $$
+
 ### Deviance
 
 From KL Divergence, in practice we do not know the true model, $p_i$. What we 
@@ -214,10 +237,14 @@ care about instead is between two models, $q$ and $r$, which one is closer
 to $p$. By subtracting two KL divergence terms together, most of the terms
 involving $p$ are cancelled out. Hence we define deviance:
 
-$$ D(q) = -2\sum_{i}log(q_i) \approx D_{KL}-D_{KL} $$ 
+$$ D(q) = -2\sum_{i}\log(q_i) \approx D_{KL}-D_{KL} $$ 
+
 `stats::logLik` computes the log-probabilities, know as **log-likelihood of
 the data**. Hence: `deviance = -2 * logLik(model)`.
 
+Deviance has the same flaw as $R^2$, it always improves as the model gets more
+complex. Deviance in-sample is **not** a measure of out of sample predictive 
+accuracy.
 
 When fitting multiple models for comparison, it is important that all models
 are fitted with the same set of data. Otherwise, models fitted with less data
@@ -291,6 +318,8 @@ satisfied, in this case it is **not** clear what the calculated WAIC means.
     + triangles show the differences between the model below it and the top 
     model
     + line across triangles are the standard deviation of the differences.
+    + the weights are **Akaike weights** for each model. Analogous to 
+    posterior probabilities of models, conditional on expected future data.
 
 Steps to calculate WAIC, p192 Overthinking box:
 
@@ -312,6 +341,11 @@ $$p_{WAIC}=\sum_{i=1}^{N}Var(y_i)$$
 6. finally we have WAIC:
 
 $$WAIC = -2 (lppd - p_{WAIC})$$
+
+
+### BIC
+
+Also known as Schwarz criterion.
 
 **Bayes Factor** is a ratio of average likelihoods (the denominator in Bayes
 theorem). There are technical issues related to using bayes factor as a measure
@@ -435,6 +469,10 @@ Although I have not yet figured out how to model the global flipping example
 with `map2stan`. 
 
 # Chapter 9
+
+## Exponenial Family
+
+![exponential](images/distro.png)
 
 ## Logit / Logistic
 

@@ -496,7 +496,9 @@ Need to install a few libraries.
     # needed for some packages
     sudo apt-get install libgfortran4
 
-    # after upgrading to gcc 7.3
+    # after upgrading to gcc 7.3 from jonathonf/gcc ppa, gfortran-7 is now
+    # also available, so there is no need to perform the below from ubuntu's
+    # ppa. Just get both gcc and gfortran-7 from jonathonf/gcc PPA.
     sudo add-apt-repository ppa:ubuntu-toolchain-r/test
     sudo apt-get install gfortran-7
 
@@ -624,13 +626,15 @@ For **gcc-7.3** use [jonathanf/gcc](https://launchpad.net/~jonathonf/+archive/ub
 sudo add-apt-repository ppa:jonathonf/gcc
 sudo apt-get update
 sudo apt-get install gcc-7
+sudo apt-get install gfortran-7
 ```
 
-### Change GCC version
+### Change GCC/gfortran default version
 
 `update-alternatives`: lower priority number has higher priority.
 
 ```
+sudo update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-7 50
 sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 50
 sudo update-alternatives --config gcc
 ```

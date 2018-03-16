@@ -721,3 +721,17 @@ Remove any failed dependencies with `sudo dpkg --purge package_name`.
 
     sudo apt-get install sogoupinyin
     sudo reboot
+
+
+# Citrix Receiver
+
+1. Download deb package from Citrix website
+2. use `gdebi filename.deb` to install the Citrix app, [here](https://askubuntu.com/questions/40723/how-do-i-install-citrix-receiver)
+3. Add CA certificates, [here](https://help.ubuntu.com/community/CitrixICAClientHowTo):
+
+```
+sudo ln -s /usr/share/ca-certificates/mozilla/* /opt/Citrix/ICAClient/keystore/cacerts/
+sudo /usr/bin/c_rehash /opt/Citrix/ICAClient/keystore/cacerts/
+```
+
+For configuration, run `/opt/Citrix/ICAClient/util/configmgr`.

@@ -469,7 +469,7 @@ Essentiall, first activate the new environment, run the following:
 python -m ipykernel install --user --name myenv --display-name "Python (myenv)"
 ```
 
-## RStudio
+## RStudio / MRO
 
 [Download page](https://www.rstudio.com/products/rstudio/download/)
 
@@ -510,11 +510,18 @@ Then run in `R`:
 
     install.packages("rstan", repos = "https://cloud.r-project.org/", dependencies=TRUE)
 
+If SSL authentication issues pop up, need to installed some other packages
+with `apt-get` first. See section above on useful packages. See this
+[issue](https://github.com/hadley/devtools/issues/1079), then run:
+
+    install.packages(c("curl", "httr"))
+
 Installing `Rethinking`:
 
     install.packages(c("coda","mvtnorm","devtools","loo"))
     library(devtools)
     devtools::install_github("rmcelreath/rethinking")
+
 
 Might need to do a local install:
 
@@ -522,9 +529,12 @@ Might need to do a local install:
     library(devtools)
     devtools::install('/home/zwl/git/rethinking/')
 
-If SSL authentication issues pop up, need to installed some other packages with `apt-get` first. See section above on useful packages. See this [issue](https://github.com/hadley/devtools/issues/1079), then run:
+Other popular packages to install:
 
-    install.packages(c("curl", "httr"))
+    install.packages(c('xts', 'car', 'caret', 'dplyr', 'stringr', 'tidyr'))
+    install.packages(c('lubridate', 'ggplot2', 'googleVis', 'glmnet', 'MASS'))
+    install.packages(c('gvlma', 'ISLR', 'leaps', 'bootstrap'))
+
 
 To install `R` package `edgarWebR`, need to install `libxml2-dev`:
 

@@ -14,3 +14,14 @@ i.e. no holes in it. Views in `pytorch` can only be created on contiguous
 tensors. To do so, call the `tensor.contiguous()` method.
 
 See post [here](https://discuss.pytorch.org/t/runtimeerror-input-is-not-contiguous/930)
+
+
+## Slicing Tensors with Boolean Mask
+
+The closest is `torch.masked_select()`, see [here](http://pytorch.org/docs/master/torch.html?highlight=masked_select#torch.masked_select).
+
+```
+x = torch.randn(10)
+masks = ...
+torch.masked_select(x, masks)
+```

@@ -90,6 +90,25 @@ Place in file:
 
 Edit: `sudo nano /etc/NetworkManager/conf.d/default-wifi-powersave-on.conf`, set `wifi.powersave = 2`.
 
+
+## DNS Server Update
+
+Based on tips [here](https://unix.stackexchange.com/questions/128220/how-do-i-set-my-dns-when-resolv-conf-is-being-overwritten),
+see the comment for Ubuntu 16.04 in the reply section for the answer from
+`slm`.
+
+```
+sudo vi /etc/resolveconf/resolv.conf.d/head
+# add the below 2 lines into the file:
+# nameserver 1.1.1.1
+# nameserver 1.0.0.1
+sudo resolvconf -u
+
+# confirm effect using command below, DNS server should be the new one.
+nslookup google.com
+```
+
+
 ## Update Ubuntu Packages
 
 Also, I needed to **upgrade to the latest distribution linux kernel for the drivers to work**. For this, I followed the instructions [here](https://askubuntu.com/questions/196768/how-to-install-updates-via-command-line) to update the packages for the distrubtions. The commends needed:

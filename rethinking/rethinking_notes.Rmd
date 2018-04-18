@@ -1058,15 +1058,66 @@ Fall back to DIC.
 
 # Chapter 12
 
-Multilevel models deserves to be the default for regression problems. They can
-reveal issues not captured by simple models. It's better to try multilevel first
-and then realise it is not necessary than to ignore potential issues.
+Multilevel models deserves to be the **default** for regression problems. 
+They can reveal issues not captured by simple models. It's better to try 
+multilevel first and then realise it is not necessary than to ignore potential 
+issues.
 
-However, they instroduce additinal assumptions in the modelling process. 
-Using maximum entropy priors mitigates this issue somewhat.
+**Cost** of the multilevel approach:
+
+1. They instroduce additinal assumptions in the modelling process. 
+Have to define the distributions from which the characteristics of the clusters
+arise. Using maximum entropy priors mitigates this issue somewhat.
+
+2. New estimation challenges. Leads us to MCMC estimation.
+
+3. Can be hard to understand, for model comparison, metrics such as `DIC` and
+`WAIC` becomes more subtle. Logic is unchanged, but need to decide which 
+parameters to focus on.
 
 Multilevel models are also known as **hierarchical** and **mixed effects** 
 models. p357.
+
+## Varying Intercept Example
+
+An example model below. Note that $\alpha_{tank}$ itself is modelled as a 
+parameter.
+
+Here, $\alpha$ and $\sigma$ are **hyperparameters**, 
+and their priors are **hyperpriors**. 
+
+The model below has **less** effective
+parameters than an ordinary model, because the two extra parameters in the 
+multilevel model allowed it to learn a **more aggressive** regularizing
+prior, to adaptively regularize, resulting in **less** flexible posterior
+and therefore **fewer** effective parameters.
+
+$$
+\begin{aligned}
+s_i &\sim \mathrm{Binomial}(n_i, p_i)\\
+logit(p_i) &= \alpha_{tank}[i] \\
+\alpha_{tank} &\sim \mathrm{Normal}(\alpha, \sigma) \\
+\alpha &\sim \mathrm{Normal}(0, 1) \\
+\sigma &\sim \mathrm{HalfCauchy}(0, 1)
+\end{aligned}
+$$
+
+Cauchy priors work well in routine multilevel model, except in two cases:
+
+1. There isn't much info in the data with which we use to estimate the 
+variance. E.g. only 5 clusters, then this is like estimating variance
+with 5 data points.
+
+2. In non-linear models with logit and log links, **floor** and **ceiling**
+effects sometimes render extreme values of the variance equally plausible as
+more realistic values.
+
+Cauchy has very **thick** and **long** tails, comparing to Exponential 
+distribution which has much **thinner** tails.
+
+In such cases, we can replace Cauchy with Exponential priors. Typically, it is
+useful to try different priors to ensure that the inference either is 
+**insensitive** to them or rather to measure how inference is **altered**.
 
 ## Pooling / Varying Effects
 
@@ -1083,7 +1134,8 @@ further away from the group mean. p362.
 
 **No Pooling** - use individual clusters as standalone - **overfitting**.
 
-**Partial Pooling** - reduce effects of both above.
+**Partial Pooling** - reduce effects of both above. This is what happens when
+estimating varying intercepts.
 
 **Benefits:**
 

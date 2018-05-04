@@ -24,7 +24,7 @@ SOTA results using LSTM architectures.
 Notes [here](./papers.ipynb#awd_lstm)
 
 * [Regularizing and Optimizing LSTMLanguage Models](https://openreview.net/forum?id=SyyGPP0TZ), ICLR Jan 2018
-    * Model named as ASGD Weight-Dropped LSTM (AWD-LSTM)
+    * Model named as AvSGD Weight-Dropped LSTM (AWD-LSTM)
     * DropConnect [paper](https://cs.nyu.edu/~wanli/dropc/dropc.pdf)
     * Need to make some notes on this paper and refer to that here.
 * [An Analysis of Neural Language Modeling at Multiple Scales](https://arxiv.org/abs/1803.08240), March 2018
@@ -32,5 +32,15 @@ Notes [here](./papers.ipynb#awd_lstm)
 
 Code for both models are on [github](https://github.com/salesforce/awd-lstm-lm)
 
+Variational dropout for PyTorch doesn't seem to be readily available. Need to
+look into the source code for this more.
+
+However, Tensorflow / Keras has it already. See `recurrent_dropout` parameter
+for Keras LSTM layer.
+
 One other paper that was cited is from [Melis, et al.](https://openreview.net/forum?id=ByJHuTgA-). On the todo list...
 
+## ICRL 2018
+
+https://openreview.net/forum?id=HkwZSG-CZ
+https://openreview.net/forum?id=SkFqf0lAZ

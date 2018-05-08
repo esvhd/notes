@@ -38,6 +38,10 @@ look into the source code for this more.
 However, Tensorflow / Keras has it already. See `recurrent_dropout` parameter
 for Keras LSTM layer.
 
+Read: https://arxiv.org/abs/1512.05287
+https://discuss.pytorch.org/t/dropout-for-rnns/633　- some discusion on implementing this in pytorch.
+
+
 One other paper that was cited is from [Melis, et al.](https://openreview.net/forum?id=ByJHuTgA-). On the todo list...
 
 ## ICRL 2018

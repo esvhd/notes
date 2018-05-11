@@ -13,7 +13,7 @@ d <- UCBadmit
 d$dept_id <- coerce_index(d$dept)
 d$male <- ifelse(d$applicant.gender=='male', 1, 0)
 
-df <- data.frame(admit=d$admit, 
+df <- data.frame(admit=d$admit,
                  dept_id=d$dept_id,
                  male=d$male,
                  applications=d$applications)
@@ -22,6 +22,8 @@ df <- data.frame(admit=d$admit,
 
 m1 <- map(
   alist(
+    # binominal distributions, aplications is # of trials,
+    # p is the number of positive examples.
     admit ~ dbinom(applications, p),
     logit(p) <- a + bm * male,
     a ~ dnorm(0, 10),
@@ -88,6 +90,8 @@ m5 <- map2stan(
     ax ~ dnorm(0, 10),
     bmx ~ dnorm(0, 10),
     sigma_dept ~ dcauchy(0, 1),
+    # LKJcorr defines a weakly informative prior on rho
+    # think of it as a regularizing prior for correlations.
     Rho ~ dlkjcorr(2)
   ),
   data=df, chains=4, cores=4, iter=5000, warmup=2000

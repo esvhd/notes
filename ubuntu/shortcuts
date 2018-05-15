@@ -9,15 +9,32 @@ Ctrl + 1 : move focus to group 1
 Split views:
 Alt + Shift + 2 : split view into 2 columns
 
+top:
+<, > to change sort order
+shift + w to save settings to ~/.toprc
+
 
 show desktop: control + windows + D
 show all open windows: windows + W
 
 stop X: sudo service lightdm stop
 
+Debian packages:
+install: sudo dpkg -i DEB_PACKAGE
+remove: sudo dpkg -r package_name
+search: apt-cache search name
+
 GRUB update:
 sudo nano /etc/default/grub
 sudo update-grub
+
+Search for packages:
+
+apt-cache search keyword
+
+List installed:
+sudo apt list --installed
+
 
 Update all packages:
 

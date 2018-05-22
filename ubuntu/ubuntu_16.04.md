@@ -199,6 +199,14 @@ Update to scripts:
     TIMECAPSULE_VOLUME="/Data"
     TIMECAPSULE_PASSWORD=password here
 
+## Mount Options - Read Only
+
+Use `Disks` application to change Auto mount options.
+
+1. Find the partition to change
+2. Disable auto mount
+3. Change option to add `ro` for read-only.
+
 ## Ubuntu Package Installation
 
 Refer to [here](https://askubuntu.com/questions/40779/how-do-i-install-a-deb-file-via-the-command-line) for installing packages.
@@ -759,7 +767,8 @@ Remove any failed dependencies with `sudo dpkg --purge package_name`.
 # Citrix Receiver
 
 1. Download deb package from Citrix website
-2. use `gdebi filename.deb` to install the Citrix app, [here](https://askubuntu.com/questions/40723/how-do-i-install-citrix-receiver)
+2. use `gdebi filename.deb` to install the Citrix app, [here](https://askubuntu.com/questions/40723/how-do-i-install-citrix-receiver) the
+package will also show up in `sudo apt list --install | grep icaclient`.
 3. Add CA certificates, [here](https://help.ubuntu.com/community/CitrixICAClientHowTo):
 
 ```
@@ -767,4 +776,12 @@ sudo ln -s /usr/share/ca-certificates/mozilla/* /opt/Citrix/ICAClient/keystore/c
 sudo /usr/bin/c_rehash /opt/Citrix/ICAClient/keystore/cacerts/
 ```
 
+For Ubuntu 16.04, Citrix would be installed in `/opt/Citrix`.
+
 For configuration, run `/opt/Citrix/ICAClient/util/configmgr`.
+
+To uninstall:
+
+```
+sudo apt-get remove icaclient
+```

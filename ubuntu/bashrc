@@ -95,10 +95,10 @@ alias la='ls -A'
 alias l='ls -CF'
 
 alias lx='ls -lXB'    # sort by extension
-alias lk='ls -lSr'     # sort by size, largest last
-alias lt='ls -ltr'     # sort by date, most recent last
-alias lc='ls -ltcr'    # sort by/show change time, most recent last
-alias lu='ls -ltur'    # sort by/show access time, most recent last
+alias lk='ls -lSrh'     # sort by size, largest last
+alias lt='ls -ltrh'     # sort by date, most recent last
+alias lc='ls -ltcrh'    # sort by/show change time, most recent last
+alias lu='ls -lturh'    # sort by/show access time, most recent last
 alias lm='ll | less'
 alias la='ll -A'       # ll, show hidden files
 
@@ -142,23 +142,37 @@ if ! shopt -oq posix; then
   fi
 fi
 
-
+PATH="/apps/pycharm/bin:$PATH"
 PATH="/home/zwl/apps/sublime_text_3:$PATH"
 PATH="/usr/local/jdk/current/bin:/usr/local/cuda/bin:/home/zwl/bin:$PATH"
 PATH=/usr/local/rstudio/current/bin:$PATH
+
+#JAVA_HOME=/usr/local/jdk
+#export JAVA_HOME
+#PATH=$JAVA_HOME/bin:$PATH
 
 # added by Anaconda3 4.4.0 installer
 PATH="/usr/anaconda3/bin:$PATH"
 PATH=/usr/local/cuda/lib64:$PATH
 
+export MRO_HOME=/opt/microsoft/ropen/current/
+export RSTUDIO_WHICH_R=/opt/microsoft/ropen/current/lib64/R/bin/R
+
+PATH=$MRO_HOME/lib64/R/bin:$PATH
+
 export PATH
 
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/extras/CUPTI/lib64
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/zwl/lib/blpapi_cpp/Linux
 
 export LD_LIBRARY_PATH
 
 PYTHONPATH=~/git/pyblp:~/git/pythonlib/:~/git/pyhistdata:~/git/pypbo:~/git/drivetools
+PYTHONPATH=$PYTHONPATH:~/git/TCN
+PYTHONPATH=$PYTHONPATH:~/git/pytorch_play
+PYTHONPATH=$PYTHONPATH:~/git/mlstack
+PYTHONPATH=$PYTHONPATH:~/git/awd-lstm-lm
 export PYTHONPATH
 
 export BLPAPI_ROOT=/home/zwl/lib/blpapi_cpp
@@ -170,4 +184,3 @@ export CUDA_VISIBLE_DEVICES=1,0
 
 export HISTDATA_FTP=50.30.37.179
 export HISTDATA_FTP2=209.126.123.58
-

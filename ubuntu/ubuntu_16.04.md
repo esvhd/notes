@@ -246,6 +246,35 @@ Then use `iostat -d 30 /dev/sda5` to monitor `/dev/sda5` with refresh every 30 s
     sudo apt-get install libssl-dev
     sudo apt-get install libcurl4-openssl-dev
 
+# Font, Icon Sizes
+
+In Screen Display, there is a scaler to adjust toolbar, font sizes. Set this
+to 1.12.
+
+##Chrome Menu Bar Size
+
+Follow instructions on this [page](https://superuser.com/questions/1116767/chrome-ui-size-zoom-levels-in-ubuntu-16-04)
+
+    sudo gedit /usr/share/applications/google-chrome.desktop
+
+Find the line:
+
+    Exec=/usr/bin/google-chrome-stable %U
+
+Change it to:
+
+    Exec=/usr/bin/google-chrome-stable --force-device-scale-factor=1.1 %U
+
+
+## Icon Size
+
+Based on post [here](https://askubuntu.com/questions/840613/how-to-change-desktop-icon-size-in-ubuntu-16-10)
+
+From the launcher, type "Nautilus", which will give you the file explorer
+under the confusing title "File". Then, go to Edit -> Preferences. (Do not go
+to File -> Properties!) "Icon View Defaults" and "List View Defaults" are
+there; use them.
+
 ## Change Mouse Cursor Size, Font Size
 
 ```
@@ -621,30 +650,6 @@ Code needed:
     },
 
 ```
-
-# Chrome Menu Bar Size
-
-Follow instructions on this [page](https://superuser.com/questions/1116767/chrome-ui-size-zoom-levels-in-ubuntu-16-04)
-
-    sudo gedit /usr/share/applications/google-chrome.desktop
-
-Find the line:
-
-    Exec=/usr/bin/google-chrome-stable %U
-
-Change it to:
-
-    Exec=/usr/bin/google-chrome-stable --force-device-scale-factor=1.1 %U
-
-
-## Icon Size
-
-Based on post [here](https://askubuntu.com/questions/840613/how-to-change-desktop-icon-size-in-ubuntu-16-10)
-
-From the launcher, type "Nautilus", which will give you the file explorer
-under the confusing title "File". Then, go to Edit -> Preferences. (Do not go
-to File -> Properties!) "Icon View Defaults" and "List View Defaults" are
-there; use them.
 
 
 ## GCC v7

@@ -790,3 +790,16 @@ To uninstall:
 ```
 sudo apt-get remove icaclient
 ```
+
+# Ubuntu 18.04
+
+Some notes on Nvidia/Cuda related installations [here](https://askubuntu.com/questions/1033489/the-easy-way-install-nvidia-drivers-cuda-cudnn-and-tensorflow-gpu-on-ubuntu-1)
+
+```
+ubuntu-drivers devices
+sudo ubuntu-drivers autoinstall
+nvidia-smi
+
+# below installs cuda 9.1, or manually install instead.
+sudo apt install nvidia-cuda-toolkit
+```

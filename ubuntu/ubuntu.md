@@ -793,6 +793,10 @@ sudo apt-get remove icaclient
 
 # Ubuntu 18.04
 
+[Ubuntu UEFI Guide](https://help.ubuntu.com/community/UEFI), shows that there
+are different screens when booting with installation usb in UEFI or legacy
+BIOS modes.
+
 Some notes on Nvidia/Cuda related installations [here](https://askubuntu.com/questions/1033489/the-easy-way-install-nvidia-drivers-cuda-cudnn-and-tensorflow-gpu-on-ubuntu-1)
 
 ```
@@ -803,3 +807,32 @@ nvidia-smi
 # below installs cuda 9.1, or manually install instead.
 sudo apt install nvidia-cuda-toolkit
 ```
+
+To fix the grub issue, boot into ubuntu installabtion in non-UEFI mode,
+because my Windows 10 is installed with MBR not GPT partitions.
+
+# Fix Windows Boot
+
+Based on this [post](https://www.quora.com/How-do-I-boot-into-Windows-10-from-Grub-Rescue-Mode), worked on my machine.
+
+Boot with Windows 10 CD, goto Repair your computer -> Troubleshooting ->
+Command prompt, run:
+
+```
+Bootrec /fixmbr
+```
+
+## Convert from MBR to GPT
+
+Use this tool [mbr2gpt](https://docs.microsoft.com/en-us/windows/deployment/mbr-to-gpt).
+
+Intel also has a [page](https://www.intel.com/content/www/us/en/support/articles/000024558/memory-and-storage/intel-optane-memory.html) on this.
+
+While running Windows 10, need to use `/allowFullOS` flag.
+```
+mbr2gpt /validate /allowFullOS
+mbr2gpt /convert /allowFullOS
+```
+
+After conversion, go to motherboard bios and change to UEFI boot. Also install
+Ubuntu with UEFI boot. This should fix the issue.

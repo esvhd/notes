@@ -1,0 +1,12 @@
+joblib
+hdbscan
+tabulate
+bokeh
+seaborn
+tqdm
+watermark
+jupyter_contrib_nbextensions
+autopep8
+#pyyaml
+xarray
+datashader

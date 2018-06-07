@@ -431,20 +431,23 @@ Edit `.condarc` to reorder channel priorities.
 ### Python packages
 
     conda install pytorch torchvision cuda91 -c pytorch
-    conda install -c conda-forge hdbscan tabulate
-    conda install joblib holoviews
-    # for difficult to build cartopy and pynio.
-    conda install -c conda-forge xarray cartopy pynio
-    conda install -c districtdatalabs yellowbrick
-    conda install -c bokeh datashader
+    conda install hdbscan tabulate joblib holoviews
+    conda install seaborn tqdm watermark xarray datashader
 
-    pip install hypertools
-    conda install seaborn tqdm watermark
+    conda install -c districtdatalabs yellowbrick
+    # conda install -c bokeh datashader
+
+    # for difficult to build cartopy and pynio.
+    conda install -c conda-forge cartopy pynio
+
+    pip install hypertools janitor
+
     pip install git+https://github.com/bashtage/arch.git
     pip install --upgrade google-api-python-client
 
     # 2to3 converter & AutoPEP 8 in jupyter
     conda install jupyter_contrib_nbextensions autopep8
+
     # enable config page
     jupyter nbextensions_configurator enable --user
 
@@ -512,7 +515,7 @@ Step:
 [`jupyter-contrib-nbextensions`](http://jupyter-contrib-nbextensions.readthedocs.io/en/latest/install.html#enabling-disabling-extensions) has a `2to3 converter` to convert Python 2.x notebooks to 3.x.
 
 ```
-pip install jupyter_contrib_nbextensions
+conda install jupyter_contrib_nbextensions
 ```
 
 #### Showing Different Conda envs
@@ -811,6 +814,12 @@ sudo apt install nvidia-cuda-toolkit
 To fix the grub issue, boot into ubuntu installabtion in non-UEFI mode,
 because my Windows 10 is installed with MBR not GPT partitions.
 
+## Settings
+
+**Workspaces**
+
+Install `Gnome Tweaks`, go to Workspaces setting.
+
 # Fix Windows Boot
 
 Based on this [post](https://www.quora.com/How-do-I-boot-into-Windows-10-from-Grub-Rescue-Mode), worked on my machine.
@@ -836,3 +845,8 @@ mbr2gpt /convert /allowFullOS
 
 After conversion, go to motherboard bios and change to UEFI boot. Also install
 Ubuntu with UEFI boot. This should fix the issue.
+
+To install Ubuntu:
+
+Goto Windows Settings -> Update & Securities -> Recovery -> Advanced Options
+-> Reboot

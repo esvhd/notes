@@ -1,0 +1,4 @@
+#hypertools
+google-api-python-client
+janitor
+TA-Lib

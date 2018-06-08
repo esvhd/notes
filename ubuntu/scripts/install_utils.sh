@@ -18,3 +18,12 @@ sudo apt-get -y install r-base
 
 sudo apt-get -y install gfortran-7
 sudo apt-get -y install libgfortran-7-dev
+
+sudo apt-get -y install gdebi
+
+# apple time capsule
+sudo apt-get -y install cifs-utils
+sudo apt-get -y install smbclient
+
+# chinese input, need reboot
+sudo apt-get install sogoupinyin

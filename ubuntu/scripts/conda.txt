@@ -1,3 +1,4 @@
+# run with conda install -f file.txt
 joblib
 hdbscan
 tabulate
@@ -10,3 +11,4 @@ autopep8
 #pyyaml
 xarray
 datashader
+rfpimp

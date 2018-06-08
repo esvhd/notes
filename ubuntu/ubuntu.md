@@ -530,7 +530,29 @@ python -m ipykernel install --user --name myenv --display-name "Python (myenv)"
 
 ## RStudio / MRO
 
+### MRO
+
+Installs to `/opt/microsoft/ropen`, create symlink to current version.
+
+`3.5.0` had issue with `libpng12.so.0`, fixed following instructions [here](https://github.com/Microsoft/microsoft-r-open/issues/34)
+
+Run the following commands:
+
+```
+cd /usr/lib/x86_64-linux-gnu
+sudo ln -s libpng16.so.16.34.0 libpng12.so.0
+```
+
+### RStudio
+
 [Download page](https://www.rstudio.com/products/rstudio/download/)
+
+Download the tarball and unpack into `/usr/local/rstudio`, create symbolic link
+to the latest version.
+
+On `18.04` there are some lib problems. So the tarball method won't work.
+Install with `deb` package for `16.04` still works.
+
 
 Install package with the following, found [here](https://support.rstudio.com/hc/en-us/community/posts/209074748-Installing-RStudio-Desktop-on-Ubuntu-16-04-LTS).
 
@@ -541,7 +563,7 @@ To remove:
 
     sudo dpkg --purge rstudio
 
-### Rethinking / R
+### Rethinking / Rstan
 
 Create `.Rprofile` file and write the line below for MRO.
 
@@ -553,7 +575,7 @@ Need to install a few libraries.
     sudo apt-get install r-base
 
     # needed for some packages
-    sudo apt-get install libgfortran4
+    # sudo apt-get install libgfortran4
 
     # after upgrading to gcc 7.3 from jonathonf/gcc ppa, gfortran-7 is now
     # also available, so there is no need to perform the below from ubuntu's
@@ -588,12 +610,20 @@ Might need to do a local install:
     library(devtools)
     devtools::install('/home/zwl/git/rethinking/')
 
-Other popular packages to install:
+Other popular packages to install & summary of above:
 
-    install.packages(c('xts', 'car', 'caret', 'dplyr', 'stringr', 'tidyr'))
-    install.packages(c('lubridate', 'ggplot2', 'googleVis', 'glmnet', 'MASS'))
-    install.packages(c('gvlma', 'ISLR', 'leaps', 'bootstrap'))
-
+```
+install.packages(c("curl", "httr"))
+install.packages("rstan", repos = "https://cloud.r-project.org/", dependencies=TRUE)
+# rethinking
+install.packages(c("coda","mvtnorm","devtools","loo"))
+library(devtools)
+devtools::install_github("rmcelreath/rethinking")
+# others
+install.packages(c('ISLR', 'caret', 'MASS', 'car', 'glmnet', 'gvlma'))
+install.packages(c('lubridate', 'xts', 'googleVis', 'leaps', 'bootstrap'))
+install.packages(c('ggplot2', 'dplyr', 'stringr', 'tidyr'))
+```
 
 To install `R` package `edgarWebR`, need to install `libxml2-dev`:
 
@@ -813,6 +843,10 @@ sudo apt install nvidia-cuda-toolkit
 
 To fix the grub issue, boot into ubuntu installabtion in non-UEFI mode,
 because my Windows 10 is installed with MBR not GPT partitions.
+
+## Packages
+
+See `scripts` folder for more details.
 
 ## Settings
 

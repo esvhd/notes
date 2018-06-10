@@ -623,6 +623,7 @@ devtools::install_github("rmcelreath/rethinking")
 install.packages(c('ISLR', 'caret', 'MASS', 'car', 'glmnet', 'gvlma'))
 install.packages(c('lubridate', 'xts', 'googleVis', 'leaps', 'bootstrap'))
 install.packages(c('ggplot2', 'dplyr', 'stringr', 'tidyr'))
+install.packages(c('bsts', 'CausalImpact'))
 ```
 
 To install `R` package `edgarWebR`, need to install `libxml2-dev`:

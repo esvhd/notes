@@ -44,7 +44,53 @@ https://discuss.pytorch.org/t/dropout-for-rnns/633　- some discusion on impleme
 
 One other paper that was cited is from [Melis, et al.](https://openreview.net/forum?id=ByJHuTgA-). On the todo list...
 
+A few follow ups for this paper.
+
+* Breaking the softmax bottleneck (on split cross entropy loss?)
+* Neural cache pointer by Edouard Graves 2016 [link](https://arxiv.org/abs/1612.04426)
+* QRNN by James Bradbury
+* Melis new paper on dropout: Pushing the bounds of dropout
+* Analysis of Neural Language Modeling at Multiple Scales
+
+## Causal Impact
+
+Read Causal Impact paper [here](https://ai.google/research/pubs/pub41854)
+
+Concepts:
+
+* Bayesian structural time series models
+* Counterfactual estimation
+
+Questions I have is around how to evaluate prediction
+accuracy.
+
+* How does the length of historical data affect the counterfactual estimates?
+
+
+* YouTube talk by author mentioned that one way to check is to look at past
+historical relationship where there wasn't any causal change, and see how the
+model estimations do. But this seems a bit arbitary, is there a more
+systematic way?
+
+
+* Any further research on analysis of multiple causal events around the same
+time?
+
+
 ## ICRL 2018
 
 https://openreview.net/forum?id=HkwZSG-CZ
 https://openreview.net/forum?id=SkFqf0lAZ
+
+
+# Other papers notable
+
+* [Do Better ImageNet Models Transfer Better?](https://arxiv.org/abs/1805.08974) - what factors lead to better feature transfer?
+
+
+* PyTorch internals in a [post](https://discuss.pytorch.org/t/dynamically-expandable-networks-resizing-weights-during-training/19218)
+
+# Tools
+
+* Horovod by Uber - distributed training
+* MLflow by Databricks - ML workflow

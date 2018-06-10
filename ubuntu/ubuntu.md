@@ -506,8 +506,8 @@ Instead of calling `jupyter notebook` directly in the crontab scripts, call a sc
 `Crontab` startup logs can be found in `/var/log/syslog`
 
 Step:
-    1. sudo crontab -e
-    2. insert line: `@reboot \home\zwl\.cron_jupyter.sh`
+    1. sudo crontab -e -u $USER # setup cron for user
+    2. insert line: `@reboot $HOME/.cron_jupyter.sh`
     3. Save and exit
 
 #### Extension Widgets
@@ -608,7 +608,7 @@ Might need to do a local install:
 
     git clone https://github.com/rmcelreath/rethinking.git
     library(devtools)
-    devtools::install('/home/zwl/git/rethinking/')
+    devtools::install('$HOME/git/rethinking/')
 
 Other popular packages to install & summary of above:
 

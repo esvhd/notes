@@ -16,6 +16,12 @@ neural networks.
 had enormous success with audio data. Would like to read about this paper next.
 
 
+## Transformers
+
+Read MIT's blog on Transformers with PyTorch.
+
+And OpenAI's blog [here](https://blog.openai.com/language-unsupervised/).
+
 ## Language Modeling
 
 Two papers from Stephen Merity, et al. that look very interesting and showed

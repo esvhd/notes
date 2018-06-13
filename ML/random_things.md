@@ -130,3 +130,105 @@ $$ L(\hat{y}, y) = \sum^{N}_{i = \hat{y}_i < y_i} (1 - \gamma) \times \mid \hat{
 For $\gamma \in [0, 1]$.
 
 
+## Causal Impact
+
+[User guide](https://google.github.io/CausalImpact/CausalImpact.html#running-an-analysis)
+
+Somes notes on Google's `CausalImpact` R package by Kay Brodersen et al.
+
+The idea here is to use correlated time series unaffect by the event to
+provide a counterfactual estimate (called **synthetic control**) of the
+impacted time series.
+
+This estimation is done by using a Bayesian structural time series model,
+which is essentially a diffusion-regression state space model.
+
+Comparing to traditional methods such as ARIMA, BSTS offers the following:
+
+* not relying on differencing, lags or moving averages
+* can visually inspect the underlying components of the model, e.g. trend,
+seasonality, etc.
+* posterior uncertainty of individual components.
+* impose priors on the model coefficients
+* ARIMA models can be expressed as BSTS models
+* dynamic regression coefficients. In `CausalImpact` this is achieved by
+pass additional parameters:`CausalImpact(..., model.args=list(dynamic.regression=TRUE))`
+
+Traditional approaches such as `diff in diff` suffer from:
+
+* can only model static relationships only
+* requires observations to be i.i.d. - usually not practical for time series
+* difference between treatment and control is constant (no trend)
+
+To see which predictor variables were used in the model, run:
+
+```
+plot(impact$model$bsts.model, "coefficients")
+```
+
+Broadly speaking there are three sources of info available for constructing an adequate synthetic control:
+
+1. time series behaviour of the reponse itself, prior to the intervention
+(autocorrelation).
+
+2. behaviour of other time series that were predictive of the target series prior to the intervention. (challenge is to pick the relevant subset to use as
+a contemporaneous controls). Feature selection problem.
+
+3. Bayesian framework, prior knowledge about the model parameters.
+
+Approach here is to allow us to choose from a large set of potential controls
+by placing a **spike-and-slab prior** on the set of regression
+coefficients and by allowing the model to average over the set of controls.
+
+Some **assumptions** made in this methodology:
+
+* Assumes that covariates are unaffected by the effects of treatment. When
+there are spill-over effects, the effect of the treatment would be
+**underestimated**.
+
+From Wikipedia [page](https://en.wikipedia.org/wiki/Spike-and-slab_variable_selection):
+
+**Spike-and-slab regression** is a Bayesian variable selection technique that
+is particularly useful when the number of possible predictors is larger than
+the number of observations. In this context, it is used as a feature selection
+tool - spike around 0 for coefficients, imposing prior that there is no
+relationship, let the data speak for itself.
+
+### Bayesian Structural Time Series
+
+More details [here](http://people.ischool.berkeley.edu/~hal/Papers/2013/pred-present-with-bsts.pdf), from the authors of R's `bsts`
+package Steven L. Scott.
+
+[Wikipedia](https://en.wikipedia.org/wiki/Bayesian_structural_time_series)
+
+[blog on using `bsts`](https://multithreaded.stitchfix.com/blog/2016/04/21/forget-arima/) and [here](https://multithreaded.stitchfix.com/blog/2016/01/13/market-watch/) on `CausalImpact`.
+
+Allows us to model **trend, seasonality and either static or dynamic regression
+coefficients**.
+
+For paper from Scott above, an example model can be written as:
+
+$$
+\begin{aligned}
+y_t &= \mu_t + \tau_t + \beta^T x_t + \epsilon_t \\
+\mu_t &= \mu_{t-1} + \delta_{t-1} + u_t \\
+\delta_t &= \delta_{t-1} + v_t \\
+\tau_t &= -\sum^{S-2}_{s=0} \big( \tau_{t-s} \big) + w_t
+\end{aligned}
+$$
+
+where:
+
+* $\eta_t = (u_t, v_t, w_t)$ contains independent components of Gaussian
+random noise, $N(0, \sigma^2_e)$
+
+* The seasonal component $\tau$ can be thought of as a set of $S$
+dummy variables with dynamic coefficients constrained to have zero expectation
+over a full cycle of $S$ seasons
+
+* $\mu_t$ is current level of the trend
+
+* $\delta_t$ is current slope of the trend
+
+Also there is detailed discussion on seasonality in Brodersen's
+[paper](https://ai.google/research/pubs/pub41854), section 2.1.

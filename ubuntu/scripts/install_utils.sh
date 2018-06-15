@@ -26,4 +26,7 @@ sudo apt-get -y install cifs-utils
 sudo apt-get -y install smbclient
 
 # chinese input, need reboot
-sudo apt-get install sogoupinyin
+# sudo apt-get install sogoupinyin
+
+sudo apt-get -y install net-tools
+#sudo apt-get -y install wireless-tools

@@ -22,6 +22,8 @@ Read MIT's blog on Transformers with PyTorch.
 
 And OpenAI's blog [here](https://blog.openai.com/language-unsupervised/).
 
+Also read Alec Radford's paper on transfer learning for RNNs. [here](https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf)
+
 ## Language Modeling
 
 Two papers from Stephen Merity, et al. that look very interesting and showed

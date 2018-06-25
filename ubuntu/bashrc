@@ -145,7 +145,7 @@ fi
 PATH="/apps/pycharm/bin:$PATH"
 PATH="/home/zwl/apps/sublime_text_3:$PATH"
 PATH="/usr/local/jdk/current/bin:/usr/local/cuda/bin:/home/zwl/bin:$PATH"
-PATH=/usr/local/rstudio/current/bin:$PATH
+PATH=$PATH:/usr/local/rstudio/current/bin
 
 #JAVA_HOME=/usr/local/jdk
 #export JAVA_HOME
@@ -156,16 +156,14 @@ PATH="/usr/anaconda3/bin:$PATH"
 PATH=/usr/local/cuda/lib64:$PATH
 
 export MRO_HOME=/opt/microsoft/ropen/current/
-export RSTUDIO_WHICH_R=/opt/microsoft/ropen/current/lib64/R/bin/R
+export RSTUDIO_WHICH_R=$MRO_HOME/lib64/R/bin/R
 
-PATH=$MRO_HOME/lib64/R/bin:$PATH
-
+PATH=$PATH:$MRO_HOME/lib64/R/bin
 export PATH
 
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/extras/CUPTI/lib64
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/zwl/lib/blpapi_cpp/Linux
-
 export LD_LIBRARY_PATH
 
 PYTHONPATH=~/git/pyblp:~/git/pythonlib/:~/git/pyhistdata:~/git/pypbo:~/git/drivetools

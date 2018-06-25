@@ -847,13 +847,17 @@ because my Windows 10 is installed with MBR not GPT partitions.
 
 ## Packages
 
-See `scripts` folder for more details.
+See `notes/scripts` folder for more details.
 
 ## Settings
 
 **Workspaces**
 
 Install `Gnome Tweaks`, go to Workspaces setting.
+
+## Mount Windows Partitions
+
+Follow instructions [here](http://ubuntuhandbook.org/index.php/2016/01/mount-windows-10-in-ubuntu/)
 
 # Fix Windows Boot
 

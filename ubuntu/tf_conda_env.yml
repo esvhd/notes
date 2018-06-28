@@ -1,3 +1,5 @@
+# conda env file for create tensorflow environment
+# run with: conda env create -f file.yml
 name: tf
 channels:
     - default
@@ -9,6 +11,7 @@ dependencies:
     - ipython
     - ipykernel
     - cython
+    - autopep8
 #    - jupyter
 #    - jupyter_client
 #    - julyter_console

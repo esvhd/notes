@@ -151,8 +151,9 @@ PATH=$PATH:/usr/local/rstudio/current/bin
 #export JAVA_HOME
 #PATH=$JAVA_HOME/bin:$PATH
 
-# added by Anaconda3 4.4.0 installer
-PATH="/usr/anaconda3/bin:$PATH"
+# since conda 4.4, no longer need to add anaconda path, see conda section
+# at the end
+#PATH="/usr/anaconda3/bin:$PATH"
 PATH=/usr/local/cuda/lib64:$PATH
 
 export MRO_HOME=/opt/microsoft/ropen/current/
@@ -182,3 +183,8 @@ export CUDA_VISIBLE_DEVICES=1,0
 
 export HISTDATA_FTP=50.30.37.179
 export HISTDATA_FTP2=209.126.123.58
+
+# set up conda activate
+. /usr/anaconda3/etc/profile.d/conda.sh
+# activate base environment
+conda activate

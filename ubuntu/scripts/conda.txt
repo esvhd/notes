@@ -12,3 +12,4 @@ autopep8
 xarray
 datashader
 rfpimp
+pyjanitor

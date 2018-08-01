@@ -7,7 +7,7 @@ if [ $exit_stats -eq 0 ]; then
     conda activate tf
     if [ $? -eq 0 ]; then
         echo Link environment to Jupyter notebook...
-        python -m ipykernel install --user --name myenv --display-name "Python (myenv)"
+        python -m ipykernel install --user --name myenv --display-name "Python (tf)"
     else
         echo Not in new environment!
     fi

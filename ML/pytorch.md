@@ -31,7 +31,6 @@ masks = ...
 torch.masked_select(x, masks)
 ```
 
-
 ## 0.4 migration guide
 
 Use `x.item()` to get the value of a 0-dim tensor.
@@ -75,4 +74,5 @@ torch.save(state, 'model.pt')
 
 Docs [recommendations](https://pytorch.org/docs/stable/notes/serialization.html#recommended-approach-for-saving-a-model)
 
-
+When reloading models for inference, remember to call `model.eval()`, as by default models
+are loaded in training model.

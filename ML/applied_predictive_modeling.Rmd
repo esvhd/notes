@@ -1,0 +1,316 @@
+---
+title: "Applied Predictive Modeling"
+author: "zwl"
+date: "25 July 2018"
+output: html_document
+---
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(AppliedPredictiveModeling)
+library(e1071)
+library(caret)
+library(corrplot)
+
+```
+
+# Data Preprocessing
+
+
+## Transforming Features
+
+Rule of thumb: ratio of highest and lowest values exceeds 20 indicates 
+significant skewness. Or compute skewness statistics with `e1072::skewness()`.
+
+To resolve **skewness** in data, can apply either log, square root or inverse.
+
+Alternatively, use **Box-Cox** transformations `caret::BoxCoxTrans()`, which is 
+more straightforward, less prone to numerical issues and just as effective as 
+Box and Tidwell.
+
+## Transformation for Outliers / Examples
+
+Tree-based models (due to splits) and SVM classification models (due to 
+support vectors) are less prone to outliers. 
+
+Center and scale data, then apply **spatial sign** transformation 
+`caret::spatialSign()`.
+
+## Transformation for Entire Dataset
+
+PCA is such an example. `prcomp()`
+
+$$ PC_1 = (a_{j1} \times Predictor_1) + (a_{j2} \times Predictor_2) + \cdots
++ (a_{jp} \times Predictor_p) $$
+
+Coefficients $a_{j1}, a_{j2}, \cdots, a_{jp}$ are known as **loadings**, 
+stored in returned result from `prcomp()` as `rotation`.
+
+PCA is naturally drawn to summarizing predictors that have more variation, 
+therefore **centering and scaling** is very important for PCA.
+
+When using scatter plot to show pairs of princial components, it is important
+for the charts to have the **scale scale**. Otherwise the effects may be 
+distorted by different scale graphically.
+
+
+## Missing Data
+
+**Informative missingness**: missing data pattern is instructional on its own,
+e.g. its pattern is related to the outcome. E.g. customer ratings, those who
+rate usually have strong opinions, either good or bad.
+
+For some data where below a certain threshould it becomes harder to measure by
+the device at hand, we can impute them as a random number between 0 and the 
+device lowest threshold.
+
+Some methods such as tree-based models can specifically account for missing
+values. Ch. 8 for more.
+
+Most relevant scheme is to build an **imputation model** for each predictor in 
+the dataset.
+
+* K-means and take average
+  * Pros: imputed data is confined to be within the range of training set 
+  values.
+  * Cons: entire training data has to be stored; number of neighbour is a 
+  tuning parameter. (Troyanskaya et al. 2001 showed that nearest neighbour
+  approach to be fairly robust to the tuning parameters, as well as the 
+  amount of missing data)
+  
+Some data that has very little variation can be removed. `caret::nearZeroVar()`
+method can help to identify those columns / predictors.
+
+
+## Collinearity / Multicollinearity
+
+PCA can help. If the first PC accounts for a large % of variance, it implies
+that there is at least one group of predictors that represent the same
+information.
+
+PCA **loadings** can be used to understand which predictors are associated with
+each component to tease out this relationship.
+
+**VIF**, variance inflation factor, can be used to identify multicollinearity,
+but beyond linear regression, it may be inadequate: 
+
+* designed for linear models, requires n > p, more samples than predictors
+* when it identifies issues, it does not determine which should be reomoved to
+solve the problem.
+
+The book includes a huristic algorithm that iteratively remove predictors by
+looking at correlated predictor pairs and the remove the one with the 
+**higher** average correlation with the rest of the predictors.
+
+
+## One-Hot Encoding
+
+When converting categorical variables to one-hot encoding format, use 
+`num_category - 1` if model has an intercept, otherwise if using `num_category`
+there may be numerical issues.
+
+Use `dummyVars()` to create one-hot encoding. Recommended to use the full
+set of dummy variables when working with tree-based models.
+
+```
+simpleMod <- dummyVars(~Mileage + Type, data=data, levelsOnly=TRUE)
+# Mileage is numerical, Type is categorical
+# converts Type to one-hot
+predict(simpleMod, data)
+```
+
+## Binning
+
+Never mannually bin continuous variables.
+
+
+## Code
+
+`caret::preProcess()` can apply a pipeline of transformations to given data.
+
+`caret::predict()` applys a model to given data.
+
+```{r prepro}
+data(segmentationOriginal)
+segData <- subset(segmentationOriginal, Case == 'Train')
+cellID <- segData$Cell
+class <- segData$Class
+case <- segData$Case
+segData <- segData[, -(1:3)]
+statusColNum <- grep('Status', names(segData))
+segData <- segData[, -statusColNum]
+
+skewness(segData$AngleCh1)
+skewValues <- apply(segData, 2, skewness)
+head(skewValues)
+
+# compute box-cox transform lambda
+Ch1AreaTrans <- BoxCoxTrans(segData$AreaCh1)
+# apply box-cox transform
+predict(Ch1AreaTrans, head(segData$AreaCh1))
+
+pc <- prcomp(segData, center=TRUE, scale. = TRUE)
+pc.var <- pc$sdev^2 / sum(pc$sdev^2)*100
+
+trans <- preProcess(segData, method=c('BoxCox', 'center', 'scale', 'pca'))
+trans
+
+# beautiful correlation matrix
+corrplot(cor(segData), order='hclust')
+
+```
+
+
+# Overfitting / Model Tuning
+
+## Data Splitting
+
+`caret::createDataPartition(classes, p=.8, list=FALSE)`
+
+Resampling usually produced better results than a single test set.
+
+**Stratified Random Sampling** draws random samples within each subgroup of 
+the data. 
+
+**Maximum dissimilarity sampling**, computationally high cost as it'd require
+a lot of pair-wise computation. p68.
+
+## Resampling
+
+### `k`-Fold Cross Validation
+
+`caret::createFolds(data, k=10, returnTrain=TRUE)`
+
+Randomly sample and divide data into train / validation sets, repeat `k` times
+and take the average performance.
+
+As `k` gets **larger**, the difference in size between the training set and the 
+resampling subset gets **smaller**, the **bias** of the technique **decreases**.
+
+`k`-fold CV generally has **high variance** compared to other methods, might
+not be attractive. With large training sets, the potential issue with variance
+and bias become negligible.
+
+### Generalized CV
+
+$$ GCV = \frac{1}{n} \sum^n_{i=1} \bigg( \frac{y_i - \hat{y}_i}{1 - df / n} \bigg)^2 $$
+
+Where `df` is degree of freedom / # of parameters estimated by the model.
+
+## Repeated Training / Test Splits
+
+TODO
+
+
+# Regression Performance Measurement
+
+## $R^2$ 
+
+$R^2$ is a measure of correlation, **not accuracy**. 
+
+It depends on the **variation** in the outcome. If RMSE is 1, for outcomes with
+variance 4 and 3, $R^2$ is 3/4 and 2/3 respectively.
+
+**Rank correlation, Spearman's rank correlation**, to compute this, rank the
+observed and predicted outcomes, the correlation between these rank is 
+calculated. `corr(..., method='spearman')`
+
+## Bias-Variance Trade-off
+
+For $MSE = \frac{1}{n} \sum^n_{i=1} (y_i - \hat{y}_i)^2, assume:
+
+1. data points are statistiaclly independent
+2. residuals have a theoretical mean of zero and constant variance $\sigma^2$,
+which is called the **irreducible noise**.
+
+We have:
+
+$$ \mathbb{E}(MSE) = \sigma^2 + (Model bias)^2 + Model Variance $$
+
+`extendrange(c(1, 5))` extends a numerical range by a percentage.
+
+`abline()` base plot function to add a line in a chart.
+
+A useful diagnosis plot is to plot:
+
+1. observed values versus predicted
+2. predicted values versus residual
+
+# Linear Regressin & Its Cousins
+
+Given $y = \beta X$ the solution is $\beta = (X^T X)^-1 X^T y$
+
+A unique solution of $(X^T X)^-1$ exists when:
+
+1. no predictor can be determined from a combination of one or more of the 
+other predictors
+2. the number of samples is greater than the number of predictors
+
+When **collinearity** exists, R fits the largest identifiable model by 
+removing variables in the reverse order of appearance in the model formula.
+
+Another **drawback** is that the solution is a hyperplane, which cannot handle 
+curvature or nonlinear structure.
+
+**Robust linear regression** using **Huber loss** (uses squared loss when error
+is small and L1 loss when error is above a threshold) can defend against 
+outliers.
+
+## Partial Least Squares
+
+Package: `pls::plsr()`
+
+High collinearity results in high variance in OLS parameters. Solution could
+be: 
+
+1. Remove highly correlated predictors described in Section 3.3
+2. usd PCA
+
+(1) does not resolve multi-collinearity issue, hence does not guarantee a 
+stable least squares solution.
+
+PCA does **not** necessarily produce new predictors that explain the response.
+PCA tris to explain the variability, however, if the variability in the 
+predictor space is not related to the variability of the response, **PCR**
+can have difficulty identifying a predictive relationship when one might exist.
+
+Author recommends **PLS** when there are correlated predictors and a linear
+regression type solution is desired.
+
+**PLS** finds linear combinations of the predictors (components), aiming to 
+**maximize component covariance with the response**, i.e. it finds components
+that:
+
+* maximally summarize the variation of the predictors while simultaneously
+* requiring these components to have maximum correlation with the response
+
+Like PCA, data need to be **centered and scaled** before applying `PLS`.
+
+`PLS` has one tuning parameters: number of components to retain. Resampling
+can be used to determine the optimal number of components.
+
+NIPALS algorithm works well for small/moderate datasets (e.g. $< 2500$ samples
+and $< 30$ predictors). Dayal & MacGregor (1997) is the most computationally
+efficient for various sizes (e.g. 500-10000 samples, 10-30 predictors,
+1-15 responses, 3-10 components).
+
+`PLS` components summarize the data through linear strctures of the original
+predictor space that are related to the response. When more intricate 
+relationships exist, authoers suggest employing other techniques, rather than
+trying to improve `PLS` through augementation.
+
+### Variable Importance in the Projection (VIP)
+
+`k`-component case, for the importance of $j$th predictor:
+
+* numerator: weighted sum of normalized weights corresponding to the $j$th 
+predictor
+* denominator: total amount of response variation explained by all `k` 
+components.
+
+Rule of thumb: VIP > 1.0 is considered to have predictive information for the
+response
+
+TODO compute

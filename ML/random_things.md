@@ -232,3 +232,21 @@ over a full cycle of $S$ seasons
 
 Also there is detailed discussion on seasonality in Brodersen's
 [paper](https://ai.google/research/pubs/pub41854), section 2.1.
+
+
+## Bayesian Credible Region (CR) vs Frequentist Confidence Interval (CI)
+
+A great blog post by @jakevdp that had a more interesting comment section on this topic [here](http://jakevdp.github.io/blog/2014/06/12/frequentism-and-bayesianism-3-confidence-credibility/).
+And an excellent [stackoverflow answer](https://stats.stackexchange.com/questions/2272/whats-the-difference-between-a-confidence-interval-and-a-credible-interval/2287#2287)
+
+Key point is the with CI, frequentists provide the right answer to the **wrong**
+question. 
+
+Typicall from the data given, we are interested in what the **given data** 
+tells us. That's what Bayesian CR tells us.
+
+Frequentist CI tells us, if you repeated see **data of this kind**, there is 
+$X%$ chance that the true value of $\theta$ falls inside of the CI. 
+
+But we are not interested in data of this kind, we are interested in what this
+piece of data tells us!

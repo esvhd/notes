@@ -2,4 +2,14 @@ pls
 caret
 e1071
 corrplot
-
+kernlab
+ipred
+MASS
+doMC
+elasticnet
+party
+partykit
+lars
+randomForest
+gbm
+xgboost

@@ -10,7 +10,6 @@ Note that the `echo = FALSE` parameter was added to the code chunk to prevent pr
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(AppliedPredictiveModeling)
-library(e1071)
 library(caret)
 library(corrplot)
 
@@ -132,7 +131,7 @@ Never mannually bin continuous variables.
 
 `caret::predict()` applys a model to given data.
 
-```{r prepro}
+```{r prepro, eval=FALSE}
 data(segmentationOriginal)
 segData <- subset(segmentationOriginal, Case == 'Train')
 cellID <- segData$Cell
@@ -181,7 +180,15 @@ a lot of pair-wise computation. p68.
 
 ### `k`-Fold Cross Validation
 
-`caret::createFolds(data, k=10, returnTrain=TRUE)`
+```{r kfold, eval=FALSE}
+library(AppliedPredictiveModeling)
+data(twoClassData)
+
+# a few different ways to do the same
+caret::createDataPartition(classes, p=.8, times=3)
+caret::createFolds(data, k=10, returnTrain=TRUE)
+caret::createMultiFolds(classes, k = 10, times=3)
+```
 
 Randomly sample and divide data into train / validation sets, repeat `k` times
 and take the average performance.
@@ -201,8 +208,133 @@ Where `df` is degree of freedom / # of parameters estimated by the model.
 
 ## Repeated Training / Test Splits
 
-TODO
+Aka Leave Group Out CV, or Monte-Carlo CV. 
 
+Repeatedly resample with replacement and split data into **modeling** and 
+**prediction** sets, 
+
+Bias decreases as the amount of data in the subset approaches the amount in the 
+modeling set. Rule of thumb 75-80%.
+
+**Higher** no. of repetitions **decreases** the uncertainty of the performance 
+estimate. Book recommends 50-200 iterations (i.e. large) to get stable estimates 
+of performance.
+
+
+## Boootstrap
+
+Randomly resample data **with replacement**. Samples not selected are referred
+to as **out-of-bag** samples.
+
+Bootstrap error rates tend to have **less uncertainty** than k-fold CV. However, 
+on average **63.2%** of the data in bootstrap is represented at least once, 
+therefore this technique has **bias similar** to k-fold CV when $k \approx 2$.
+This bias will decrease as data size becomes larger.
+
+### 632 Method
+
+To address the bias issue, the 632 method combines simple bootstrap estimate 
+and the estimate from re-predicting the training set (aka. the **apparent
+error rate**). 
+
+632 error = 0.632 * simple bootstrap estimate + 0.368 * apparent error rate
+
+632 method reduces bias but can be unstable with small sample size. It can 
+still result in unduly optimisitic results when the model **severely** overfits,
+i.e. **apparent error rate is close to zero**. 
+
+**632+ method** was created to address this severely overfit case.
+
+## Author's recommendations
+
+No resampling method is uniformly better than others. 
+
+If sample size is small, use repeated 10-fold CV:
+
+* Good bias and variance properties
+* computational cost not high
+
+For model selection, use bootstrap methods given low variance.
+
+For large data set, the differences between resampling methods become less
+pronounced, use simple 10-fold CV, which gives acceptable variance and low bias.
+
+See later chapters for **optimization bias** for small datasets.
+
+## Model Selection
+
+Here the tips are actually quite similar to what Andrew Ng gave for DL models.
+
+Essentially fit a more flexible / complicated model first to discover 
+**performance ceiling**. Then use simpler models and choose one that is 
+reasonaly close to the complex model.
+
+With increased precision, there is higher likelihood that models can be
+differentiated in terms of **sensitivity** than for **specificity**.
+
+
+## Parameter Tuning
+
+Examples below.
+
+```{r resample, eval=FALSE}
+data(GermanCredit)
+
+library(doMC)
+# register to use 8 cores
+registerDoMC(8)
+
+GermanCredit <- GermanCredit[, -nearZeroVar(GermanCredit)]
+GermanCredit$CheckingAccountStatus.lt.0 <- NULL
+GermanCredit$SavingsAccountBonds.lt.100 <- NULL
+GermanCredit$EmploymentDuration.lt.1 <- NULL
+GermanCredit$EmploymentDuration.Unemployed <- NULL
+GermanCredit$Personal.Male.Married.Widowed <- NULL
+GermanCredit$Property.Unknown <- NULL
+GermanCredit$Housing.ForFree <- NULL
+
+## Split the data into training (80%) and test sets (20%)
+set.seed(100)
+inTrain <- createDataPartition(GermanCredit$Class, p = .8)[[1]]
+GermanCreditTrain <- GermanCredit[ inTrain, ]
+GermanCreditTest  <- GermanCredit[-inTrain, ]
+
+# a few methiods availalbe
+# e1071::tune()
+# ipred::errorest()
+# Design::validate()
+
+svm.fit <- caret::train(Class ~ ., 
+                        data=GermanCreditTrain,
+                        method='svmRadial',
+                        preProc=c('center', 'scale'),
+                        # tune SVM cost parameter from [2^-1, 2^-2, ..., 2^7]
+                        tuneLength=10,
+                        # by default bootstrap is used to evaluate performance
+                        # use trainControl() to use k-fold CV.
+                        trControl=trainControl(method='repeatedcv', 
+                                               repeats = 5, 
+                                               classProbs = TRUE))
+
+plot(svm.fit, scales=list(x=list(log=2)))
+
+glmProfile <- train(Class ~ .,
+                    data = GermanCreditTrain,
+                    method = "glm",
+                    trControl = trainControl(method = "repeatedcv", 
+                                             repeats = 5))
+
+
+# To compare models 
+resamp <- caret::resamples(list(SVM = svm.fit, Logistic = glmProfile))
+summary(resamp)
+
+summary(diff(resamp))
+
+predictedProbs <- predict(svm.fit, newdata = GermanCreditTest, type = "prob")
+head(predictedProbs)
+
+```
 
 # Regression Performance Measurement
 
@@ -219,7 +351,7 @@ calculated. `corr(..., method='spearman')`
 
 ## Bias-Variance Trade-off
 
-For $MSE = \frac{1}{n} \sum^n_{i=1} (y_i - \hat{y}_i)^2, assume:
+For $MSE = \frac{1}{n} \sum^n_{i=1} (y_i - \hat{y}_i)^2, with **assumptions**:
 
 1. data points are statistiaclly independent
 2. residuals have a theoretical mean of zero and constant variance $\sigma^2$,
@@ -227,16 +359,17 @@ which is called the **irreducible noise**.
 
 We have:
 
-$$ \mathbb{E}(MSE) = \sigma^2 + (Model bias)^2 + Model Variance $$
+$$ \mathbb{E}(MSE) = \sigma^2 + (\text{Model Bias})^2 + \text{Model Variance}$$
 
 `extendrange(c(1, 5))` extends a numerical range by a percentage.
 
 `abline()` base plot function to add a line in a chart.
 
-A useful diagnosis plot is to plot:
+A useful **diagnosis plot** is to plot:
 
 1. observed values versus predicted
 2. predicted values versus residual
+
 
 # Linear Regressin & Its Cousins
 
@@ -251,8 +384,8 @@ other predictors
 When **collinearity** exists, R fits the largest identifiable model by 
 removing variables in the reverse order of appearance in the model formula.
 
-Another **drawback** is that the solution is a hyperplane, which cannot handle 
-curvature or nonlinear structure.
+Another **drawback** of multiple linear regression is that the solution is a 
+hyperplane, which cannot handle curvature or nonlinear structure.
 
 **Robust linear regression** using **Huber loss** (uses squared loss when error
 is small and L1 loss when error is above a threshold) can defend against 
@@ -313,4 +446,367 @@ components.
 Rule of thumb: VIP > 1.0 is considered to have predictive information for the
 response
 
-TODO compute
+## Penalized Models
+
+Combating **colinearity** by using **biased** models may result in regression
+models where the **overall MSE** is competitive.
+
+**LARS** model can be used to fit lasso models more efficiently, especailly
+in high dimensional problems.
+
+Elastic net allows for effective regularization via L2 loss with feature 
+selection quality of lasso L1 penalty.
+
+## Code
+
+```{r linear_reg, eval=FALSE}
+data(solubility)
+
+set.seed(2)
+
+trainingData <- solTrainXtrans
+
+# visualize data vs target
+featurePlot(solTrainXtrans[, -notFingerprints],
+            solTrainY,
+            between = list(x = 1, y = 1),
+            type = c("g", "p", "smooth"),
+            labels = rep("", 2))
+
+# fit linear model
+trainingData$Solubility <- solTrainY
+lmFit <- lm(Solubility ~ ., data=trainingData)
+
+summary(lmFit)
+lmPred <- predict(lmFit, solTestXtrans)
+lmValues <- data.frame(obs=solTestY, pred=lmPred)
+
+# caret::defaultSummary() to estimate performance
+defaultSummary(lmValues)
+
+# robust linear model rlm()
+lmFit <- rlm(Solubility ~ ., data=trainingData)
+
+# use 10-fold CV
+ctrl <- trainControl(method = 'cv', number=10)
+set.seed(100)
+lmFit1 <- train(x = solTrainXtrans, y = solTrainY, method='lm', 
+                trControl = ctrl)
+
+# find highly correlated predictors and remove
+tooHigh <- findCorrelation(cor(solTrainXtrans), .9)
+trainXfiltered <- solTrainXtrans[, -tooHigh]
+testXfiltered  <-  solTestXtrans[, -tooHigh]
+
+lmTune <- train(x = trainXfiltered, y = solTrainY,
+                method = "lm",
+                trControl = ctrl)
+
+rlmPCA <- train(x = trainXfiltered, y = solTrainY,
+                method = "rlm",
+                # preProcess = c('center', 'scale', 'pca'),
+                preProcess = 'pca',
+                trControl = ctrl)
+rlmPCA
+```
+
+```{r pls, eval=FALSE}
+library(pls)
+plsFit <- plsr(Solubility ~ ., data=trainingData)
+
+# can choose number of component for prediction
+predict(plsFit, solTestXtrans[1:5,], ncomp=1:2)
+
+loadings(plsFit)
+scores(plsFit)
+
+scoreplot(plsFit)
+plot(plsFit)
+
+plsTune <- train(x = solTrainXtrans, y = solTrainY,
+                 method='pls', 
+                 tuneLength = 20,
+                 trControl = trainControl(method = 'repeatedcv', 
+                                          number = 10),
+                 preProcess = c('center', 'scale'))
+```
+
+```{r penalized, eval=FALSE}
+library(elasticnet)
+
+# Ridge
+lm.ridge()
+
+# elastic-net, lambda parameter is ridge weight
+# or in glmnet package
+elasticnet::enet(x = as.matrix(solTrainXtrans), y = solTrainY, lambda = .001)
+
+```
+
+
+# Non-Linear Methods
+
+## MARS
+
+Skipped for now.
+
+## SVM
+
+Book focuses on **$\epsilon$-insensitive regression**.
+
+SVMs for regression use a function similar to the Huber function, but with 
+difference. 
+
+Given $\epsilon$ give by user, data points with residuals **within** the 
+threshold do not contribute to the regression fit, while data points with
+an absolute difference **greater** than the threshold contribute a linear-scale
+amount.
+
+Consequence: 
+
+1. more robust t outliers, 
+2. samples that fit well have **no effect** on the regression equation.
+
+Poorly predicted points define the line. 
+
+SVM is over-parameterized, but the cost value effectively regularizes the model,
+helps to alleviate this problem.
+
+Individual training data points are required for new predictions, these are 
+known as **support vectors**.
+
+Authors found that the cost parameter provides more flexibility for tuning the
+model and therefore suggest fixing a value for $\epsilon$ and tuning over the
+other kernel parameters.
+
+Since the predictors enter into the model as sum of cross products, differences
+in predictor scales can affect the model. Therefore, data should be 
+**centered and scaled** before feeding into svm.
+
+Bayesian analog to SVM: *relevance vector machine* (Tipping 2001). There are 
+usually less relevance vectors than support vectors in model.
+
+## KNN
+
+Data should be **centered and scaled** before feeding into KNN. 
+
+KNN has one parameter to tune: the number of neighbours, `k`.
+
+KNN needs to store all training data, therefore is not memory efficient.
+
+KNN can have **poor** performance when local predictor structure is not 
+relevant to the response.
+
+## Code
+
+Neural network package `nnet`.
+
+`MARS` found in `earth` package, useful functions:
+
+* `earth()` to fit a model
+* `plotmo()` to plot 
+* `earth::evimp()` or `caret::varImp()` for variable importance
+
+`KNN` use `knnreg::knn()`
+
+```{r svm, eval=FALSE}
+
+# e1071::svm()
+# kernlab package has more extensive implementation of SVM for regression
+# use kernlab::ksvm
+# kernlab laso has relevance vector machine, rvm()
+
+library(kernlab)
+data(solubility)
+
+solTrainXtrans$solTrainY <- solTrainY
+
+# supported kernels: rbfdot, polydot, vanilladot, etc.
+svmFit <- ksvm(solTrainY ~ ., data = solTrainXtrans,
+               # x = solTrainXtrans, y = solTrainY,
+               kernel = 'rbfdot', kpar = 'automatic',
+               C = 1, epsilon = .1)
+
+# use train() to tune model. method parameter can take:
+# svmRadial, svmLinear, svmPoly to fit different kernels
+svmRTuned <- train(solTrainY ~ ., data = solTrainXtrans,
+                   method = 'svmRadial',
+                   preProc = c('center', 'scale'),
+                   tuneLength = 14, 
+                   trControl = trainControl(method = 'cv'))
+
+# to choose the selected model:
+fm <- svmRTuned$finalModel
+
+# to access the support vectors indices
+fm@SVindex
+
+```
+
+
+# Regression Trees / Rule-based Models
+
+By construction, trees / rule-based models can effective handle many types 
+of predictors (sparse, skewded, continuous, categorical, etc.), **without**
+the need to pre-process them.
+
+## Weaknesses:
+
+1. model instability, e.g. a small change in data can drastically change the 
+structure of the tree.
+2. Less than optimal predictive performance, due to rectanglur decision 
+boundries, which may not suit the data / true relationship.
+3. For a single tree, the number of possible predicted outcome from a tree is
+finite and is determined by the number of terminal nodes.
+4. Trees suffer from **selection bias**: predictors with a higher number of
+distinct values are favoured over more granular predictors. 
+5. As the number of missing values increase, the selection of predictors become
+more **biased**.
+
+Solution: ensemble methods.
+
+## Trees
+
+### Cost Complexity Pruning
+
+Goal of pruning is the find a right sized tree that has the smallest error
+rate. Penalize the error rate using the size of the tree:
+
+$$ SSE_{c_p} = SSE + c_p \times \text{# Terminal Nodes} $$
+
+where $c_p$ is the tuned **complexity parameter**. Large values
+may result the tree to have just one or no splits - which means that 
+**no predictor** adequately explains enough of the variance in the outcome at
+the chosen value of complexity parameter.
+
+Also uses **one-standard deviation** rule for model selection. Alterantively,
+use tree associated with the numerically smallest error.
+
+### Missing Values
+
+Use **surrogate splits**. A surrogate split is one whose results are similar to 
+the original split actually used in the tree.
+
+### Feature Importance
+
+One way is to measure importance is to keep track of the overal reduction ni 
+the optimization criteria for each predictor.
+
+**Disadvantage** of this approach: when some predictors are highly correlated,
+the choice of which to use in a split is somewhat random. Which results in
+more predictors being selected than those actually needed, affecting variable
+importance values. 
+
+See Weakness sector for more disadvantages. 
+
+**Unbiased** regression trees:
+
+* GUIDE
+* conditional inference trees
+
+TODO p184
+
+## Code
+
+Packages: `rpart`, `party`, `partykit`
+
+### Single trees:
+
+* `rpart::rpart()` - fits w/ CART
+* `party::ctree()` - fits w/ conditional inference trees
+
+```{r trees, eval=FLASE}
+# Turning for rpart() is through paramter `rpart.control`
+# for party::ctree() this is through `ctree_control`
+
+# Or, via train() to tune both complexity parameter and max node depth.
+# method = 'rpart' to tune over complexity parameter
+# method = 'rpart2' to tune over max node depth.
+# method = 'ctree' to tune mincriterion
+# method = 'ctree2' to tune over max node depth.
+rpartTuned <- train(solTrainY ~ ., data = solTrainXtrans,
+                    method='rpart2', tuneLength=10,
+                    trControl = trainControl(method = 'cv'))
+
+library(partykit)
+# plot tree
+rpartTree2 <- as.party(rpartTree)
+plot(rpartTree2)
+```
+
+### Model Trees
+
+Packages: `RWeka`
+
+`M5` model trees: `RWeka::M5P()` with formula interface. For `train()`,
+use parameters:
+* `method='M5'`
+* `control = Weka_control(M = 10)`
+`M5` results can be plotted by calling `plot(model)`.
+
+### Bagging
+
+Packages: 
+* `bagging` - formula interface
+* `ipredbagg` - non-formula interface
+
+Other ways:
+
+* `RWeka::Bagging()`
+* `caret::bag()` - general framework that works for many models
+* `party::cforest()` - Conditional inference trees, with parameter:
+`controls = cforest_control(mtry = ncol(trainData) - 1)`
+
+### Random Forest
+
+Package: `randomForest::randomForest()`
+
+Parameters:
+* `mtry` - number of predictors that are randomly sampled as candidates for 
+each split. Default is # of predictors / 3.
+* `ntree` - # of bootstrap samples. Default 500, but should use at least 1000.
+* `importance` - default is FALSE. Then call 
+`randomForest::importance(..., type=1, scale=F)` to get the right importance 
+values.
+
+For `caret::train()`:
+* `method = 'rf'` or `'cforest'`
+
+For `cforest` objects, variable importance can be obtained by calling
+`party::varimp()`
+
+`caret::varImp()` has a unified wrapper that works for tree-models from:
+`rpart`, `classbagg` produced by `ipred`'s bagging, `randomForest`, 
+`cforest`, `gbm`, and `cubist`
+
+### Boosted Trees
+
+Package: `gbm`, call:
+* `gbm::gbm.fit(x, y, distribution = 'gaussian')` - non-formula interface
+* `gbm::gbm(y ~ x, data = data, distribution = 'gaussian')` - formula interface
+
+`distribution` parameter defines the type of loss function that will be 
+optimized during boosting. Use `gaussian` for ** continuous response**. 
+
+Other parameters for `gbm`:
+
+* `n.trees` - number of trees
+* `interaction.depth` - depth of trees
+* `shrinkage`
+* `bag.fraction` - proportion of observations to be sampled
+
+For `caret::train()`, see below example:
+
+```{r boost, eval=FALSE}
+library(gbm)
+
+gbmGrid <- expand.grid(interaction.depth = seq(1, 7, by = 2),
+                       n.trees = seq(100, 1000, by = 50),
+                       shrinkage = c(.01, .1),
+                       n.minobsinnode=c(5, 10))
+
+gbmTune <- train(solTrainY ~ ., data = solTrainXtrans,
+                 method='gbm',
+                 tuneGrid = gbmGrid,
+                 verbose = F)
+```

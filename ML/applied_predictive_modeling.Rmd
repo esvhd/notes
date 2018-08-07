@@ -12,11 +12,60 @@ knitr::opts_chunk$set(echo = TRUE)
 library(AppliedPredictiveModeling)
 library(caret)
 library(corrplot)
+```
 
+# Quick Reference
+
+## Model Features
+
+Models sensitive to **centering & scaling**: 
+
+* PCA
+* PLS
+* SVM
+* KNN
+
+Those less sensitive: trees.
+
+
+Models sensitive to **outliers**:
+
+* OLS
+* PCA
+
+Less sensitive to **outliers**:
+
+* Robust linear regression with Huber loss
+* Trees based methods (due to splits)
+* SVM (due to support vectors)
+
+## Model Comparson Plots:
+
+* For regression, **predicted vs targets** and **predicted vs residuals**.
+
+* `caret::featurePlot()` shows univariate plot of feature vs tarets.
+
+* `Hmisc::describe()` describes data by colume, p228
+
+* `parallelPlot(model)` **parallel-coordinate plots**: p230-231, 
+use line plots to show resampledresults (RMSE or $R^2$) across different models. Each line shows the **same** sample set across all models.
+
+
+## `R` Coding
+
+* `.` represent everything, e.g. `outcome ~ .`
+* `(.)^2` expandas into model with all linear terms and all **two-factor**
+interactions
+* `I()` **as is** function, e.g. `I(feature^2)` will use squared feature
+
+Use `paste()` and `as.formula()` to create formula from multiple string text. 
+
+```{r paste, eval=FALSE}
+f <- paste('out ~ x + ', 'y + I(c^2)')
+f <- as.formula(f)
 ```
 
 # Data Preprocessing
-
 
 ## Transforming Features
 
@@ -51,7 +100,7 @@ PCA is naturally drawn to summarizing predictors that have more variation,
 therefore **centering and scaling** is very important for PCA.
 
 When using scatter plot to show pairs of princial components, it is important
-for the charts to have the **scale scale**. Otherwise the effects may be 
+for the charts to have the **same scale**. Otherwise the effects may be 
 distorted by different scale graphically.
 
 
@@ -174,7 +223,7 @@ Resampling usually produced better results than a single test set.
 the data. 
 
 **Maximum dissimilarity sampling**, computationally high cost as it'd require
-a lot of pair-wise computation. p68.
+a lot of pair-wise computation. p68. `maxDissim()`
 
 ## Resampling
 
@@ -594,7 +643,7 @@ KNN has one parameter to tune: the number of neighbours, `k`.
 
 KNN needs to store all training data, therefore is not memory efficient.
 
-KNN can have **poor** performance when local predictor structure is not 
+KNN can have **poor performance** when local predictor structure is not 
 relevant to the response.
 
 ## Code
@@ -667,6 +716,10 @@ Solution: ensemble methods.
 
 ## Trees
 
+Single tree building:
+`rpart::rpart()`
+`party::ctree()`
+
 ### Cost Complexity Pruning
 
 Goal of pruning is the find a right sized tree that has the smallest error
@@ -704,7 +757,162 @@ See Weakness sector for more disadvantages.
 * GUIDE
 * conditional inference trees
 
-TODO p184
+## Regression Model Trees
+
+`RWeka::M5P()` for trees
+
+`RWeka::M5Rules()` for rule based model.
+
+**Drawback** for simple regression trees: each terminal node uses the 
+**average** of the training set outcomes in the node for prediction. 
+
+**Implication**: the model may not do a good join in prediction outcomes 
+that are extremely high or low.
+
+Alternatively, use a **different estimator** in the terminal node.
+
+**Model tree** vs simple trees:
+
+* split criterion is different
+* terminal node predicts the outcome using a linear model
+* when a sample is predicted, it is often a combination of the predictions from
+different models along the same path through the tree.
+
+Main implementation: **M5** in `Weka` package.
+
+**Split** criterion:
+
+The **expected reduction** in the node's error rate is used.
+
+$$\text{reduction} = SD(S) - \sum_{i=1}^{P}\frac{n_i}{n} \times SD(S_i) $$
+
+Where:
+
+* $S$ is the entire dataset
+* $S_1, \cdots, \S_P$ - $P$ subsets of the data after splitting
+* $n_i$ number of samples in partion $i$
+
+This metrics determines if the total variation in the splits, weighted by 
+sample size, is lower than in the presplit data.
+
+See p185 for more details on tree construction.
+
+## Rule-Based Model
+
+p190
+
+## Bagged Trees
+
+Short for Bootstrap Aggregation. 
+
+Bagging advantages: 
+
+1. Effectively reduces variance of a prediction through its 
+aggregation process.
+2. They provide their own internal estimate of predictive performance (using
+**out of bag** data) that correlates well with either CV or test set estimates. 
+
+Bagging stable, lower variance models like linear regression and MARS offer
+**less** improvment in predictive performance.
+
+Tress are great for bagging because they have high variance.
+
+One parameter to tune: number of bootstrap samples to aggregate $m$.
+
+often we see exponential decrease in predictive improvement as the number of
+iterations increases. The most improvments in prediction perforamnce is obtained
+with a smaller number of trees (m < 10).
+
+If performance is not at an acceptable level after 50 bagging iterations,
+authors suggest trying other more powerful ensemble methods as random forest
+and boosting.
+
+**Caveats**:
+
+1. high computational cost and memory requirement
+2. bagged model is less intrepretable.
+
+## Random Forest
+
+Need to reduce tree correlation. Algo on page 200, 8.2 listing.
+
+Algo randomly selects predictors at each split, decreases tree correlation.
+
+Tuning parameters:
+
+* number of randomly selected predictors, $k$, to choose from at each split, 
+referred to as $m_{try}$
+  * Breiman 2001 suggests setting $m_{try} = \frac{P}{3}$ where $P$ is the 
+  number of predictors.
+* number of trees for the forest.
+  
+Breiman proved that RF is **protected from overfitting**. Authors found that
+tuning parameters do not have a drastic effect on performance.
+
+RF is robust to **noisy response**. The independence of learnings can underfit 
+data when response is not noisy.
+
+Strobl et al. (2007) proved that the correlations between predictors can have a
+significant impact on the importance value. E.g. non-informative predictor
+that has high correlation with informative predictor end up having higher or
+equal importance as weakly informative predictors.
+
+Also showed that $m_{try}$ tuning parameter has a **series** effect on the 
+importance values.
+
+Impact of between-predictor correlations is to **dilute the importance** of key 
+predictors. This is **not** addressed by Strobl's 2007 alternative importance
+measure.
+
+RF and single tree such as CART may have very different ordering of feature
+importance, this highlights that a single tree's greediness prioritize 
+predictors differently than a RF.
+
+## Boosting
+
+Several researchers showed that boosting can be interpreted as a forward
+stepwise additive model that minimizes exponential loss.
+
+Basic principles, see p205 for algo:
+
+* Given a **loss function** and a **weak** learner, the algo seeks to find an
+additive model that minimizes the loss function.
+* The model is fit to the residual to minimize the loss
+* The current model is added to the previous model, and the procedure continues
+for a pre-defined number of iterations.
+
+Requires a **weak** learner, almost any technique with tuning parameters can
+be made into a weak learner. Trees are great for reasons below:
+
+1. can be weak learner simply by restricting its depth
+2. separate trees can be easily added together
+3. trees can be generated quickly.
+
+For **tree** based gradient boosting, two parameters:
+1. number of iterations
+2. depth of each tree, aka. **interation depth**
+
+Boosting applies a greedy strategy of choosing the optimal weak learner at each
+stage. The drawback is that it might not find the optimal global model and
+can overfit the training data.
+
+Remedy: regularization, only a fraction of the current predicted value is added
+to the previous iteration's predicted value. The learning rate, $\lambda$ is 
+between 0 and 1. 
+
+**Stochastic Gradient Boosting** (Friedman) added another step in each 
+iteration: randomly sample a fraction of the training data to be used in 
+the current training iteration. This fraction can be tuned in CV.
+
+Variable importance for boosting is a function of the reduction in squared
+error: the improvment in squared error due to each predictor is summed within 
+each tree in the ensemble, then this improvment sum is averaged over the 
+ensemble to yield an overall importance value. 
+
+The importance profile for boosting has a much **steeper** slope than the on 
+for random forest. This is due to the fact that the trees in boosting are 
+dependent on each other and therefore will have correlated structures as the
+method follows by the gradient.
 
 ## Code
 
@@ -715,7 +923,9 @@ Packages: `rpart`, `party`, `partykit`
 * `rpart::rpart()` - fits w/ CART
 * `party::ctree()` - fits w/ conditional inference trees
 
-```{r trees, eval=FLASE}
+```{r trees, eval=FALSE}
+library(rpart)
+library(party)
 # Turning for rpart() is through paramter `rpart.control`
 # for party::ctree() this is through `ctree_control`
 
@@ -740,48 +950,49 @@ Packages: `RWeka`
 
 `M5` model trees: `RWeka::M5P()` with formula interface. For `train()`,
 use parameters:
+
 * `method='M5'`
 * `control = Weka_control(M = 10)`
+
 `M5` results can be plotted by calling `plot(model)`.
 
 ### Bagging
 
-Packages: 
-* `bagging` - formula interface
-* `ipredbagg` - non-formula interface
+* `ipred::bagging()` - formula interface
+* `ipred::ipredbagg()` - non-formula interface
 
 Other ways:
 
 * `RWeka::Bagging()`
 * `caret::bag()` - general framework that works for many models
 * `party::cforest()` - Conditional inference trees, with parameter:
-`controls = cforest_control(mtry = ncol(trainData) - 1)`
+`controls = cforest_control(mtry = ncol(trainData) - 1)` to set 
+$m_{try} = \text{# of predictors}$.
 
 ### Random Forest
 
 Package: `randomForest::randomForest()`
 
 Parameters:
+
 * `mtry` - number of predictors that are randomly sampled as candidates for 
 each split. Default is # of predictors / 3.
 * `ntree` - # of bootstrap samples. Default 500, but should use at least 1000.
-* `importance` - default is FALSE. Then call 
+* `importance` - default is FALSE. First set to `TRUE` then call 
 `randomForest::importance(..., type=1, scale=F)` to get the right importance 
 values.
 
-For `caret::train()`:
-* `method = 'rf'` or `'cforest'`
+For `caret::train()`: `method = 'rf'` or `'cforest'`
 
 For `cforest` objects, variable importance can be obtained by calling
 `party::varimp()`
 
-`caret::varImp()` has a unified wrapper that works for tree-models from:
+`caret::varImp()` has a **unified wrapper** that works for tree-models from:
 `rpart`, `classbagg` produced by `ipred`'s bagging, `randomForest`, 
 `cforest`, `gbm`, and `cubist`
 
 ### Boosted Trees
 
-Package: `gbm`, call:
 * `gbm::gbm.fit(x, y, distribution = 'gaussian')` - non-formula interface
 * `gbm::gbm(y ~ x, data = data, distribution = 'gaussian')` - formula interface
 

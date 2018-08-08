@@ -16,22 +16,24 @@ library(corrplot)
 
 # Quick Reference
 
-## Model Features
+## Model Weaknesses
 
-Models sensitive to **centering & scaling**: 
+### Models sensitive to **centering & scaling**
 
-* PCA
-* PLS
-* SVM
-* KNN
+* PCA, because PCA tries to explain variance.
+* PLS, same as PCA.
+* SVM, because kernel is sum of cross products of support vectors and new 
+samples.
+* KNN, based on distance measure so scale can have huge impact.
+* LDA, also remove near zero variance predictors.
 
-Those less sensitive: trees.
+Those **less** sensitive: trees.
 
 
-Models sensitive to **outliers**:
+### Models sensitive to **Outliers**
 
-* OLS
-* PCA
+* OLS, because of the tendency to reduce residual for outliers.
+* PCA, because of variance caused by outliers.
 
 Less sensitive to **outliers**:
 
@@ -39,9 +41,27 @@ Less sensitive to **outliers**:
 * Trees based methods (due to splits)
 * SVM (due to support vectors)
 
-## Model Comparson Plots:
+### **Collinearity**
+
+* Linear regression, causing unstable coefficients / large variance
+* Logistic regression, unstable coefficients / large variance
+* LDA, better than logistic regression but still breaks when multicollinearity
+becomes extreme.
+* Trees, choice of which correlated feature to split becomes somewhat random,
+also impact importance values.
+
+### Number of features **larger** than number of samples, $N < p$
+
+* Linear regression, cannot invert $X^T X$
+* LDA, cannot invert covariance matrix of the data. Could happen in CV when 
+some data is reserved for validation.
+
+
+## Model Comparson Plots and Functions:
 
 * For regression, **predicted vs targets** and **predicted vs residuals**.
+
+* `caret::defaultSummary()` for model summary.
 
 * `caret::featurePlot()` shows univariate plot of feature vs tarets.
 
@@ -52,6 +72,8 @@ use line plots to show resampledresults (RMSE or $R^2$) across different models.
 
 
 ## `R` Coding
+
+### Formula
 
 * `.` represent everything, e.g. `outcome ~ .`
 * `(.)^2` expandas into model with all linear terms and all **two-factor**
@@ -64,6 +86,11 @@ Use `paste()` and `as.formula()` to create formula from multiple string text.
 f <- paste('out ~ x + ', 'y + I(c^2)')
 f <- as.formula(f)
 ```
+
+### Useful functions
+
+
+
 
 # Data Preprocessing
 
@@ -699,7 +726,11 @@ By construction, trees / rule-based models can effective handle many types
 of predictors (sparse, skewded, continuous, categorical, etc.), **without**
 the need to pre-process them.
 
-## Weaknesses:
+No need to specify the form of the predictor's relationship with the response.
+
+They can handle missing data and implicitly conduct feature selection. 
+
+## Single Tree Weaknesses:
 
 1. model instability, e.g. a small change in data can drastically change the 
 structure of the tree.
@@ -1021,3 +1052,54 @@ gbmTune <- train(solTrainY ~ ., data = solTrainXtrans,
                  tuneGrid = gbmGrid,
                  verbose = F)
 ```
+
+
+# Discriminant Analysis / Other Linear Classifiers
+
+## Logistic Regression
+
+When model residuals folloer a normal distribution, minimizing the sum of 
+squared residuals also produces **maximum likelihood estimates**.
+
+Given probability of a class $p$ in a binary classification task, because 
+$0 <= p <= 1$, to formulate a linear model that we need to model 
+**odds**, $\frac{p}{1-p}$. Hence logistic regression is defined by:
+
+$$ \log\bigg( \frac{p}{1-p} \bigg) = \beta_0 + \beta_1 x_1 + \cdots + \beta_p x_p $$
+
+Where $p$ is the number of predictors.
+
+Logistic regression produces **linear** boundaries, unless the predictors used
+in the model are non-linear versions of the data (e.g. squared features).
+
+
+## Linear Discriminant Analysis (LDA)
+
+LDA finds an optimal discriminant vector.
+
+Fisher (1936) and Welch (1939) both discovered it from different angles.
+
+Welch took the approach of minimizing the total probability of 
+mis-classification. Imposes assumption of Gaussian data with idential 
+covariance.
+
+Non-identical covariance leads to **Quadratic discriminant analysis**.
+
+Fisher tried to find a linear combination of the predictors such that 
+**the between group variance was maximized, relative to the within group variance.**
+
+For multi-class tasks, Fisher's model would require $C*p + p(p + 1) / 2$
+parameters, where:
+
+* $C$ is the number of classes and 
+* $p$ is the number of 
+predictors.
+
+**Conditions** for when LDA works:
+
+* more samples than predictors
+* covariance matrix of data is invertible
+* data can be decently separated by linear hyperplane
+
+When number of samples approach number of predictors, be vary **careful**!
+

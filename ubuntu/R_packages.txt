@@ -13,3 +13,10 @@ lars
 randomForest
 gbm
 xgboost
+glmnet
+pamr
+pROC
+klaR
+rms
+sparseLDA
+subselect

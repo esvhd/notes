@@ -62,7 +62,10 @@ also impact importance values.
 TODO: methods to combat collinearity
 
 * `findCorrelation()`, then remove columns with high correlation
-* p311, `subselect::trim.matrix()` to eliminate linear combinations
+* p311, `subselect::trim.matrix()` to eliminate linear combinations, takes
+a covariance matrix as input.
+  * trimmed columns are stored in `names.discarded`
+* `caret::findLinearCombos()`
 
 
 * PLS / PCA
@@ -1510,6 +1513,25 @@ xyplot(creditLift)
 
 # Discriminant Analysis / Other Linear Classifiers
 
+```{r lda_data, eval=F}
+library(caret)
+library(doMC)
+registerDoMC(8)
+library(plyr)
+library(reshape2)
+
+load("~/tmp/apm/grantData.RData")
+
+pre2008Data <- training[pre2008,]
+year2008Data <- rbind(training[-pre2008,], testing)
+
+set.seed(345)
+test2008 <- createDataPartition(year2008Data$Class, p = .25)[[1]]
+
+allData <- rbind(pre2008Data, year2008Data[-test2008,])
+holdout2008 <- year2008Data[test2008,]
+```
+
 ## Logistic Regression
 
 When model residuals folloer a normal distribution, minimizing the sum of 
@@ -1525,6 +1547,71 @@ Where $p$ is the number of predictors.
 
 Logistic regression produces **linear** boundaries, unless the predictors used
 in the model are non-linear versions of the data (e.g. squared features).
+
+`rms` package has many relevant functions. See Harrell 2001 for details.
+
+```{r logit, eval=F}
+modelFit <- glm(Class ~ Day, 
+                data=training[pre2008, ],
+                # binominal for logistic regression
+                family = binomial)
+
+# glm() treats the second factor level as the event of interest, 
+# so to get class 1 probabilities, use 1 - results
+successProb <- 1 - predict(modelFit, type='response')
+
+# alternative is to use rms::lrm()
+library(rms)
+# rcs() - restricted cublic spline for fitting flexible nonlinear functions
+# of a predictor
+rcsFit <- lrm(Class ~ rcs(Day), data=training[pre2008, ])
+rcsFit
+
+dayProfile <- rms::Predict(rcsFit, 
+                           # predict first 365 samples
+                           Day=0:365, 
+                           # flip the prediction to get the model for 
+                           # successful grants
+                           fun=function(x) -x)
+
+# use train() for glm
+ctrl <- trainControl(method = "cv",
+                     summaryFunction = twoClassSummary,
+                     classProbs = TRUE,
+                     index = list(TestSet = 1:nrow(pre2008Data)),
+                     savePredictions = T)
+
+lrFull <- train(training[, fullSet], y=training$Class,
+                method='glm', 
+                metric='ROC',
+                trControl = ctrl)
+
+# fiting with reduced set has higher AUC
+lrReduced <- train(training[, reducedSet], y=training$Class,
+                method='glm', 
+                metric='ROC',
+                trControl = ctrl)
+lrReduced
+
+# hold out set predictions are saved in $pred
+lrReduced$pred
+
+# show confusion matrix for hold out set, norm = is form normalization
+confusionMatrix(lrReduced, norm = 'none')
+
+# AUC
+lrRoc <- roc(response = lrReduced$pred$obs,
+             predictor = lrReduced$pred$successful,
+             levels = rev(levels(lrReduced$pred$obs)))
+auc(lrRoc)
+plot(lrRoc)
+# use 1 - specificity for x axis:
+plot(lrRoc, legacy.axes=T)
+
+# variable importance
+lrImp <- varImp(lrReduced, scale = F)
+# plot(lrImp)
+```
 
 
 ## Linear Discriminant Analysis (LDA)
@@ -1572,6 +1659,27 @@ not be invertible.
 Authors recommends using **PLSDA** if there could be non-linear relationships 
 but don't know which predictors are involved.
 
+```{r lda, eval=F}
+# fit LDA model
+set.seed(476)
+ldaFit <- train(x = training[,reducedSet], 
+                y = training$Class,
+                method = "lda",
+                preProc = c("center","scale"),
+                metric = "ROC",
+                trControl = ctrl)
+ldaFit
+
+confusionMatrix(ldaFit, norm='none')
+
+ldaRoc <- roc(response=ldaFit$pred$obs,
+              predictor = ldaFit$pred$successful,
+              level = rev(levels(ldaFit$pred$obs)))
+auc(ldaRoc)
+plot(lrRoc, type='s', col=rgb(.2, .2, .2, .2))
+plot(ldaRoc, add=T, type='s')
+```
+
 
 ## Partial Least Square Discriminant Analysis
 
@@ -1605,6 +1713,79 @@ probabilities, **advantage** is that prior probabilities can be specified.
 
 Feature importance values can be computed.
 
+```{r plsda, eval=F}
+set.seed(476)
+plsFit <- train(x = training[,fullSet], 
+                y = training$Class,
+                method = "pls",
+                tuneGrid = expand.grid(ncomp = 1:10),
+                preProc = c("center","scale"),
+                metric = "ROC",
+                probMethod = "Bayes",
+                trControl = ctrl)
+plsFit
+
+plsImpGrant <- varImp(plsFit, scale=F)
+plot(plsImpGrant, top=20)
+
+## Only keep the final tuning parameter data
+plsFit$pred <- merge(plsFit$pred,  plsFit$bestTune)
+
+plsRoc <- roc(response = plsFit$pred$obs,
+              predictor = plsFit$pred$successful,
+              levels = rev(levels(plsFit$pred$obs)))
+auc(plsRoc)
+
+bestPlsNcomp <- plsFit$results[best(plsFit$results, "ROC", maximize = TRUE), "ncomp"]
+bestPlsROC <- plsFit$results[best(plsFit$results, "ROC", maximize = TRUE), "ROC"]
+
+plsCM <- confusionMatrix(plsFit, norm = 'none')
+
+# now fit reduced set
+plsFit2 <- train(x = training[,reducedSet], 
+                 y = training$Class,
+                 method = "pls",
+                 tuneGrid = expand.grid(ncomp = 1:10),
+                 preProc = c("center","scale"),
+                 metric = "ROC",
+                 probMethod = "Bayes",
+                 trControl = ctrl)
+plsFit2
+
+bestPlsNcomp2 <- plsFit2$results[best(plsFit2$results, "ROC", maximize = TRUE), "ncomp"]
+bestPlsROC2 <- plsFit2$results[best(plsFit2$results, "ROC", maximize = TRUE), "ROC"]
+
+plsFit2$pred <- merge(plsFit2$pred,  plsFit2$bestTune)
+
+plsRoc2 <- roc(response = plsFit2$pred$obs,
+               predictor = plsFit2$pred$successful,
+               levels = rev(levels(plsFit2$pred$obs)))
+auc(plsRoc2)
+
+plsCM2 <- confusionMatrix(plsFit2, norm = "none")
+plsCM2
+
+pls.ROC <- cbind(plsFit$results,Descriptors="Full Set")
+pls2.ROC <- cbind(plsFit2$results,Descriptors="Reduced Set")
+
+plsCompareROC <- data.frame(rbind(pls.ROC,pls2.ROC))
+
+xyplot(ROC ~ ncomp,
+       data = plsCompareROC,
+       xlab = "# Components",
+       ylab = "ROC (2008 Hold-Out Data)",
+       auto.key = list(columns = 2),
+       groups = Descriptors,
+       type = c("o", "g"))
+
+## Plot ROC curves and variable importance scores
+plot(ldaRoc, type = "s", col = rgb(.2, .2, .2, .2), legacy.axes = TRUE)
+plot(lrRoc, type = "s", col = rgb(.2, .2, .2, .2), add = TRUE, legacy.axes = TRUE)
+plot(plsRoc2, type = "s", add = TRUE, legacy.axes = TRUE)
+
+plot(plsImpGrant, top=20, scales = list(y = list(cex = .95)))
+```
+
 ## Penalized Models
 
 For logistic regression, `L2` penalty can be added to maximizing log likelihood:
@@ -1617,9 +1798,337 @@ stabilize the logistic regression model coefficients in these cases.
 
 `glmnet` package uses elastic net style penalty. p303 for equation.
 
+```{r glm_reg, eval=F}
+glmnGrid <- expand.grid(alpha = c(0,  .1,  .2, .4, .6, .8, 1),
+                        lambda = seq(.01, .2, length = 40))
+set.seed(476)
+glmnFit <- train(x = training[,fullSet], 
+                 y = training$Class,
+                 method = "glmnet",
+                 tuneGrid = glmnGrid,
+                 preProc = c("center", "scale"),
+                 metric = "ROC",
+                 trControl = ctrl)
+glmnFit
+
+glmnet2008 <- merge(glmnFit$pred,  glmnFit$bestTune)
+glmnetCM <- confusionMatrix(glmnFit, norm = "none")
+glmnetCM
+
+glmnetRoc <- roc(response = glmnet2008$obs,
+                 predictor = glmnet2008$successful,
+                 levels = rev(levels(glmnet2008$obs)))
+auc(glmnetRoc)
+
+glmnFit0 <- glmnFit
+glmnFit0$results$lambda <- format(round(glmnFit0$results$lambda, 3))
+
+glmnPlot <- plot(glmnFit0,
+                 plotType = "level",
+                 cuts = 15,
+                 scales = list(x = list(rot = 90, cex = .65)))
+
+update(glmnPlot,
+       ylab = "Mixing Percentage\nRidge <---------> Lasso",
+       sub = "",
+       main = "Area Under the ROC Curve",
+       xlab = "Amount of Regularization")
+
+plot(plsRoc2, type = "s", col = rgb(.2, .2, .2, .2), legacy.axes = TRUE)
+plot(ldaRoc, type = "s", add = TRUE, col = rgb(.2, .2, .2, .2), legacy.axes = TRUE)
+plot(lrRoc, type = "s", col = rgb(.2, .2, .2, .2), add = TRUE, legacy.axes = TRUE)
+plot(glmnetRoc, type = "s", add = TRUE, legacy.axes = TRUE)
+
+```
+
 ## Code
 
 Package list: `glmnet`, `pamr`, `pls`, `pROC`, `rms`, `sparseLDA`, `subselect`
 
 `grantData.RData` can be created using a script that comes with this book's
 package.
+
+`caret::twoClassSummary()` computes ROC for two-class tasks.
+
+`caret::train()` notes:
+
+  * By default, accuracy and Kappa statistic are used to evaluate classification
+  models.
+  * Can use ROC as a evaluation metric by using `metric = 'ROC'`. 
+  * By default `train` only generates class predictions. use `classProbs=T` 
+  if probabilities are needed.
+  
+```{r sparseLDA, eval=F}
+## Sparse logistic regression
+## Package: sparseLDA, PenalizedLDA
+## main function: sparseLDA::sda, tuning parameter lambda
+
+set.seed(476)
+spLDAFit <- train(x = training[,fullSet], 
+                  y = training$Class,
+                  "sparseLDA",
+                  tuneGrid = expand.grid(lambda = c(.1),
+                                         NumVars = c(1:20, 50, 75, 100, 250, 500, 750, 1000)),
+                  preProc = c("center", "scale"),
+                  metric = "ROC",
+                  trControl = ctrl)
+spLDAFit
+
+spLDA2008 <- merge(spLDAFit$pred,  spLDAFit$bestTune)
+spLDACM <- confusionMatrix(spLDAFit, norm = "none")
+spLDACM
+
+spLDARoc <- roc(response = spLDA2008$obs,
+                predictor = spLDA2008$successful,
+                levels = rev(levels(spLDA2008$obs)))
+auc(spLDARoc)
+
+update(plot(spLDAFit, scales = list(x = list(log = 10))),
+       ylab = "ROC AUC (2008 Hold-Out Data)")
+
+plot(plsRoc2, type = "s", col = rgb(.2, .2, .2, .2), legacy.axes = TRUE)
+plot(glmnetRoc, type = "s", add = TRUE, col = rgb(.2, .2, .2, .2), 
+     legacy.axes = TRUE)
+plot(ldaRoc, type = "s", add = TRUE, col = rgb(.2, .2, .2, .2), 
+     legacy.axes = TRUE)
+plot(lrRoc, type = "s", col = rgb(.2, .2, .2, .2), add = TRUE, 
+     legacy.axes = TRUE)
+plot(spLDARoc, type = "s", add = TRUE, legacy.axes = TRUE)
+```
+
+```{r svm_class, eval=F}
+# LGOCV = Leave Group Out CV
+ctrl <- trainControl(method='LGOCV',
+                     summaryFunction = twoClassSummary, 
+                     classProbs = TRUE,
+                     index = list(TrainSet = pre2008),
+                     savePredictions = T)
+
+svmFit00 <- train(allData[,fullSet], allData$Class,
+                  method = "svmRadial",
+                  tuneGrid = svmrGrid,
+                  preProc = c("center", "scale"),
+                  metric = "ROC",
+                  trControl = ctrl00)
+```
+
+# Nonlinear Classification Models
+
+With a few exceptions such as FDA, the techniques described in this chapter
+can be adversely affected when a large number of predictors are 
+non-informative.
+
+## Nonlinear Discriminant Analysis
+
+### Quadratic and Regularized Discriminant Analysis
+
+* `MASS::qda()` for QDA
+* `rrcov::QdaCov()` - outlier resisant version for QDA
+* `klaR::rda()` for RDA
+
+QDA relaxes the LDA covariance assumption so that a class-specific covariance
+structure can be accommodated.
+
+Implication: 
+
+* decision boundaries now becomes quadratically curvilinear in 
+the predictor space.
+* data requirement is more stringent: class-specific covariance matrix
+need to be invertible, this means that the number of predictors must be less
+than the **number of samples within each class**.
+* predictors within each class must not have pathological levels of 
+**collinearity**.
+* if majority of the predictors in the data are categorical, QDA will only
+be able to model these as linear functions, limiting its effectiveness.
+
+In practice, data may be separated by structures somewhere between 
+**linear and quadratic** class boundaries. Hence the use of 
+**regularized** discriminant analysis, which is similar to elastic net and
+use both LDA and QDA with a **tuning parameter** $\lambda$. E.g. 
+
+$$ \hat{\Sigma}_l(\lambda) = \lambda \Sigma_l + (1 - \lambda) \Sigma $$
+
+Where:
+
+* $\Sigma_l$ is the covariance matrix of the $l$th class
+* $\Sigma$ is the pooled covariance matrix across all classes
+
+### Mixture Discriminant Analysis
+
+`mda::mda()`
+
+MDA allows each class to be represented by multiple multivariate normal 
+distributions. 
+
+These distributions may have different means, but like LDA, the covariance 
+structure are **assumed to be the same**.
+
+### Flexible Discriminant Analysis
+
+Hastie (1994) described a process where for $C$ classes, a set of $C$ linear
+regression models can be fit to binary class indicators and showed that
+the regression coefficients from these models can be post-processed to derive
+the discriminant coefficients. This forms the concept of FDA.
+
+Bagging FDA - authors stated that based on their experience, bagging FDA or
+MARS has a marignal impact on model performance, and increased number of
+terms diminishes the interpretation of the discriminant equation.
+
+`mda::fda()` for FDA, accepts formula interface, parameter `method` specifies
+the exact method for estimating the regression parameters.
+
+`earth` package fits MARS with a **wider range of options**, and can be used 
+together with `fda(..., method = earth)`. Other parameters for `earth()` can
+be passed to `fda()` which will pass them to `earth()`.
+
+`caret::train()` can fit FDA models with `method = 'fda'`. `caret:varImp()` 
+also works.
+
+### SVM
+
+Vapnik 1995 extended SVM to incorporate a cost parameter on the sum of the 
+training set points that are on the boundary or on the wrong side of the 
+boundary.
+
+Large cost values increase model complexity rather than restrain it. 
+When cost is **low**, model may **underfit** the data. When cost is 
+**too large**, the model may **overfit** the data.
+
+Platt (2000) described a way to post-process SVM output to estimate class
+probabilities.
+
+Alternatives are:
+
+* Least square SVM
+* Relevance vector machines
+* Import vector machines
+
+**Graph kernel** can directly relate the content of graph representation 
+to the model without deriving descripor variables.
+
+**String kernel** can use entire text of a document directly and has more 
+potential to find important relationships than the bag-of-words approach.
+
+SVM can be **adversely affected** by non-informative predictors.
+
+Most comprehensive implementation in `kernlab` package.
+
+* `ksvm()` takes `prob.model = TRUE` to estimate class probabilities with
+sigmoid function (Platt 2000). 
+* `class.weights` parameter assigns asymmetric cost to each class. Syntax is 
+to use **named vectors** of weights or costs. e.g. 
+`class.weights = c(successful = 1, unsuccessful = 5)`
+* class probabilities are not affected by `class.weights`
+* use `predict(model, newdata = ..., type = 'prob')` to predict class 
+probabilities.
+
+
+### KNN
+
+`caret::train(..., method='knn', ...)`
+
+New sample's predicted class is the class with the highest probability estimate
+of its neighbours.
+
+Prone to **overfitting** when $K$ is small.
+
+Book example revealed some numerical instability of KNN: as the number of 
+neighbours increases, the probability of ties also increases.
+
+### Naive Bayes
+
+Assumes that all of the predictors are **independent** of the others. Makes
+computation easier..
+
+Let $Y$ be the class variable and $X$ be the collections of predictor variables.
+
+Conditional probability with this assumption becomes:
+
+$$ Pr[X \mid Y = C_l] = \Omega_{j=1}^{P} Pr[X_j \mid Y = C_l] $$
+
+Probabilty density for each predictor is estimated from the data. When a new
+sample comes in, Bayes' rule is applied to compute $P[Y=C_l \mid X]$.
+
+Class prediction if the class with highest probability.
+
+If no **prior** is given, the convention is to use the observed proportions 
+from the training set to estimate the prior.
+
+Problem occurs for small sample set when one of the category has zero occurance.
+Because conditional probabilities are multiplied together, a zero from one
+predictor would coerce the posterior probability to zero.
+
+One method to avoid this issue is to use a **Laplace correction** or 
+**Laplace smoothing**, where the same correction factor, usually between 1 and
+2, is added to the numerator.
+
+For the denominator, the frequencies are increased by the correction factor
+times the number of values of the predictor.
+
+Ironically, class probabilities created by applying Bayes' rule in the normal
+fashion tend not to be well-calibrated. As the number of predictors increases,
+the posterior probabilities will become more extreme.
+
+See Kevin Murphy Machine Learning book p84 for a more detailed discussion on 
+Naive Bayes algorithm. The model had $C \times p$ parameters (not many compare
+to others), therefore is **relatively immune to overfitting**.
+
+Continuous predictors are modeled with Gaussian distribution.
+
+Binary predictors are modeled with Bernoulli distribution.
+
+* `e1071::naiveBayes()`
+* `klaR::NaiveBayes()`
+
+Both methods offer Laplace corrections (parameter `fL = ` for `klaR`), 
+but the version in `klaR` has the option of using conditional density estimate 
+that are more flexible.
+
+However, both methods treat binary variables as continuous. Therefore, 
+binary features need to be converted to **factors** with `factor()`
+
+```{r naivebayes, eval=F}
+### Section 13.6 Naive Bayes
+
+## Create factor versions of some of the predictors so that they are treated
+## as categories and not dummy variables
+
+factors <- c("SponsorCode", "ContractValueBand", "Month", "Weekday")
+nbPredictors <- factorPredictors[factorPredictors %in% reducedSet]
+nbPredictors <- c(nbPredictors, factors)
+nbPredictors <- nbPredictors[nbPredictors != "SponsorUnk"]
+
+nbTraining <- training[, c("Class", nbPredictors)]
+nbTesting <- testing[, c("Class", nbPredictors)]
+
+for(i in nbPredictors)
+{
+  if(length(unique(training[,i])) <= 15)
+  {
+    nbTraining[, i] <- factor(nbTraining[,i], 
+                              levels = paste(sort(unique(training[,i]))))
+    nbTesting[, i] <- factor(nbTesting[,i], 
+                             levels = paste(sort(unique(training[,i]))))
+  }
+}
+
+set.seed(476)
+nBayesFit <- train(x = nbTraining[,nbPredictors],
+                   y = nbTraining$Class,
+                   method = "nb",
+                   metric = "ROC",
+                   tuneGrid = data.frame(usekernel = c(TRUE, FALSE), fL = 2),
+                   trControl = ctrl)
+nBayesFit
+
+nBayesFit$pred <- merge(nBayesFit$pred,  nBayesFit$bestTune)
+nBayesCM <- confusionMatrix(nBayesFit, norm = "none")
+nBayesCM
+nBayesRoc <- roc(response = nBayesFit$pred$obs,
+                 predictor = nBayesFit$pred$successful,
+                 levels = rev(levels(nBayesFit$pred$obs)))
+nBayesRoc
+```
+
+# Classification Trees
+

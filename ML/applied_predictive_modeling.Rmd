@@ -948,7 +948,7 @@ For **tree** based gradient boosting, two parameters:
 2. depth of each tree, aka. **interation depth**
 
 Boosting applies a greedy strategy of choosing the optimal weak learner at each
-stage. The drawback is that it might not find the optimal global model and
+stage. The **drawback** is that it might not find the optimal global model and
 can overfit the training data.
 
 Remedy: regularization, only a fraction of the current predicted value is added
@@ -959,14 +959,14 @@ between 0 and 1.
 iteration: randomly sample a fraction of the training data to be used in 
 the current training iteration. This fraction can be tuned in CV.
 
-Variable importance for boosting is a function of the reduction in squared
+**Variable importance** for boosting is a function of the reduction in squared
 error: the improvment in squared error due to each predictor is summed within 
 each tree in the ensemble, then this improvment sum is averaged over the 
 ensemble to yield an overall importance value. 
 
-The importance profile for boosting has a much **steeper** slope than the on 
+The **importance profile** for boosting has a much **steeper** slope than the on 
 for random forest. This is due to the fact that the trees in boosting are 
-dependent on each other and therefore will have correlated structures as the
+dependent on each other and therefore will have **correlated structures** as the
 method follows by the gradient.
 
 ## Code
@@ -2132,3 +2132,155 @@ nBayesRoc
 
 # Classification Trees
 
+## Basics
+
+### Gini Index
+
+For $J$ classes each having probability $p_1, \cdots, p_J$:
+
+$$ G(p) = \sum_{i=1}^J p_i \sum_{k \neq i}^J p_k = 1 - \sum_{i=1}^J (p_i)^2 $$
+
+For two-class problems:
+
+$$
+\begin{aligned}
+p_1 + p_2 &= 1 \\
+G(p) &= p_1 (1 - p_1) + p_2 (1 - p_2) \\
+&= p_1 - p_1^2 + p_2 - p_2^2 \\
+&= 1 - p_1^2 - p_2^2 \\
+&= (p_1 + p_2)^2 - p_1^2 - p_2^2 \\
+&= 2 p_1 p_2
+\end{aligned}
+$$
+
+$G$ is minimized when either of the class probabilities is near 0, and 
+maximized when $p_1 = p_2$, in which case a node is **least pure**. 
+This makes sense as this case implies $p_1 = p_2 = .5$, i.e. class label is
+a coin toss.
+
+Before a split, a node's Gini index is 
+
+$$ Gini(\text{prior to split}) = 2 \frac{n_{1+}}{n}\frac{n_{2+}}{n} $$
+
+Where:
+
+* $n$ is the total number of samples that belong to this node
+* $n_{1+}$ is the number of samples that belong to **class 1** at this node
+* $n_{2+}$ is the number of samples that belong to **class 2** at this node
+
+After a split at this node, the Gini index of a node $A$ after the split 
+is the sum of the Gini indices of the $A$'s sub nodes, 
+**weighted** by the proportion of samples in the sub-nodes.
+
+$$
+\begin{aligned}
+Gini(\text{after split}) &= 2 \bigg( \frac{n_{+1}}{n} \times \frac{n_{11}}{n_{+1}}\frac{n_{12}}{n_{+1}} + \frac{n_{+2}}{n} \times \frac{n_{21}}{n_{+2}}\frac{n_{22}}{n_{+2}} \bigg) \\
+&= 2 \bigg( \frac{n_{11}}{n}\frac{n_{12}}{n_{+1}} +  \frac{n_{21}}{n}\frac{n_{22}}{n_{+2}} \bigg) 
+\end{aligned}
+$$
+Where:
+
+* $n_{11}$, $n_{12}$ are # of samples for class 1 and class 2 respectively for
+sub node 1
+* $n_{21}$, $n_{22}$ are # of samples for class 1 and class 2 respectively for
+sub node 2
+
+**Paritioning algorithms** examine nearly all split points, and selects the 
+split point value that **minimizes** the purity criterion.
+
+The tree is then pruned with **cost-complexity pruning**.
+
+Classification and regression trees can both handle missing data. In prediction,
+**surrogate splits** can be used in place of the split for which there are
+missing data.
+
+### Categorical Predictors for Trees
+
+Trees can group categorical predictors into either side of the split. To do 
+this, categorical predictors must be treated as an **ordered set of bits**:
+
+1. **Grouped categories**: each categorical predictor can be entered into 
+the model as a single entity so that the model decides how to group or split
+the values.
+2. **Independent categories**: categorical predictors are first decomposed 
+into binary dummy variables (one-hot), forcing binary splits.
+
+Which approach is more appropriate depends on the data and the model. p404.
+
+**Independent categories** tend to be **easier** to interpret for trees.
+
+### C4.5 based on Information Theory
+
+The quality of a split is measured by **information statistic**. For two-class
+problems:
+
+$$ info = - \big[ p\log_2(p) + (1-p)\log_2(1-p) \big] $$
+
+Using the $n$ notions above, before a split:
+
+$$ info(\text{before split}) = - \bigg[ \frac{n_{1+}}{n}\log_2\bigg(\frac{n_{1+}}{n}\bigg)\bigg] - \bigg[\frac{n_{2+}}{n}\log_2\bigg(\frac{n_{2+}}{n}\bigg) \bigg] $$
+
+The **information gain** after the split is:
+
+$$ gain(\text{split}) = info(\text{before split}) - info(\text{after split}) $$
+
+Tree is constructed by searching for the split that **maximizes** info gain.
+
+Information after the split is again the sum of informaton statistic of its
+sub-nodes, weighted by the proportions of samples in the sub nodes.
+
+For continuous predictors, there may be more or less unique values to consider 
+the split for different predictors. Info gain criteria is 
+**biased againstpredictors that have a large number of possible outcomes.**,
+i.e. would **favour** predictors with only a few distinct values over 
+continuous predictors. To correct this, **info gain ratio** is used.
+
+## Random Forest
+
+Breiman (2000) recommends setting $m_{try}$ to $\sqrt{P}$ where $P$ is the 
+number of predictors.
+
+Authors suggests tuning $m_{try}$ with 5 values that are somewhat evenly spaced
+across the range from 2 to $P$.
+
+## Boosting
+
+### AdaBoost
+
+Algo on p390. 
+
+For $k$ iterations, builds $k$ models. Samples are incorrectly classified
+in $i$th iteration receives more weight in $(i+1)$th iteration. 
+
+Each iteration of the algo is required to learn a different aspect of the data,
+focusing on regions that contain difficult-to-classify samples.
+
+**Stage weight** is computed based on mis-classification error rate at that 
+iteration:
+
+$$ \ln\big(\frac{1-err_k}{err_k}\big) $$
+
+Ad prediction time, multiply the $k$th stage value by the $k$th model 
+prediction and adding these across $k$, class label is based on the sign 
+of the summed value, i.e. +1 or -1.
+
+Since trees are low bias, high variance methods, boosting works well with 
+trees to reduce variance and arrive at a low bias, low variance model.
+
+### Stochastic Gradient Boosting
+
+Algo p14.3
+
+For grant data, boosting with **independent category predictors** performed
+uniformly better than **grouped category predictors**. This is likely because
+only one value of the many grouped category predictors contains meaningful
+predictive information.
+
+With **grouped categories**, increasing shrinkage parameters almost uniformly
+**degrades** predictive performance across tree depths. This implies that for
+grouped category predictors, boosting obtains most of its predictive info
+from **a moderately sized initial tree**.
+
+**Variable importance values** see secton for boosting for regression.
+
+## C5.0

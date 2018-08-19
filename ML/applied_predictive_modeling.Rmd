@@ -5,7 +5,7 @@ date: "25 July 2018"
 output: html_document
 ---
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Code snippets from this wonderful book's  `AppliedPredictiveModeling` package.
 
 ```{r setup, include=FALSE, eval=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -212,6 +212,8 @@ there may be numerical issues.
 
 Use `dummyVars()` to create one-hot encoding. Recommended to use the full
 set of dummy variables when working with tree-based models.
+
+Alternatively, use `model.matrix()`
 
 ```
 simpleMod <- dummyVars(~Mileage + Type, data=data, levelsOnly=TRUE)
@@ -1402,6 +1404,31 @@ different places or situations.
 proportion of correctly predicted samples for both the event and nonevent
 groups.
 
+**Matthew Correlation Coefficient** is related to Youden's $J$ index. It has
+a value between -1 and +1, and can be found in package `mccr`. 
+A value of +1 indicates perfect prediction, -1 means the worst possible, i.e.
+predicting everything wrong.
+It is defined, using terms from a confustion matrix, as:
+(if any of the 4 denominator sums is 0 then the MCC is set to 0.)
+
+$$ MCC = \frac{TP \times TN - FP \times FN}{\sqrt{(TP + FP)(TP + FN)(TN + FP)(TN + FN)}} $$
+
+$MCC$ has a generalized form to handle multi-class problems.
+`mccr:mccr()` only handles two-class problems, requires actual class labels 
+and predicted class labels, labels must be numeric, 1 for positive, 0 for
+negative. 
+
+```{r mcc, eval=F}
+
+library(mccr)
+
+# assuming fit.roc is is obtained by calling pROC::roc()
+act <- ifelse(fit.roc$pred$obs == 'successful', 1, 0)
+pred <- ifelse(fit.roc$pred$pred == 'successful', 1, 0)
+mccr(act, pred)
+```
+
+
 ## Non-Accuracy-Based Criteria
 
 Models should be fit for purpose. Need to consider the impact of the different
@@ -1463,6 +1490,7 @@ ROC multi-class extensions:
 library(pROC)
 creditROC <- roc(relevel(creditResults$obs, "Good"), creditResults$prob)
 
+# confidence interval for metrics can also be obtained, see ci.coords()
 coords(creditROC, "all")[,1:3]
 
 auc(creditROC)
@@ -1490,7 +1518,10 @@ The **lift** is the number of samples detected by a model above a completely
 random selection of samples.
 
 Lift chart plots the cumulative gain / lift against the cumulative % of samples
-that have been screened.
+that have been / need to be screened. E.g. a lift chart for a random forest
+model can be used to determine that in order to find `Y%` (y-axis) of those of 
+the event class with this model, `X%` (x-axis) of the population need to be 
+sampled.
 
 Steps:
 
@@ -1602,6 +1633,9 @@ confusionMatrix(lrReduced, norm = 'none')
 # AUC
 lrRoc <- roc(response = lrReduced$pred$obs,
              predictor = lrReduced$pred$successful,
+             # rev() reverses the input
+             # levels() takes a factor type array and returns the unique
+             # values / factors, like np.unique()
              levels = rev(levels(lrReduced$pred$obs)))
 auc(lrRoc)
 plot(lrRoc)
@@ -2134,6 +2168,63 @@ nBayesRoc
 
 ## Basics
 
+Classification tree package: `rpart`, `partykit` package to plot the model.
+
+Other packages:
+
+  * `party`
+  * `tree`
+  * `oblique.tree`
+  * `partDSA`
+  * `evtree` - trees developed with genetic algo.
+  * `LogicReg` for Logic Regression
+
+```{r rpart, eval=F}
+library(rpart)
+load('~/tmp/apm/grantData.RData')
+
+# fit a mode
+cartModel <- rpart(factorForm, data=training[pre2008,])
+
+# or use caret
+library(caret)
+
+# defines which data are in the holdout set and the perf measure
+ctrl <- trainControl(method = "LGOCV",
+                     summaryFunction = twoClassSummary,
+                     classProbs = TRUE,
+                     index = list(TrainSet = pre2008),
+                     savePredictions = TRUE)
+
+set.seed(476)
+# for J48 and C5.0 tree use method='J48' or 'C5.0Tree'
+rpartFit <- train(x = training[,fullSet], 
+                  y = training$Class,
+                  method = "rpart",
+                  tuneLength = 30,
+                  metric = "ROC",
+                  trControl = ctrl)
+rpartFit
+
+# plot tree
+library(partykit)
+plot(as.party(rpartFit$finalModel))
+
+# confustion matrix
+rpart2008 <- merge(rpartFit$pred,  rpartFit$bestTune)
+rpartCM <- confusionMatrix(rpartFit, norm = "none")
+rpartCM
+
+library(pROC)
+rpartRoc <- roc(response = rpartFit$pred$obs,
+                predictor = rpartFit$pred$successful,
+                levels = rev(levels(rpartFit$pred$obs)))
+rpartRoc
+
+# variable importance
+varImp(rpartFit)
+```
+
 ### Gini Index
 
 For $J$ classes each having probability $p_1, \cdots, p_J$:
@@ -2211,6 +2302,8 @@ Which approach is more appropriate depends on the data and the model. p404.
 
 ### C4.5 based on Information Theory
 
+Package `RWeka`, use `caret::train(..., method='J48', ...)`.
+
 The quality of a split is measured by **information statistic**. For two-class
 problems:
 
@@ -2235,13 +2328,170 @@ the split for different predictors. Info gain criteria is
 i.e. would **favour** predictors with only a few distinct values over 
 continuous predictors. To correct this, **info gain ratio** is used.
 
+Notes for code:
+
+* `caret::bag()` creates bagging models more generally, i.e. other than just
+trees.
+
+```{r treebag, eval=F}
+library(doMC)
+registerDoMC(10)
+
+# bagging trees
+set.seed(476)
+treebagFit <- train(x = training[,fullSet], 
+                    y = training$Class,
+                    method = "treebag",
+                    nbagg = 50,
+                    metric = "ROC",
+                    trControl = ctrl)
+treebagFit
+
+treebag2008 <- merge(treebagFit$pred,  treebagFit$bestTune)
+treebagCM <- confusionMatrix(treebagFit, norm = "none")
+treebagCM
+
+treebagRoc <- roc(response = treebagFit$pred$obs,
+                  predictor = treebagFit$pred$successful,
+                  levels = rev(levels(treebagFit$pred$obs)))
+treebagRoc
+
+set.seed(476)
+treebagFactorFit <- train(x = training[,factorPredictors], 
+                          y = training$Class,
+                          method = "treebag",
+                          nbagg = 50,
+                          metric = "ROC",
+                          trControl = ctrl)
+treebagFactorFit
+
+treebagFactor2008 <- merge(treebagFactorFit$pred,  treebagFactorFit$bestTune)
+treebagFactorCM <- confusionMatrix(treebagFactorFit, norm = "none")
+treebagFactorCM
+
+treebagFactorRoc <- roc(response = treebagFactorFit$pred$obs,
+                        predictor = treebagFactorFit$pred$successful,
+                        levels = rev(levels(treebagFactorFit$pred$obs)))
+treebagFactorRoc
+
+plot(rpartRoc, type = "s", col = rgb(.2, .2, .2, .2), legacy.axes = TRUE)
+plot(j48FactorRoc, type = "s", add = TRUE, col = rgb(.2, .2, .2, .2), 
+     legacy.axes = TRUE)
+plot(treebagRoc, type = "s", add = TRUE, print.thres = c(.5), 
+     print.thres.pch = 3, legacy.axes = TRUE, print.thres.pattern = "", 
+     print.thres.cex = 1.2,
+     col = "red", print.thres.col = "red")
+plot(treebagFactorRoc, type = "s", add = TRUE, print.thres = c(.5), 
+     print.thres.pch = 16, print.thres.pattern = "", legacy.axes = TRUE, 
+     print.thres.cex = 1.2)
+legend(.75, .2,
+       c("Grouped Categories", "Independent Categories"),
+       lwd = c(1, 1),
+       col = c("black", "red"),
+       pch = c(16, 3))
+```
+
 ## Random Forest
 
 Breiman (2000) recommends setting $m_{try}$ to $\sqrt{P}$ where $P$ is the 
 number of predictors.
 
 Authors suggests tuning $m_{try}$ with 5 values that are somewhat evenly spaced
-across the range from 2 to $P$.
+across the range from 2 to $P$. This is **different** to regression.
+
+Notes for code:
+
+* parameter `cutoff` controls the voting cutoff(s) for determining the 
+winning clas.
+* `predict()` for random forests takes `type=prob|vote`, which returns either
+class probability or actual vote count.
+* with the fitted model, `class.error` shows out of bag estimate of sensitivity
+and false positive rate (1 - specificity).
+* `caret::train()` takes `method='rf'` for random forests
+* other packages: 
+  * `party::cforest`
+  * `obliqueRF::obliqueRF()` 
+  * `rFerns::rFerns`
+  * `RRF::RRF()` for regularized RF
+
+
+
+```{r rfclass, eval=F}
+### For the book, this model was run with only 500 trees (by
+### accident). More than 1000 trees usually required to get consistent
+### results.
+
+mtryValues <- c(5, 10, 20, 32, 50, 100, 250, 500, 1000)
+set.seed(476)
+rfFit <- train(x = training[,fullSet], 
+               y = training$Class,
+               method = "rf",
+               ntree = 500,
+               tuneGrid = data.frame(mtry = mtryValues),
+               importance = TRUE,
+               metric = "ROC",
+               trControl = ctrl)
+rfFit
+
+rf2008 <- merge(rfFit$pred,  rfFit$bestTune)
+rfCM <- confusionMatrix(rfFit, norm = "none")
+rfCM
+
+rfRoc <- roc(response = rfFit$pred$obs,
+             predictor = rfFit$pred$successful,
+             levels = rev(levels(rfFit$pred$obs)))
+rfRoc
+
+gc()
+
+## The randomForest package cannot handle factors with more than 32
+## levels, so we make a new set of predictors where the sponsor code
+## factor is entered as dummy variables instead of a single factor. 
+
+sponsorVars <- grep("Sponsor", names(training), value = TRUE)
+sponsorVars <- sponsorVars[sponsorVars != "SponsorCode"]
+
+rfPredictors <- factorPredictors
+rfPredictors <- rfPredictors[rfPredictors != "SponsorCode"]
+rfPredictors <- c(rfPredictors, sponsorVars)
+
+set.seed(476)
+rfFactorFit <- train(x = training[,rfPredictors], 
+                     y = training$Class,
+                     method = "rf",
+                     ntree = 1500,
+                     tuneGrid = data.frame(mtry = mtryValues),
+                     importance = TRUE,
+                     metric = "ROC",
+                     trControl = ctrl)
+rfFactorFit
+
+rfFactor2008 <- merge(rfFactorFit$pred,  rfFactorFit$bestTune)
+rfFactorCM <- confusionMatrix(rfFactorFit, norm = "none")
+rfFactorCM
+
+rfFactorRoc <- roc(response = rfFactorFit$pred$obs,
+                   predictor = rfFactorFit$pred$successful,
+                   levels = rev(levels(rfFactorFit$pred$obs)))
+rfFactorRoc
+
+plot(treebagRoc, type = "s", col = rgb(.2, .2, .2, .2), legacy.axes = TRUE)
+plot(rpartRoc, type = "s", add = TRUE, col = rgb(.2, .2, .2, .2), legacy.axes = TRUE)
+plot(j48FactorRoc, type = "s", add = TRUE, col = rgb(.2, .2, .2, .2), 
+     legacy.axes = TRUE)
+plot(rfRoc, type = "s", add = TRUE, print.thres = c(.5), 
+     print.thres.pch = 3, legacy.axes = TRUE, print.thres.pattern = "", 
+     print.thres.cex = 1.2,
+     col = "red", print.thres.col = "red")
+plot(rfFactorRoc, type = "s", add = TRUE, print.thres = c(.5), 
+     print.thres.pch = 16, print.thres.pattern = "", legacy.axes = TRUE, 
+     print.thres.cex = 1.2)
+legend(.75, .2,
+       c("Grouped Categories", "Independent Categories"),
+       lwd = c(1, 1),
+       col = c("black", "red"),
+       pch = c(16, 3))
+```
 
 ## Boosting
 
@@ -2283,4 +2533,387 @@ from **a moderately sized initial tree**.
 
 **Variable importance values** see secton for boosting for regression.
 
+Notes for code:
+
+* `gbm` can only accommodate two class problems and using 
+`distribution=bernoulli|adaboost`
+* `predict(gbmModel, type = 'response')` computes class probability for the 
+class encoded as `1`.
+
+```{r boost_class, eval=F}
+gbmGrid <- expand.grid(interaction.depth = c(1, 3, 5, 7, 9),
+                       n.trees = (1:20)*100,
+                       shrinkage = c(.01, .1))
+
+set.seed(476)
+gbmFit <- train(x = training[,fullSet], 
+                y = training$Class,
+                method = "gbm",
+                tuneGrid = gbmGrid,
+                metric = "ROC",
+                verbose = FALSE,
+                trControl = ctrl)
+gbmFit
+
+gbmFit$pred <- merge(gbmFit$pred,  gbmFit$bestTune)
+gbmCM <- confusionMatrix(gbmFit, norm = "none")
+gbmCM
+
+gbmRoc <- roc(response = gbmFit$pred$obs,
+              predictor = gbmFit$pred$successful,
+              levels = rev(levels(gbmFit$pred$obs)))
+
+set.seed(476)
+gbmFactorFit <- train(x = training[,factorPredictors], 
+                      y = training$Class,
+                      method = "gbm",
+                      tuneGrid = gbmGrid,
+                      verbose = FALSE,
+                      metric = "ROC",
+                      trControl = ctrl)
+gbmFactorFit
+
+# convert class probabilities to class prediction factor variables
+gbmPred <- predict(gbmFactorFit, 
+                   newdata = head(training[-pre2008,]),
+                   type = 'response',
+                   n.trees = 1400)
+gbmClass <- ifelse(gbmPred > .5, 'successful', 'unsuccessful')
+gbmClass <- factor(gbmClass, levels = levels(training$Class))
+gbmClass
+
+gbmFactorFit$pred <- merge(gbmFactorFit$pred,  gbmFactorFit$bestTune)
+gbmFactorCM <- confusionMatrix(gbmFactorFit, norm = "none")
+gbmFactorCM
+
+gbmFactorRoc <- roc(response = gbmFactorFit$pred$obs,
+                    predictor = gbmFactorFit$pred$successful,
+                    levels = rev(levels(gbmFactorFit$pred$obs)))
+
+gbmROCRange <- extendrange(cbind(gbmFactorFit$results$ROC,gbmFit$results$ROC))
+
+plot(gbmFactorFit, ylim = gbmROCRange, 
+     auto.key = list(columns = 4, lines = TRUE))
+
+
+plot(gbmFit, ylim = gbmROCRange, 
+     auto.key = list(columns = 4, lines = TRUE))
+
+
+plot(treebagRoc, type = "s", col = rgb(.2, .2, .2, .2), legacy.axes = TRUE)
+plot(rpartRoc, type = "s", add = TRUE, col = rgb(.2, .2, .2, .2), 
+     legacy.axes = TRUE)
+plot(j48FactorRoc, type = "s", add = TRUE, col = rgb(.2, .2, .2, .2), 
+     legacy.axes = TRUE)
+plot(rfFactorRoc, type = "s", add = TRUE, col = rgb(.2, .2, .2, .2), 
+     legacy.axes = TRUE)
+plot(gbmRoc, type = "s", print.thres = c(.5), print.thres.pch = 3, 
+     print.thres.pattern = "", print.thres.cex = 1.2,
+     add = TRUE, col = "red", print.thres.col = "red", legacy.axes = TRUE)
+plot(gbmFactorRoc, type = "s", print.thres = c(.5), print.thres.pch = 16, 
+     legacy.axes = TRUE, print.thres.pattern = "", print.thres.cex = 1.2,
+     add = TRUE)
+legend(.75, .2,
+       c("Grouped Categories", "Independent Categories"),
+       lwd = c(1, 1),
+       col = c("black", "red"),
+       pch = c(16, 3))
+```
+
+
 ## C5.0
+
+See book. 
+
+```{r c5, eval=F}
+c50Grid <- expand.grid(trials = c(1:9, (1:10)*10),
+                       model = c("tree", "rules"),
+                       winnow = c(TRUE, FALSE))
+set.seed(476)
+c50FactorFit <- train(training[,factorPredictors], training$Class,
+                      method = "C5.0",
+                      tuneGrid = c50Grid,
+                      verbose = FALSE,
+                      metric = "ROC",
+                      trControl = ctrl)
+c50FactorFit
+
+c50FactorFit$pred <- merge(c50FactorFit$pred,  c50FactorFit$bestTune)
+c50FactorCM <- confusionMatrix(c50FactorFit, norm = "none")
+c50FactorCM
+
+c50FactorRoc <- roc(response = c50FactorFit$pred$obs,
+                    predictor = c50FactorFit$pred$successful,
+                    levels = rev(levels(c50FactorFit$pred$obs)))
+```
+
+## Code
+
+Some notes on how the predictors were pre-processed.
+
+```{r factor, eval=F}
+fullSet <- names(training)[names(training) != "Class"]
+
+###################################################################
+### In the classification tree chapter, there is a different set
+### of predictors that use factor encodings of some of the 
+### predictors
+
+factorPredictors <- names(training)[names(training) != "Class"]
+factorPredictors <- factorPredictors[!grepl("Sponsor[0-9]", factorPredictors)]
+factorPredictors <- factorPredictors[!grepl("SponsorUnk", factorPredictors)]
+factorPredictors <- factorPredictors[!grepl("ContractValueBand[A-Z]", factorPredictors)]
+factorPredictors <- factorPredictors[!grepl("GrantCat", factorPredictors)]
+factorPredictors <- factorPredictors[!(factorPredictors %in% levels(training$Month))]
+factorPredictors <- factorPredictors[!(factorPredictors %in% levels(training$Weekday))]
+
+# how to create a formula from paste
+factorForm <- paste("Class ~ ", paste(factorPredictors, collapse = "+"))
+factorForm <- as.formula(factorForm)
+```
+
+
+# Remedies for Severe Class Imbalance
+
+Implications from severe class imbalance: models achieve **good specificity**, 
+but have **poor sensitivity**.
+
+When classes are **balanced**, lift charts and ROC curves are not so similar
+to each other. When they are similiar, it may be a sign of class imbalance.
+Maximum area in a lift chart is bounded by the event rate, whereas ROC curve is 
+not.
+
+General approaches to deal with class imbalance:
+
+* tune model parameters
+* post processing of model predictions
+* modification of case weights and prior probabilities.
+* Resampling of training data to create more balanced classes
+
+## Model Tuning
+
+This is essentially finding the right trade-off between sensitivity and FPR on
+the ROC curve. 
+
+## Alternate Cutoffs
+
+`pROC::coords()` returns the points on the ROC curve as well as driving 
+new cutoffs. Parameters
+
+* `x='best'`
+* `best.method = 'youden | closest.topleft'`
+* returns associated threshold
+
+Determine alternative cutoff for class probabilities. 
+
+Most straight forward way is to use the ROC curve. This is post-processing, 
+so use the fitted model with different cutoffs, the plot a ROC curve these
+iterations. 
+
+Ways to determine the new cutoff:
+
+1. if there is a target for sensitivity or specificity
+2. find the point on the ROC curve that is closest (shortest distance) to the
+perfect model (100% sensitifity and 100% specificity), i.e. upper left corner.
+3. Use Youden's $J$ index, compute the index for different cutoff values, use
+the one cutoff that has the highest Youden's $J$. (for RF models, 3 is similar
+to 2.)
+
+It is **important**, especially for small sample size, to use an **independent** 
+data set to derive the cutoff. Not training, not test set.
+
+If **training** set is used, there is likely a **large optimistic bias** in 
+the class probabilities that leads to inaccurate assessments of the 
+sensitivity and specificity.
+
+If **test** set is used, it is no longer an **unbiased** source to judge model
+performance.
+
+Main impact of using an alternative cutoff is to make trade-off between 
+particular types of errors. (Only move samples up and down rows of the
+confusion matrix, **not** from diagnal to off-diagnal).
+
+## Adjusting Prior Probabilities
+
+For naive Bayes, or discriminant analysis, and models that use prior.
+
+Weiss and Provost (2001a) suggest that priors that reflect the natural class
+imbalance will materially **bias** predictions to the **major** class.
+
+Use more **balanced** prior or a balanced training set may help deal with 
+class imbalance.
+
+## Unequal Class Weights
+
+E.g. **Case weights** for boosting methods.
+
+## Resampling 
+
+Up-sample: any method that **adds** additional data to balance the classes.
+E.g. resample the minority class with replacements.
+
+Down-sample: any methods that **reduces** the data size to balance the classes.
+
+If the training set is **sampled** to be balanced, the test set should be 
+sampled to be **more consistent** with the state of the nature and should 
+reflect the imbalance so that **honest** estimates of future performance can be
+computed.
+
+Down-sampling approaches:
+
+* randomly sample major classes so that all classes have approx. the same size.
+* take a bootstrap sample across all classes such that they are balanced. 
+**Advantage** of this approach is that the bootstrap selection can be run 
+many times so that the estimate of variance can be obtained about the 
+down-sampling.
+
+One implementation of random forest can use a class specified as the 
+**stratification variable**, to bootstrap samples roughtly the same size per 
+class.
+
+`caret::downSample()` and `caret::upSample()`
+
+**SMOTE**, synthetic minority over-sampling technique, uses KNN nearest K 
+neighbours of a randomly chosen sample to impute new cases. Three parameters:
+
+* amount of up-sampling
+* amount of down-sampling
+* $K$ neighbours used to impute new cases (random combinations of this sample's 
+and its neighbours' predictors)
+
+`smoteTrain <- DMwR::SMOTE(y ~ ., data=training)` 
+
+When using **modified versions** of the training set, resampled estimates of 
+model performance can become **biased**.
+
+Resample can help with class imbalance issues, but no approach is a clear 
+winner based on current research.
+
+## Cost-Sensitivy Training
+
+For SVM, costs can be associated with specific classes. However, class 
+probablilities cannot be generated when this is done (at least in current
+version). Use `class.weights=` parameter in `kernlab::ksvm`.
+
+
+```{r, eval=F}
+svmWtFit <- train(CARAVAN ~ .,
+                  data = trainingInd[, noNZVSet],
+                  method = "svmRadial",
+                  tuneGrid = svmGrid1,
+                  preProc = c("center", "scale"),
+                  metric = "Kappa",
+                  class.weights = c(insurance = 18, noinsurance = 1),
+                  trControl = ctrlNoProb)
+svmWtFit
+```
+
+Tree models can use different costs. When unequal costs are used, class
+probabilities might not be consistent with the discrete class predictions. 
+The final class prediction for a sample is a function of the 
+**class probability and the cost structure**, so 
+**class probablities should not be used** to reflect confidence.
+
+For CART models in `rpart` package, use `parms=` parameter to provide more
+fitting options. One option is to use `loss`. 
+
+```{r, eval=F}
+library(rpart)
+
+cmat <- list(loss = matrix(c(0, 1, 20, 0), ncol = 2))
+
+cartWMod <- train(x = training[,predictors],
+                  y = training$CARAVAN,
+                  method = "rpart",
+                  trControl = ctrlNoProb,
+                  tuneGrid = rpartGrid,
+                  metric = "Kappa",
+                  parms = cmat)
+```
+
+`C5.0` trees are similar but uses a transposed version of the cost matrix.
+
+```{r, eval=F}
+library(C50)
+
+finalCost <- matrix(c(0, 20, 1, 0), ncol = 2)
+rownames(finalCost) <- colnames(finalCost) <- levels(training$CARAVAN)
+
+C5CostFit <- train(training[, predictors],
+                   training$CARAVAN,
+                   method = "C5.0",
+                   metric = "Kappa",
+                   tuneGrid = c5Grid,
+                   cost = finalCost,
+                   control = C5.0Control(earlyStopping = FALSE),
+                   trControl = ctrlNoProb)
+```
+
+**Useful Plots**: 
+
+* plot cost weights versus Kappa
+* plot cost weights versus Sensitivity and Specificity.
+
+
+# Measuring Predictor Importance
+
+## Numerical Response / Outcome
+
+**LOESS**, locally weighted regression, based on a series polynominal 
+regressions that model the data in small neighbourhoods. It is effective at
+creating smooth regression trends that are extremely adaptive. 
+A pseudo-$R^2$ can be calculated from the residuals.
+
+Drawbacks for univariate measures such as correlation with outcome:
+
+* If two predictors are highly correlated with the response and with each other,
+then the univariate approach will identify both as important.
+* will fail to identify groups of predictors that together have a strong 
+relationship with the outcome.
+
+**t-statistic** is used to comparing the mean of two troups, It is essentially
+a signal to noise ratio. If the signal is large enough, the model may be able
+to overcome the noise.
+
+`t.test` assumes that the data are **normally distributed**. 
+If this is violated, use other methods such as **Wilcoxon rank sum test**. 
+
+For binary predictors with continuous outcome, outcome is divided into two 
+groups indicated by the binary predictor, means fo reach group is computed, 
+`t.test` is applied to test the difference in means.
+
+```{r t.stat, eval=F}
+# FP044 is a binary predictor, unique values {0, 1}
+levels(factor(solTrainXtrans$FP044))
+
+# test a single predictor
+t.test(solTrainY ~ solTrainXtrans$FP044)
+
+# test all predictors with apply()
+getTstats <- function(x, y)
+{
+  tStats <- t.test(y ~ x)[c("statistic", "p.value", "estimate")]
+  unlist(tStats)
+}
+tVals <- apply(solTrainXtrans[, fpCols],
+               MARGIN = 2,
+               FUN = getTstats,
+               y = solTrainY)
+# transpose
+tVals <- t(tVals)
+```
+
+**Volcano plot** for continuous response / outcome
+
+* x-axis shows differences of mean values of different groups of outcome,
+e.g. for each predictor, separate them into groups based on the outcome, 
+compute mean for each group, then compute the difference between the groups.
+* y-axis shows `-log(p-values)`, higher in the chart means smaller p-value.
+
+When predictor has more than two values, i.e. not binary, ANOVA model can be 
+used. Next step is to find which means are different, therefore it's useful
+to create dummy binary variables and apply `t.test` described above.
+
+## Categorical Outcome
+
+

@@ -21,3 +21,10 @@ klaR
 rms
 sparseLDA
 subselect
+rpart
+RWeka
+C50
+minerva
+ModelMetrics
+mccr
+CORElearn

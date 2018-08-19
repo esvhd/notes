@@ -631,6 +631,13 @@ To install `R` package `edgarWebR`, need to install `libxml2-dev`:
 
     sudo apt-get install libxml2-dev
 
+To link Java with R, run the following:
+
+```
+umask 022
+sudo R CMD javareconf
+```
+
 ### TA-Lib
 
 Need to install `TA-Lib` c libraries first. Follow instructions on [github](https://github.com/mrjbq7/ta-lib).

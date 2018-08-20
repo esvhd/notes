@@ -377,7 +377,8 @@ differentiated in terms of **sensitivity** than for **specificity**.
 
 ## Parameter Tuning
 
-Examples below.
+Examples below. For a ful list of `trainControl()` `method=`, 
+see [here](https://topepo.github.io/caret/model-training-and-tuning.html#control).
 
 ```{r resample, eval=FALSE}
 data(GermanCredit)
@@ -814,6 +815,34 @@ See Weakness sector for more disadvantages.
 * GUIDE
 * conditional inference trees
 
+Packages: `rpart`, `party`, `partykit`
+
+### Single Rree Code
+
+* `rpart::rpart()` - fits w/ CART
+* `party::ctree()` - fits w/ conditional inference trees
+
+```{r trees, eval=FALSE}
+library(rpart)
+library(party)
+# Turning for rpart() is through paramter `rpart.control`
+# for party::ctree() this is through `ctree_control`
+
+# Or, via train() to tune both complexity parameter and max node depth.
+# method = 'rpart' to tune over complexity parameter
+# method = 'rpart2' to tune over max node depth.
+# method = 'ctree' to tune mincriterion
+# method = 'ctree2' to tune over max node depth.
+rpartTuned <- train(solTrainY ~ ., data = solTrainXtrans,
+                    method='rpart2', tuneLength=10,
+                    trControl = trainControl(method = 'cv'))
+
+library(partykit)
+# plot tree
+rpartTree2 <- as.party(rpartTree)
+plot(rpartTree2)
+```
+
 ## Regression Model Trees
 
 `RWeka::M5P()` for trees
@@ -854,6 +883,19 @@ sample size, is lower than in the presplit data.
 
 See p185 for more details on tree construction.
 
+### Model Trees Code
+
+Packages: `RWeka`
+
+`M5` model trees: `RWeka::M5P()` with formula interface. For `train()`,
+use parameters:
+
+* `method='M5'`
+* `control = Weka_control(M = 10)` sets minimum number of training set points
+required to create additional splits, default is 4.
+
+`M5` results can be plotted by calling `plot(model)`.
+
 ## Rule-Based Model
 
 p190
@@ -888,6 +930,19 @@ and boosting.
 
 1. high computational cost and memory requirement
 2. bagged model is less intrepretable.
+
+### Bagging Code
+
+* `ipred::bagging()` - formula interface
+* `ipred::ipredbagg()` - non-formula interface
+
+Other ways:
+
+* `RWeka::Bagging()`
+* `caret::bag()` - general framework that works for many models
+* `party::cforest()` - Conditional inference trees, with parameter:
+`controls = cforest_control(mtry = ncol(trainData) - 1)` to set 
+$m_{try} = \text{# of predictors}$.
 
 ## Random Forest
 
@@ -924,6 +979,67 @@ measure.
 RF and single tree such as CART may have very different ordering of feature
 importance, this highlights that a single tree's greediness prioritize 
 predictors differently than a RF.
+
+### RF Code
+
+Package: `randomForest::randomForest()`
+
+Parameters:
+
+* `mtry` - number of predictors that are randomly sampled as candidates for 
+each split. Default is # of predictors / 3.
+* `ntree` - # of bootstrap samples. Default 500, but should use at least 1000.
+* `importance` - default is FALSE. First set to `TRUE` then call 
+`randomForest::importance(..., type=1, scale=F)` to get the right importance 
+values.
+
+For `caret::train()`: `method = 'rf'` or `'cforest'`
+
+For `cforest` objects, variable importance can be obtained by calling
+`party::varimp()`
+
+`caret::varImp()` has a **unified wrapper** that works for tree-models from:
+`rpart`, `classbagg` produced by `ipred`'s bagging, `randomForest`, 
+`cforest`, `gbm`, and `cubist`
+
+```{r reg_rf, eval=F}
+library(AppliedPredictiveModeling)
+data(solubility)
+
+library(caret)
+set.seed(100)
+
+indx <- createFolds(solTrainY, returnTrain = TRUE)
+ctrl <- trainControl(method = "cv", index = indx)
+
+mtryGrid <- data.frame(mtry = floor(seq(10, ncol(solTrainXtrans), length = 10)))
+
+### Tune the model using cross-validation
+set.seed(100)
+rfTune <- train(x = solTrainXtrans, y = solTrainY,
+                method = "rf",
+                tuneGrid = mtryGrid,
+                ntree = 1000,
+                importance = TRUE,
+                trControl = ctrl)
+rfTune
+
+plot(rfTune)
+
+rfImp <- varImp(rfTune, scale = FALSE)
+rfImp
+
+### Tune the model using the OOB estimates
+ctrlOOB <- trainControl(method = "oob")
+set.seed(100)
+rfTuneOOB <- train(x = solTrainXtrans, y = solTrainY,
+                   method = "rf",
+                   tuneGrid = mtryGrid,
+                   ntree = 1000,
+                   importance = TRUE,
+                   trControl = ctrlOOB)
+rfTuneOOB
+```
 
 ## Boosting
 
@@ -971,84 +1087,7 @@ for random forest. This is due to the fact that the trees in boosting are
 dependent on each other and therefore will have **correlated structures** as the
 method follows by the gradient.
 
-## Code
-
-Packages: `rpart`, `party`, `partykit`
-
-### Single trees:
-
-* `rpart::rpart()` - fits w/ CART
-* `party::ctree()` - fits w/ conditional inference trees
-
-```{r trees, eval=FALSE}
-library(rpart)
-library(party)
-# Turning for rpart() is through paramter `rpart.control`
-# for party::ctree() this is through `ctree_control`
-
-# Or, via train() to tune both complexity parameter and max node depth.
-# method = 'rpart' to tune over complexity parameter
-# method = 'rpart2' to tune over max node depth.
-# method = 'ctree' to tune mincriterion
-# method = 'ctree2' to tune over max node depth.
-rpartTuned <- train(solTrainY ~ ., data = solTrainXtrans,
-                    method='rpart2', tuneLength=10,
-                    trControl = trainControl(method = 'cv'))
-
-library(partykit)
-# plot tree
-rpartTree2 <- as.party(rpartTree)
-plot(rpartTree2)
-```
-
-### Model Trees
-
-Packages: `RWeka`
-
-`M5` model trees: `RWeka::M5P()` with formula interface. For `train()`,
-use parameters:
-
-* `method='M5'`
-* `control = Weka_control(M = 10)`
-
-`M5` results can be plotted by calling `plot(model)`.
-
-### Bagging
-
-* `ipred::bagging()` - formula interface
-* `ipred::ipredbagg()` - non-formula interface
-
-Other ways:
-
-* `RWeka::Bagging()`
-* `caret::bag()` - general framework that works for many models
-* `party::cforest()` - Conditional inference trees, with parameter:
-`controls = cforest_control(mtry = ncol(trainData) - 1)` to set 
-$m_{try} = \text{# of predictors}$.
-
-### Random Forest
-
-Package: `randomForest::randomForest()`
-
-Parameters:
-
-* `mtry` - number of predictors that are randomly sampled as candidates for 
-each split. Default is # of predictors / 3.
-* `ntree` - # of bootstrap samples. Default 500, but should use at least 1000.
-* `importance` - default is FALSE. First set to `TRUE` then call 
-`randomForest::importance(..., type=1, scale=F)` to get the right importance 
-values.
-
-For `caret::train()`: `method = 'rf'` or `'cforest'`
-
-For `cforest` objects, variable importance can be obtained by calling
-`party::varimp()`
-
-`caret::varImp()` has a **unified wrapper** that works for tree-models from:
-`rpart`, `classbagg` produced by `ipred`'s bagging, `randomForest`, 
-`cforest`, `gbm`, and `cubist`
-
-### Boosted Trees
+### Boosting Code
 
 * `gbm::gbm.fit(x, y, distribution = 'gaussian')` - non-formula interface
 * `gbm::gbm(y ~ x, data = data, distribution = 'gaussian')` - formula interface
@@ -1078,6 +1117,23 @@ gbmTune <- train(solTrainY ~ ., data = solTrainXtrans,
                  tuneGrid = gbmGrid,
                  verbose = F)
 ```
+
+## Code
+
+`train()` for regression, available `method=` are:
+
+* `rpart`, `rpart2` - single regression tree, CART
+* `ctree`, `ctree2` - conditional inference tree
+* `M5` - rule based tree model
+* `treebag` - bagging trees
+* `rf` - random forest
+* `cforest` - conditional inference forest
+* `gbm` - boosting trees
+* `cubist` - cubist
+
+A more comprehensive list 
+[here](https://topepo.github.io/caret/available-models.html).
+
 
 # Measuring Performance in Classification Models
 
@@ -1404,7 +1460,7 @@ different places or situations.
 proportion of correctly predicted samples for both the event and nonevent
 groups.
 
-**Matthew Correlation Coefficient** is related to Youden's $J$ index. It has
+**Matthews Correlation Coefficient** is related to Youden's $J$ index. It has
 a value between -1 and +1, and can be found in package `mccr`. 
 A value of +1 indicates perfect prediction, -1 means the worst possible, i.e.
 predicting everything wrong.
@@ -1417,6 +1473,8 @@ $MCC$ has a generalized form to handle multi-class problems.
 `mccr:mccr()` only handles two-class problems, requires actual class labels 
 and predicted class labels, labels must be numeric, 1 for positive, 0 for
 negative. 
+
+`ModelMetrics` package also has a MCC implementation.
 
 ```{r mcc, eval=F}
 
@@ -1476,8 +1534,31 @@ individual ROC curve is uniformly better than other models' ROC curves.
   
 ROC multi-class extensions: 
 
-* Hand and Till 2001
+* Hand and Till 2001 `pROC::multiclass.roc()`
 * Lachiche and Flach 2003
+
+Alternatively, a set of **one-versus-all** ROC curves can be created. In this
+case, each class will have its own AUC score, the overall relevance can be 
+quantified by either the **average** or **max** AUC across the classes.
+
+To train using `metric='ROC'` for multi-class problems:
+
+```{r multi.class.roc, eval=F}
+install.packages('MLmetrics')
+
+ctrl <- trainControl(method = 'repeatedcv',
+                     number = 10,
+                     repeats = 5, 
+                     savePredictions = T,
+                     classProbs = T,
+                     summaryFunction = multiClassSummary)
+
+rf <- train(..., metric='ROC',...)
+
+# confusion matrix will work for multi-class problems
+rf.cm <- confusionMatrix(rf, norm = 'none')
+```
+
 
 ```{r roc, eval=F}
 # uses results from class probability histogram section
@@ -2864,6 +2945,23 @@ regressions that model the data in small neighbourhoods. It is effective at
 creating smooth regression trends that are extremely adaptive. 
 A pseudo-$R^2$ can be calculated from the residuals.
 
+```{r loess, eval=F}
+smo <- loess(solTrainY ~ solTrainXtrans$NumCarbon)
+
+# or, use caret:filterVarImp
+library(caret)
+smoother <- filterVarImp(x = SolContPred[, -ncol(SolContPred)], 
+                         y = solTrainY, 
+                         nonpara = TRUE)
+smoother$Predictor <- rownames(smoother)
+names(smoother)[1] <- "Smoother"
+
+library(lattice)
+xyplot(solTrainY ~ solTrainXtrans$NumCarbon,
+       type=c('p', 'smooth'),
+       xlab='# carbon', ylab='Solubility')
+```
+
 Drawbacks for univariate measures such as correlation with outcome:
 
 * If two predictors are highly correlated with the response and with each other,
@@ -2895,6 +2993,9 @@ getTstats <- function(x, y)
   tStats <- t.test(y ~ x)[c("statistic", "p.value", "estimate")]
   unlist(tStats)
 }
+
+fpCols <- grepl("FP", names(solTrainXtrans))
+
 tVals <- apply(solTrainXtrans[, fpCols],
                MARGIN = 2,
                FUN = getTstats,
@@ -2916,4 +3017,82 @@ to create dummy binary variables and apply `t.test` described above.
 
 ## Categorical Outcome
 
+In two-class problems, use predictor data as inputs into the ROC curve.
 
+Use `caret::filterVarImp(x = data$predictor.1, y = data$categorical_outcome)`
+
+Another simple approach is to test if the mean values of predictors within each
+class are different with `t-statistics`.
+
+For **binary** predictors and two-class problems, an effective method is to 
+use the **odds ratio**. `stats::fisher.test()`
+
+Odds of $p$ is $p / (1 - p)$. The probability of an
+event can be calculated for both classes, as $p_1$ and $p_2$, then:
+
+$$ \text{Odds Ratio} = \frac{p_1(1-p_1)}{p_2(1 - p_2)} $$
+
+Odds ratio represent the increase in the odds of the even when going from the
+first level of the predictor to the other.
+
+```{r cat.odds, eval=F}
+load('~/tmp/apm/grantData.RData')
+
+sp6table <- table(training[pre2008, 'Sponsor62B'],
+                  training[pre2008, 'Class'])
+
+fisher.test(sp6table)
+```
+
+For multi-class or predictors with more than two levels:
+
+* Fisher's exact test can still be used to measure the association between
+the predictor and the classes, but a single odds ratio cannot be computed, 
+use the p-value for association instead.
+* gain ratio used for `C4.5` can be used. Larger is better.
+
+Sometimes Fisher's exact test can be computationally prohibitive, in these
+cases, use $chi^2$ test for association:
+
+```{r chi, eval=F}
+chisq.test(sp6table)
+```
+
+## Other Approaches
+
+### `Relief
+
+Works for continuous predictors, dummy variables, and can recognize nonlinear
+relationships between the predictor and outcome. 
+
+Improved algo called `ReliefF`. 
+
+For a predictor, the score attempts to characterize the separation between the 
+classes in isolated sections of the data. Larger scores are indicative of 
+important predictors.
+
+```{r relieff, eval=F}
+library(CORElearn)
+ReliefF <- attrEval(Sol ~ .,  data = SolContPred,
+                    estimator = "RReliefFequalK")
+ReliefF <- data.frame(Predictor = names(ReliefF),
+                  Relief = ReliefF)
+```
+
+### MIC - Mutual Information Criterion
+
+Similar to correlation statistics, 0 indicates no relationship, 1 indicates
+extremely strong relationship.
+
+One potential issue: it's a general technique, might not do so well as others
+under some circumstances.
+
+```{r mic, eval=F}
+library(minerva)
+MIC <- mine(x = SolContPred[, 1:numSolPred], y = solTrainY)$MIC
+MIC <- data.frame(Predictor = rownames(MIC),
+                  MIC = MIC[,1])
+```
+
+
+# Intro to Feature Selection

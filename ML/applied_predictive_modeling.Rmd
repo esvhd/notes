@@ -1474,10 +1474,53 @@ $MCC$ has a generalized form to handle multi-class problems.
 and predicted class labels, labels must be numeric, 1 for positive, 0 for
 negative. 
 
-`ModelMetrics` package also has a MCC implementation.
+`ModelMetrics` package also has a MCC implementation that supports multi class
+problems. Example below to train with `caret::train` with custom metric.
 
 ```{r mcc, eval=F}
 
+library(ModelMetrics)
+
+data(iris)
+
+# custom function for model metrics
+mccSummary <- function(data, lev = NULL, model = NULL) {
+  # get the levels from target labels
+  lvls <- levels(data$obs)
+  num.classes = length(lvls)
+  
+  # convert to one hot format
+  oh <- dummyVars(~ obs, data = data)
+  obs.oh <- predict(oh, newdata = data)
+  
+  # get class probabilities, make sure they are in the same column order
+  # as target labels, mcc cannot take data.frame so need matrix as input
+  pred.probs <- as.matrix(data[, lvls])
+  
+  out <- ModelMetrics::mcc(actual = obs.oh, 
+                           predicted =pred.probs, 
+                           cutoff = 1 / num.classes)
+  auc <- ModelMetrics::mauc(actual = obs.oh, predicted = pred.probs)
+  
+  return(c(MCC=out, AUC=auc['mauc'], num.classes=num.classes))
+}
+
+ctrl <- trainControl(method='repeatedcv', 
+                     number = 10, 
+                     repeats = 5, 
+                     savePredictions = T, 
+                     classProbs = T,
+                     summaryFunction = mccSummary)
+
+rf <- train(x = iris[, 1:4], y=iris[, 5], method = 'rf',
+            metric = 'MCC', 
+            tuneGrid = data.frame(mtry=c(2, 3, 4)),
+            trControl = ctrl)
+rf 
+s <- mccSummary(rf$pred)
+s
+
+# alternative library. ModelMetric claims better performance.
 library(mccr)
 
 # assuming fit.roc is is obtained by calling pROC::roc()
@@ -1520,7 +1563,7 @@ if there are other costs or benefits.
 
 ## Receiver Operating Charastics (ROC) Curve
 
-ROC plots False Positive Rate on x-ais and Sensitivity on y-axis.
+ROC plots False Positive Rate (FPR) on x-ais and Sensitivity (TPR) on y-axis.
 
 **Advantage**: **insensitive** to disparities in the class proportions.
 
@@ -1535,6 +1578,8 @@ individual ROC curve is uniformly better than other models' ROC curves.
 ROC multi-class extensions: 
 
 * Hand and Till 2001 `pROC::multiclass.roc()`
+    * mentions the connection between AUC and Gini coefficient (not Gini index), 
+    $Gini + 1 = 2 \times AUC$
 * Lachiche and Flach 2003
 
 Alternatively, a set of **one-versus-all** ROC curves can be created. In this
@@ -1544,6 +1589,9 @@ quantified by either the **average** or **max** AUC across the classes.
 To train using `metric='ROC'` for multi-class problems:
 
 ```{r multi.class.roc, eval=F}
+# Preferred way is probably to use ModelMetrics package.
+# See example in Matthews correlation coefficient (MCC) section.
+
 install.packages('MLmetrics')
 
 ctrl <- trainControl(method = 'repeatedcv',
@@ -1553,7 +1601,10 @@ ctrl <- trainControl(method = 'repeatedcv',
                      classProbs = T,
                      summaryFunction = multiClassSummary)
 
-rf <- train(..., metric='ROC',...)
+# or use metric = 'logLoss'
+rf <- train(..., metric='AUC',...)
+
+multiClassSummary(rf$pred, lev = levels(rf$pred$obs))
 
 # confusion matrix will work for multi-class problems
 rf.cm <- confusionMatrix(rf, norm = 'none')
@@ -3060,7 +3111,7 @@ chisq.test(sp6table)
 
 ## Other Approaches
 
-### `Relief
+### `Relief`
 
 Works for continuous predictors, dummy variables, and can recognize nonlinear
 relationships between the predictor and outcome. 
@@ -3096,3 +3147,148 @@ MIC <- data.frame(Predictor = rownames(MIC),
 
 
 # Intro to Feature Selection
+
+Including non-informative predictors can affect many models, such as:
+
+* linear regression
+* PLS
+* neural nets (well, maybe feedforward networks that this book covers)
+* random forest (a bit in the book example but overall model wasn't so bad)
+
+Generally there are two main approaches to reduce the number of predictors:
+
+* wrapper methods:
+  * evaluates lots of variations, computationally intensive
+  * increased risk of overfitting
+* filter methods:
+  * more computationally efficient than wrappers
+  * but selection criterion is not directly related to the effectiveness of
+  the model
+  * as a result, redundant predictors may be selected and important interactions
+  between variables will not be able to be quantified.
+
+## Wrapper Methods
+
+Wrapper methods conduct a search of the predictor to determine which, when 
+entered into the model, produce the best results. This is achieved by building
+lots of models by adding / removing features used.
+
+Drawbacks:
+
+1. Greedy, does not re-evaluate past solution
+2. Use of repeated hypothesis tests invalidates many of their statistical 
+properties.
+3. Maximizing statistical significance may not be the same as maximizing 
+more relevant accuracy-based quantities.
+
+2/3 above can be mitigated by using performance metrics such as RMSE instead 
+of statisticall tests. Pitfall here is this process itself is 
+**prone to overfitting**.
+
+Alternatives to RMES includes **information criateria** such as AIC, or 
+**correlation based methods* (finding the predictor that maximizes correlation
+with the outcome while minimizing between-predictor correlation).
+
+Such a correlation metric can be:
+
+$$ G = \frac{P R_y}{\sqrt{P + P(P - 2)\bar{R}_x}} $$
+
+Where:
+
+* $R_y$ is correlation between a predictor and the outcome
+* $\bar{R}_x$ is the average correlation between this predictor and the other 
+$P$ predictors already included in the model
+
+This metric is used to rank predictors as a function of effectiveness and
+redundancy.
+
+Models built to predict can be built based on dubious statistical principals,
+the **key protection** is a thorough, methodical 
+**validation process with independent data**.
+
+### Forward, Backward, Stepwise Selection
+
+**Stepwise selection**: after a predictor is added, re-evaluation all the 
+included predictors for removal. Pros: less greedy, cons: exacerbates the 
+problem of repeated hypothesis testing. Can be improved by using information 
+criteria instead.
+
+**Recursive feature elimination** (RFE) avoids refitting many models at each step 
+of the search. Note: in multi-class settings, "easy" classes may saturate 
+the position for the highest ranks in importance. Apply class specific
+importance scores to mitigate this issue to balance the error rates across
+all classes.
+
+### Simulated Annealing
+
+Once a model is fitted, a slightly modified set of predictors is used to create
+another model, if the new model is an improvement, keep it.
+If not, it can still be kept with a probability of $p_i^a$, where $i$ is the 
+number of iteration of the process. 
+
+This probability is configured to **decrease** over time, so that when $i$ is
+large, it becomes very unlikely that a suboptimal configuration will be 
+accepted.
+
+### Genetic Algorithm
+
+Mimics gene replication and mutation process. Allow the fittest pair to 
+randomly reproduce, then add random mutation, to generate the next generation.
+Usually mutation probability is kept low, e.g. $p_m < 0.05$. Goal is to escape
+from local minimums.
+
+## Filter Methods
+
+Most of these methods are univariate, therefore collinearity problem arises.
+
+Suffers from multiple hypothesis testing. Need to use **Bonferroni correction**,
+to adjust p-value of $\alpha$ to $\alpha / M$ where $M$ is the number of tests.
+
+This procedure is **very conservative**, and limit the number of true-positive 
+results.
+
+## Selection Bias
+
+Need to consider the variabilty of the feature selection process itself, 
+because it becomes part of the model building process.
+
+Ambroise and McLachlan 2002 experiment scrambled class labels and used RFE
+with LOOCV and achieved zero error rate... This clearly demostrates overfitting.
+
+Essentially need an outer loop to wrap around the entire process. See book
+algorithm 19.5 on p502.
+
+Computationally intensive, but the process would drastically reduce the chance
+of overfitting, especially for small datasets.
+
+Situations that increase the likelihood of overfitting:
+
+* data set is small
+* ratio of # of predictor to # of samples is large. 
+* complex models that are powerful / prone to overfitting
+* no independent test set
+
+When data set is large, authors recommends separating data for selecting 
+features, tuning models, and validating the final model (and feature set).
+
+Setting aside a test is always good to double check if some gross error have 
+been committed.
+
+## Case Study
+
+In some cases, when one-hot encoding generates a lot of features, and some of 
+them have over few samples, some models may have issues estimating some 
+parameters. To mitigate this, create larger buckets, i.e. less refined buckets.
+
+Case study showed that the top two models, LDA and RF, selected different
+set of important features (RF had 7, LDA had 34 and included the 7 from RF), 
+and rankings were different.
+
+This underscores the idea that feature selection is a **poor method** for 
+determining the most significant variables in the data.
+
+To assess which predictors have indivdual associations with the outcome, 
+common classical statistical methods are far more appropriate.
+
+Also SVM model here may be suffering from class imbalance problems.
+

@@ -152,7 +152,40 @@ therefore **centering and scaling** is very important for PCA.
 
 When using scatter plot to show pairs of princial components, it is important
 for the charts to have the **same scale**. Otherwise the effects may be 
-distorted by different scale graphically.
+distorted by different scale graphically. Components are stored in `precomp()`
+result as `x`.
+
+
+```{r pca, eval=F}
+# pca for 2 predictors
+pr <- prcomp(~ AvgIntenCh1 + EntropyIntenCh1, 
+             data = segTrainTrans, 
+             scale. = TRUE)
+
+transparentTheme(pchSize = .7, trans = .3)
+
+xyplot(AvgIntenCh1 ~ EntropyIntenCh1,
+       data = segTrainTrans,
+       groups = segTrain$Class,
+       xlab = "Channel 1 Fiber Width",
+       ylab = "Intensity Entropy Channel 1",
+       auto.key = list(columns = 2),
+       type = c("p", "g"),
+       main = "Original Data",
+       aspect = 1)
+
+xyplot(PC2 ~ PC1,
+       # here are the components
+       data = as.data.frame(pr$x),
+       groups = segTrain$Class,
+       xlab = "Principal Component #1",
+       ylab = "Principal Component #2",
+       main = "Transformed",
+       xlim = extendrange(pr$x),
+       ylim = extendrange(pr$x),
+       type = c("p", "g"),
+       aspect = 1)
+```
 
 
 ## Missing Data
@@ -193,7 +226,7 @@ PCA **loadings** can be used to understand which predictors are associated with
 each component to tease out this relationship.
 
 **VIF**, variance inflation factor, can be used to identify multicollinearity,
-but beyond linear regression, it may be inadequate: 
+but beyond linear regression, it may be **inadequate**: 
 
 * designed for linear models, requires n > p, more samples than predictors
 * when it identifies issues, it does not determine which should be reomoved to
@@ -257,6 +290,8 @@ pc.var <- pc$sdev^2 / sum(pc$sdev^2)*100
 
 trans <- preProcess(segData, method=c('BoxCox', 'center', 'scale', 'pca'))
 trans
+# apply transformation
+data.trans <- predict(trans, new.data)
 
 # beautiful correlation matrix
 corrplot(cor(segData), order='hclust')
@@ -651,7 +686,28 @@ elasticnet::enet(x = as.matrix(solTrainXtrans), y = solTrainY, lambda = .001)
 
 ## MARS
 
-Skipped for now.
+Advantages:
+
+* the model automatically conducts feature selection
+* model equation is independent of the predictor variables that are not involved
+with any of the final model features.
+* Interpretability
+* Needs little pre-processing
+
+`MARS` found in `earth` package, useful functions:
+
+* `earth::earth()` to fit a model
+* `plotmo()` to plot 
+* `earth::evimp()` or `caret::varImp()` for variable importance
+* `caret::train()` with `method = 'earth'`
+
+
+```{r mars, eval=F}
+marsTune <- train(x = solTrainXtrans, y = solTrainY,
+                  method = "earth",
+                  tuneGrid = expand.grid(degree = 1, nprune = 2:38),
+                  trControl = ctrl)
+```
 
 ## SVM
 
@@ -689,29 +745,6 @@ in predictor scales can affect the model. Therefore, data should be
 Bayesian analog to SVM: *relevance vector machine* (Tipping 2001). There are 
 usually less relevance vectors than support vectors in model.
 
-## KNN
-
-Data should be **centered and scaled** before feeding into KNN. 
-
-KNN has one parameter to tune: the number of neighbours, `k`.
-
-KNN needs to store all training data, therefore is not memory efficient.
-
-KNN can have **poor performance** when local predictor structure is not 
-relevant to the response.
-
-## Code
-
-Neural network package `nnet`.
-
-`MARS` found in `earth` package, useful functions:
-
-* `earth()` to fit a model
-* `plotmo()` to plot 
-* `earth::evimp()` or `caret::varImp()` for variable importance
-
-`KNN` use `knnreg::knn()`
-
 ```{r svm, eval=FALSE}
 
 # e1071::svm()
@@ -743,8 +776,25 @@ fm <- svmRTuned$finalModel
 
 # to access the support vectors indices
 fm@SVindex
-
 ```
+
+
+## KNN
+
+Data should be **centered and scaled** before feeding into KNN. 
+
+KNN has one parameter to tune: the number of neighbours, `k`.
+
+KNN needs to store all training data, therefore is not memory efficient.
+
+KNN can have **poor performance** when local predictor structure is not 
+relevant to the response.
+
+## Code
+
+Neural network package `nnet`.
+
+`KNN` use `knnreg::knn()`
 
 
 # Regression Trees / Rule-based Models
@@ -935,6 +985,7 @@ and boosting.
 
 * `ipred::bagging()` - formula interface
 * `ipred::ipredbagg()` - non-formula interface
+* `caret::train()` with `method = 'treebag'`
 
 Other ways:
 
@@ -944,19 +995,29 @@ Other ways:
 `controls = cforest_control(mtry = ncol(trainData) - 1)` to set 
 $m_{try} = \text{# of predictors}$.
 
+
+```{r bag, eval=F}
+treebagTune <- train(x = solTrainXtrans, y = solTrainY,
+                     method = "treebag",
+                     nbagg = 50,
+                     trControl = ctrl)
+
+treebagTune
+```
+
 ## Random Forest
 
 Need to reduce tree correlation. Algo on page 200, 8.2 listing.
 
 Algo randomly selects predictors at each split, decreases tree correlation.
 
-Tuning parameters:
+***Tuning parameters***:
 
 * number of randomly selected predictors, $k$, to choose from at each split, 
-referred to as $m_{try}$
+referred to as $m_{try}$, `mtry` for `caret`
   * Breiman 2001 suggests setting $m_{try} = \frac{P}{3}$ where $P$ is the 
-  number of predictors.
-* number of trees for the forest.
+  number of predictors, but better to use CV.
+* number of trees for the forest. `ntree`
   
 Breiman proved that RF is **protected from overfitting**. Authors found that
 tuning parameters do not have a drastic effect on performance.
@@ -1010,7 +1071,7 @@ library(caret)
 set.seed(100)
 
 indx <- createFolds(solTrainY, returnTrain = TRUE)
-ctrl <- trainControl(method = "cv", index = indx)
+ctrl <- trainControl(method = "cv", index = indx, savePredictions = T)
 
 mtryGrid <- data.frame(mtry = floor(seq(10, ncol(solTrainXtrans), length = 10)))
 
@@ -1061,7 +1122,7 @@ be made into a weak learner. Trees are great for reasons below:
 2. separate trees can be easily added together
 3. trees can be generated quickly.
 
-For **tree** based gradient boosting, two parameters:
+For **tree** based gradient boosting, two tuning parameters:
 1. number of iterations
 2. depth of each tree, aka. **interation depth**
 
@@ -1069,7 +1130,8 @@ Boosting applies a greedy strategy of choosing the optimal weak learner at each
 stage. The **drawback** is that it might not find the optimal global model and
 can overfit the training data.
 
-Remedy: regularization, only a fraction of the current predicted value is added
+Remedy: **regularization** (shrinkage), only a fraction of the current 
+predicted value is added
 to the previous iteration's predicted value. The learning rate, $\lambda$ is 
 between 0 and 1. 
 
@@ -1095,12 +1157,14 @@ method follows by the gradient.
 `distribution` parameter defines the type of loss function that will be 
 optimized during boosting. Use `gaussian` for ** continuous response**. 
 
-Other parameters for `gbm`:
+Other **tuning parameters** for `gbm`:
 
 * `n.trees` - number of trees
 * `interaction.depth` - depth of trees
-* `shrinkage`
+* `shrinkage` - learning rate, how much regularizaton, portion of the output 
+added to the previous iteration's predicted values, between 0 and 1.
 * `bag.fraction` - proportion of observations to be sampled
+* `n.minobsinnode` - min observations in node
 
 For `caret::train()`, see below example:
 
@@ -3213,11 +3277,54 @@ included predictors for removal. Pros: less greedy, cons: exacerbates the
 problem of repeated hypothesis testing. Can be improved by using information 
 criteria instead.
 
+* `stats::step()` - works for `lm` and `glm` models. 
+Parameter `direction = 'backward' | 'forward'`. Uses AIC.
+* `MASS::stepAIC()` is more **general**, works with other models, uses AIC.
+* `rms::fastbw()` can use p-value, not recommended.
+* `leaps::regsubsets()`
+* `klaR::stepclass()` use CV accuracy as a metric. 
+
+`caret::train()` has wrappers for `leaps`, `stepAIC` and `stepclass`. 
+
 **Recursive feature elimination** (RFE) avoids refitting many models at each step 
 of the search. Note: in multi-class settings, "easy" classes may saturate 
 the position for the highest ranks in importance. Apply class specific
 importance scores to mitigate this issue to balance the error rates across
 all classes.
+
+* `caret::rfe()` is general and works on different model types.
+* `varSelRF` package works with random forests.
+
+`caret::rfFuncs` is a list with functions for RFE algo 19.2 on p495. Each of 
+these functions can be changed. Other such function lists exist for other 
+models:
+
+* `ldaFuncs`
+* `nbFuncs` for Niave Bayes
+* `caretFuncs` allows for a model to be tuned at each iteration of feature
+selection
+* `lrFuncs`
+
+Example:
+
+```{r rfe, eval=F}
+ctrl <- rfeControl(method = "repeatedcv", repeats = 5,
+                   saveDetails = TRUE,
+                   index = index,
+                   returnResamp = "final")
+
+ctrl$functions <- rfFuncs
+ctrl$functions$summary <- fiveStats
+set.seed(721)
+rfRFE <- rfe(training[, predVars],
+             training$Class,
+             sizes = varSeq,
+             metric = "ROC",
+             ntree = 1000,
+             rfeControl = ctrl)
+rfRFE
+```
+
 
 ### Simulated Annealing
 
@@ -3246,6 +3353,16 @@ to adjust p-value of $\alpha$ to $\alpha / M$ where $M$ is the number of tests.
 
 This procedure is **very conservative**, and limit the number of true-positive 
 results.
+
+`sbf()` function (Selection By Filter) is used for **filter methods**.
+Related functions:
+
+* `sbfControl`
+* `rfSBF`
+* `ldaSBF`
+
+`caret::resamples()` is used to get resampling results for a number of 
+models.
 
 ## Selection Bias
 
@@ -3292,3 +3409,123 @@ common classical statistical methods are far more appropriate.
 
 Also SVM model here may be suffering from class imbalance problems.
 
+
+# Factors That Affect Model Performance
+
+## Type III error
+
+Developing a model that answers the wrong question. Good 
+example is that the data collection process can impose conditions on the 
+problem we are modeling, e.g. do customers respond to promotional contacts.
+We can never identify those who wouldn't response either contacted or not.
+
+## Noise
+
+Three ways **noise** affects model performance:
+
+1. In predictor measurement process, systematic noise can occur.
+2. Inclusion of non-informative predictors.
+3. Noise can come through via the response variable. This type of error gives
+rise to an **upper bound** on model performance. E.g. error in target labels.
+
+### Noise in Response
+
+As the level of noise in the response variable increases, it becomes harder 
+to distinguish the abilities of different models, because more complex models
+cannot surpass this error.
+
+### Noise in Predictors
+
+The effect of this depends on:
+
+* the amount of randomness
+* the importance of the predictor
+* the type of model
+
+Randomness can be hidden when training data is collected in a very 
+**controlled** environment.
+
+**Variance Component Models** (gauge reproducibiity and repeatability methods),
+quantify the source of noise in the data.
+
+## Discretizing Continuous Outcomes
+
+If outome is bimodal or multimodal, categorizing is appropriate. However, 
+the the response follows a continuous distribution, categorizing would induce
+a loss of information and weakens the model.
+
+Another reason to categorize is when we believe that the continuous outcome
+contains high degrees of error, such that only the extreme reponses are likely
+to be correctly categorized. In this case, data can be partioned into three
+categories, positive, negative and unknown.
+
+## When Not to Trust Your Model's Prediction
+
+When new data comes from a changed or different distribution.
+
+**Extrapolation** is commonly defined as using a model to predict samples that 
+are outside the range of the training data. With high dimensional data, 
+there could be space within the predictors' range but no data exists. 
+
+Extrapolated predictions, whether outside the range or within vacant regions 
+of space, may not be trustworthy.
+
+The **applicability domain** of a model is the region of predictor space
+where the model makes prediction with a given reliability. Usually define
+the domain in terms of similarity to the training data.
+
+Methods to compare the training data and new data space:
+
+* dimension reduction such as PCA, steps: 
+  * run PCA for training and new data separately
+  * plot 2D component vs component charts and compare if the training and 
+  new data occupy the same region of the charts. 
+  * Note that the scales of these charts must be the same to enable comparison.
+* multi-dimensional scaling
+
+When projecting many predictors into 2D, intricate predictor relationships as
+well as sparse and dense pockets of space can be masked. This means that 
+even though visually training and new data may appear to overlap in the
+projection plot, there maybe regions within the predictor space where the model
+will inadequately predict new samples.
+
+Hastie 2008 developed a process to train a classifier to predict if new data
+is different to training data (p537, algo 20.1): 
+
+1. Training data are labelled as training, and 
+2. They are used to generate, via uniform sampling, fake training data which are
+labelled as different to the original training data.
+3. then both sets of data is combined, shuffled, and used to train a classifer
+4. when new data arrives, this classifier predicts if the data is similar 
+to the original authentic training data.
+
+Authors proposed two changes for practical use:
+
+1. instead of uniform sampling, permute the predictor columns. This would work
+for categorical predictors. Using `apply` and `sample`
+2. recommends building this dataset using a subset of the original predictors
+for computational efficiency. E.g. pick the top N most important.
+
+```{r permute, eval=F}
+# permute columns
+permuted.data <- apply(data, 2, function(x) sample(x))
+# combine real and randome data
+all.data <- rbind(data, permuted.data)
+# label each portion accordingly.
+groupVals <- c('training', 'random')
+groupY <- factor(rep(groupVals, each = nrow(all.data)))
+# now train model with all.data and groupY label.
+```
+
+## Large Sample Set
+
+More data of the same type isn't always better, computational burden, 
+diminishing returns. 
+
+More data of different types may be more helpful, Big $P$ usually helps more
+than big $N$, # of predictors vs # of samples.
+
+
+# `R` Tips
+
+`apropos(text)` function to search for functions by name.

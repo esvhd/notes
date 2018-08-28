@@ -6,6 +6,8 @@ output: html_document
 ---
 
 Code snippets from this wonderful book's  `AppliedPredictiveModeling` package.
+`caret` is in maintainance mode, new development is focused on 
+[`tidymodels`](https://github.com/tidymodels/tidymodels).
 
 ```{r setup, include=FALSE, eval=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -120,10 +122,12 @@ f <- as.formula(f)
 
 ## Transforming Features
 
-Rule of thumb: ratio of highest and lowest values exceeds 20 indicates 
-significant skewness. Or compute skewness statistics with `e1072::skewness()`.
+Rule of thumb: ratio of highest and lowest values **exceeds 20 indicates**
+significant skewness. 
 
-To resolve **skewness** in data, can apply either log, square root or inverse.
+Or compute **skewness statistics** with `e1072::skewness()`.
+
+To resolve skewness in data, can apply either **log, square root or inverse**.
 
 Alternatively, use **Box-Cox** transformations `caret::BoxCoxTrans()`, which is 
 more straightforward, less prone to numerical issues and just as effective as 
@@ -145,15 +149,18 @@ $$ PC_1 = (a_{j1} \times Predictor_1) + (a_{j2} \times Predictor_2) + \cdots
 + (a_{jp} \times Predictor_p) $$
 
 Coefficients $a_{j1}, a_{j2}, \cdots, a_{jp}$ are known as **loadings**, 
-stored in returned result from `prcomp()` as `rotation`.
+stored in returned result from `prcomp()` as `rotation`. See example in 
+code below to compute score matrix from data and loadings.
+
+Use `lattice::splom` to plot loadings vs componements. See book example.
 
 PCA is naturally drawn to summarizing predictors that have more variation, 
 therefore **centering and scaling** is very important for PCA.
 
 When using scatter plot to show pairs of princial components, it is important
 for the charts to have the **same scale**. Otherwise the effects may be 
-distorted by different scale graphically. Components are stored in `precomp()`
-result as `x`.
+distorted by different scale graphically. Components / transformed values are 
+stored in `precomp()` result as `x`.
 
 
 ```{r pca, eval=F}
@@ -161,6 +168,13 @@ result as `x`.
 pr <- prcomp(~ AvgIntenCh1 + EntropyIntenCh1, 
              data = segTrainTrans, 
              scale. = TRUE)
+
+# loadings
+pr$rotation
+# how to go from loadings to PC / score matrix
+x.rep <- as.matrix(segTrainTrans[,c('AvgIntenCh1', 'EntropyIntenCh1')]) %*% 
+  pr$rotation
+all.equal(pr$x, x.rep)
 
 transparentTheme(pchSize = .7, trans = .3)
 
@@ -185,6 +199,41 @@ xyplot(PC2 ~ PC1,
        ylim = extendrange(pr$x),
        type = c("p", "g"),
        aspect = 1)
+
+## Plot a scatterplot matrix of the first three rotation variables
+
+transparentTheme(pchSize = .8, trans = .7)
+panelRange <- extendrange(segRot[, 1:3])
+library(ellipse)
+upperp <- function(...) {
+    args <- list(...)
+    circ1 <- ellipse(diag(rep(1, 2)), t = .1)
+    panel.xyplot(circ1[,1], circ1[,2],
+                 type = "l",
+                 lty = trellis.par.get("reference.line")$lty,
+                 col = trellis.par.get("reference.line")$col,
+                 lwd = trellis.par.get("reference.line")$lwd)
+    circ2 <- ellipse(diag(rep(1, 2)), t = .2)
+    panel.xyplot(circ2[,1], circ2[,2],
+                 type = "l",
+                 lty = trellis.par.get("reference.line")$lty,
+                 col = trellis.par.get("reference.line")$col,
+                 lwd = trellis.par.get("reference.line")$lwd)
+    circ3 <- ellipse(diag(rep(1, 2)), t = .3)
+    panel.xyplot(circ3[,1], circ3[,2],
+                 type = "l",
+                 lty = trellis.par.get("reference.line")$lty,
+                 col = trellis.par.get("reference.line")$col,
+                 lwd = trellis.par.get("reference.line")$lwd)
+    panel.xyplot(args$x, args$y, groups = args$groups, subscripts = args$subscripts)
+}
+
+segRot <- pr$rotation
+splom(~segRot[, 1:3],
+      groups = segRot$Channel,
+      lower.panel = function(...){}, upper.panel = upperp,
+      prepanel.limits = function(x) panelRange,
+      auto.key = list(columns = 2))
 ```
 
 
@@ -241,19 +290,36 @@ looking at correlated predictor pairs and the remove the one with the
 
 When converting categorical variables to one-hot encoding format, use 
 `num_category - 1` if model has an intercept, otherwise if using `num_category`
-there may be numerical issues.
+there may be **numerical issues**, i.e. collinearity.
 
-Use `dummyVars()` to create one-hot encoding. Recommended to use the full
-set of dummy variables when working with tree-based models.
+Use `dummyVars()` to create one-hot encoding. Formula based method by default
+creates `n` variables for `n` unique values.
+Book recommends to use the  **full set of dummy variables** (i.e. n-columns, 
+not n-1 columns) when working with **tree-based** models.
 
-Alternatively, use `model.matrix()`
+Alternatively, use `model.matrix()` with formula, which creates n-1 columns
+for n unique values, plus a intercept column.
 
-```
+```{r one.hot, eval=F}
+# levelsOnly removes predictor names in the new one-hot matrix
 simpleMod <- dummyVars(~Mileage + Type, data=data, levelsOnly=TRUE)
-# Mileage is numerical, Type is categorical
-# converts Type to one-hot
+
+# Mileage is numerical, Type is categorical, converts Type to one-hot
 predict(simpleMod, data)
+
+# example, full set vs the other
+d <- as.data.frame(list(tt=c('one', 'two', 'three')))
+predict(dummyVars(~ tt, data=d, levelsOnly = T), newdata = d)
+# with n-1 columns
+predict(dummyVars(~ tt, data=d, levelsOnly = T, fullRank = T), newdata = d)
+
+# or using model.matrix()
+# with intercept
+model.matrix(~ tt, d)
+# without intercept
+model.matrix(~ tt - 1, d)
 ```
+
 
 ## Binning
 
@@ -467,7 +533,11 @@ glmProfile <- train(Class ~ .,
 resamp <- caret::resamples(list(SVM = svm.fit, Logistic = glmProfile))
 summary(resamp)
 
-summary(diff(resamp))
+# diff methods is used to make inferences about differences between models
+model.diff <- diff(resamp)
+summary(model.diff)
+# Accuracy based tests
+model.diff$statistics$Accuracy
 
 predictedProbs <- predict(svm.fit, newdata = GermanCreditTest, type = "prob")
 head(predictedProbs)

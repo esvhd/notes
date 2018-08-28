@@ -129,7 +129,7 @@ $(document).ready(function () {
 </div>
 
 
-<p>Code snippets from this wonderful book’s <code>AppliedPredictiveModeling</code> package.</p>
+<p>Code snippets from this wonderful book’s <code>AppliedPredictiveModeling</code> package. <code>caret</code> is in maintainance mode, new development is focused on <a href="https://github.com/tidymodels/tidymodels"><code>tidymodels</code></a>.</p>
 <div id="quick-reference" class="section level1">
 <h1>Quick Reference</h1>
 <div class="figure">
@@ -221,8 +221,9 @@ f &lt;- as.formula(f)</code></pre>
 <h1>Data Preprocessing</h1>
 <div id="transforming-features" class="section level2">
 <h2>Transforming Features</h2>
-<p>Rule of thumb: ratio of highest and lowest values exceeds 20 indicates significant skewness. Or compute skewness statistics with <code>e1072::skewness()</code>.</p>
-<p>To resolve <strong>skewness</strong> in data, can apply either log, square root or inverse.</p>
+<p>Rule of thumb: ratio of highest and lowest values <strong>exceeds 20 indicates</strong> significant skewness.</p>
+<p>Or compute <strong>skewness statistics</strong> with <code>e1072::skewness()</code>.</p>
+<p>To resolve skewness in data, can apply either <strong>log, square root or inverse</strong>.</p>
 <p>Alternatively, use <strong>Box-Cox</strong> transformations <code>caret::BoxCoxTrans()</code>, which is more straightforward, less prone to numerical issues and just as effective as Box and Tidwell.</p>
 </div>
 <div id="transformation-for-outliers-examples" class="section level2">
@@ -235,13 +236,21 @@ f &lt;- as.formula(f)</code></pre>
 <p>PCA is such an example. <code>prcomp()</code></p>
 <p><span class="math display">\[ PC_1 = (a_{j1} \times Predictor_1) + (a_{j2} \times Predictor_2) + \cdots
 + (a_{jp} \times Predictor_p) \]</span></p>
-<p>Coefficients <span class="math inline">\(a_{j1}, a_{j2}, \cdots, a_{jp}\)</span> are known as <strong>loadings</strong>, stored in returned result from <code>prcomp()</code> as <code>rotation</code>.</p>
+<p>Coefficients <span class="math inline">\(a_{j1}, a_{j2}, \cdots, a_{jp}\)</span> are known as <strong>loadings</strong>, stored in returned result from <code>prcomp()</code> as <code>rotation</code>. See example in code below to compute score matrix from data and loadings.</p>
+<p>Use <code>lattice::splom</code> to plot loadings vs componements. See book example.</p>
 <p>PCA is naturally drawn to summarizing predictors that have more variation, therefore <strong>centering and scaling</strong> is very important for PCA.</p>
-<p>When using scatter plot to show pairs of princial components, it is important for the charts to have the <strong>same scale</strong>. Otherwise the effects may be distorted by different scale graphically. Components are stored in <code>precomp()</code> result as <code>x</code>.</p>
+<p>When using scatter plot to show pairs of princial components, it is important for the charts to have the <strong>same scale</strong>. Otherwise the effects may be distorted by different scale graphically. Components / transformed values are stored in <code>precomp()</code> result as <code>x</code>.</p>
 <pre class="r"><code># pca for 2 predictors
 pr &lt;- prcomp(~ AvgIntenCh1 + EntropyIntenCh1, 
              data = segTrainTrans, 
              scale. = TRUE)
+
+# loadings
+pr$rotation
+# how to go from loadings to PC / score matrix
+x.rep &lt;- as.matrix(segTrainTrans[,c('AvgIntenCh1', 'EntropyIntenCh1')]) %*% 
+  pr$rotation
+all.equal(pr$x, x.rep)
 
 transparentTheme(pchSize = .7, trans = .3)
 
@@ -265,7 +274,42 @@ xyplot(PC2 ~ PC1,
        xlim = extendrange(pr$x),
        ylim = extendrange(pr$x),
        type = c(&quot;p&quot;, &quot;g&quot;),
-       aspect = 1)</code></pre>
+       aspect = 1)
+
+## Plot a scatterplot matrix of the first three rotation variables
+
+transparentTheme(pchSize = .8, trans = .7)
+panelRange &lt;- extendrange(segRot[, 1:3])
+library(ellipse)
+upperp &lt;- function(...) {
+    args &lt;- list(...)
+    circ1 &lt;- ellipse(diag(rep(1, 2)), t = .1)
+    panel.xyplot(circ1[,1], circ1[,2],
+                 type = &quot;l&quot;,
+                 lty = trellis.par.get(&quot;reference.line&quot;)$lty,
+                 col = trellis.par.get(&quot;reference.line&quot;)$col,
+                 lwd = trellis.par.get(&quot;reference.line&quot;)$lwd)
+    circ2 &lt;- ellipse(diag(rep(1, 2)), t = .2)
+    panel.xyplot(circ2[,1], circ2[,2],
+                 type = &quot;l&quot;,
+                 lty = trellis.par.get(&quot;reference.line&quot;)$lty,
+                 col = trellis.par.get(&quot;reference.line&quot;)$col,
+                 lwd = trellis.par.get(&quot;reference.line&quot;)$lwd)
+    circ3 &lt;- ellipse(diag(rep(1, 2)), t = .3)
+    panel.xyplot(circ3[,1], circ3[,2],
+                 type = &quot;l&quot;,
+                 lty = trellis.par.get(&quot;reference.line&quot;)$lty,
+                 col = trellis.par.get(&quot;reference.line&quot;)$col,
+                 lwd = trellis.par.get(&quot;reference.line&quot;)$lwd)
+    panel.xyplot(args$x, args$y, groups = args$groups, subscripts = args$subscripts)
+}
+
+segRot &lt;- pr$rotation
+splom(~segRot[, 1:3],
+      groups = segRot$Channel,
+      lower.panel = function(...){}, upper.panel = upperp,
+      prepanel.limits = function(x) panelRange,
+      auto.key = list(columns = 2))</code></pre>
 </div>
 <div id="missing-data" class="section level2">
 <h2>Missing Data</h2>
@@ -293,13 +337,26 @@ xyplot(PC2 ~ PC1,
 </div>
 <div id="one-hot-encoding" class="section level2">
 <h2>One-Hot Encoding</h2>
-<p>When converting categorical variables to one-hot encoding format, use <code>num_category - 1</code> if model has an intercept, otherwise if using <code>num_category</code> there may be numerical issues.</p>
-<p>Use <code>dummyVars()</code> to create one-hot encoding. Recommended to use the full set of dummy variables when working with tree-based models.</p>
-<p>Alternatively, use <code>model.matrix()</code></p>
-<pre><code>simpleMod &lt;- dummyVars(~Mileage + Type, data=data, levelsOnly=TRUE)
-# Mileage is numerical, Type is categorical
-# converts Type to one-hot
-predict(simpleMod, data)</code></pre>
+<p>When converting categorical variables to one-hot encoding format, use <code>num_category - 1</code> if model has an intercept, otherwise if using <code>num_category</code> there may be <strong>numerical issues</strong>, i.e. collinearity.</p>
+<p>Use <code>dummyVars()</code> to create one-hot encoding. Formula based method by default creates <code>n</code> variables for <code>n</code> unique values. Book recommends to use the <strong>full set of dummy variables</strong> (i.e. n-columns, not n-1 columns) when working with <strong>tree-based</strong> models.</p>
+<p>Alternatively, use <code>model.matrix()</code> with formula, which creates n-1 columns for n unique values, plus a intercept column.</p>
+<pre class="r"><code># levelsOnly removes predictor names in the new one-hot matrix
+simpleMod &lt;- dummyVars(~Mileage + Type, data=data, levelsOnly=TRUE)
+
+# Mileage is numerical, Type is categorical, converts Type to one-hot
+predict(simpleMod, data)
+
+# example, full set vs the other
+d &lt;- as.data.frame(list(tt=c('one', 'two', 'three')))
+predict(dummyVars(~ tt, data=d, levelsOnly = T), newdata = d)
+# with n-1 columns
+predict(dummyVars(~ tt, data=d, levelsOnly = T, fullRank = T), newdata = d)
+
+# or using model.matrix()
+# with intercept
+model.matrix(~ tt, d)
+# without intercept
+model.matrix(~ tt - 1, d)</code></pre>
 </div>
 <div id="binning" class="section level2">
 <h2>Binning</h2>
@@ -460,7 +517,11 @@ glmProfile &lt;- train(Class ~ .,
 resamp &lt;- caret::resamples(list(SVM = svm.fit, Logistic = glmProfile))
 summary(resamp)
 
-summary(diff(resamp))
+# diff methods is used to make inferences about differences between models
+model.diff &lt;- diff(resamp)
+summary(model.diff)
+# Accuracy based tests
+model.diff$statistics$Accuracy
 
 predictedProbs &lt;- predict(svm.fit, newdata = GermanCreditTest, type = &quot;prob&quot;)
 head(predictedProbs)</code></pre>

@@ -2284,7 +2284,7 @@ be passed to `fda()` which will pass them to `earth()`.
 `caret::train()` can fit FDA models with `method = 'fda'`. `caret:varImp()` 
 also works.
 
-### SVM
+## SVM
 
 Vapnik 1995 extended SVM to incorporate a cost parameter on the sum of the 
 training set points that are on the boundary or on the wrong side of the 
@@ -2321,9 +2321,40 @@ to use **named vectors** of weights or costs. e.g.
 * class probabilities are not affected by `class.weights`
 * use `predict(model, newdata = ..., type = 'prob')` to predict class 
 probabilities.
+* `kernlab::sigest()` can be used to sample training data to provide potential
+$\sigma$ ranges for **Gaussian radial basis** kernel.
 
 
-### KNN
+```{r svm_class, eval=F}
+library(kernlab)
+library(caret)
+
+ctrl <- trainControl(method = "LGOCV",
+                     summaryFunction = twoClassSummary,
+                     classProbs = TRUE,
+                     index = list(TrainSet = pre2008),
+                     savePredictions = TRUE)
+
+# paper: 
+# Appearance-based object recognition using SVMs: which kernel should I use?
+# 2002
+sigmaRangeReduced <- sigest(as.matrix(training[,reducedSet]))
+
+svmRGridReduced <- expand.grid(sigma = sigmaRangeReduced[1],
+                               C = 2^(seq(-4, 4)))
+                               
+svmRFitReduced <- train(x = training[,reducedSet], 
+                        y = training$Class,
+                        method = "svmRadial",
+                        metric = "ROC",
+                        preProc = c("center", "scale"),
+                        tuneGrid = svmRGridReduced,
+                        trControl = ctrl)
+svmRFitReduced
+```
+
+
+## KNN
 
 `caret::train(..., method='knn', ...)`
 
@@ -2335,7 +2366,7 @@ Prone to **overfitting** when $K$ is small.
 Book example revealed some numerical instability of KNN: as the number of 
 neighbours increases, the probability of ties also increases.
 
-### Naive Bayes
+## Naive Bayes
 
 Assumes that all of the predictors are **independent** of the others. Makes
 computation easier..

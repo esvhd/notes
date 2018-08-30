@@ -219,17 +219,32 @@ f &lt;- as.formula(f)</code></pre>
 </div>
 <div id="data-preprocessing" class="section level1">
 <h1>Data Preprocessing</h1>
+<p><code>caret::preProcess()</code> can apply a pipeline of transformations to given data.</p>
+<p><code>caret::predict()</code> applys a model or transformation to given data.</p>
 <div id="transforming-features" class="section level2">
 <h2>Transforming Features</h2>
 <p>Rule of thumb: ratio of highest and lowest values <strong>exceeds 20 indicates</strong> significant skewness.</p>
 <p>Or compute <strong>skewness statistics</strong> with <code>e1072::skewness()</code>.</p>
 <p>To resolve skewness in data, can apply either <strong>log, square root or inverse</strong>.</p>
-<p>Alternatively, use <strong>Box-Cox</strong> transformations <code>caret::BoxCoxTrans()</code>, which is more straightforward, less prone to numerical issues and just as effective as Box and Tidwell.</p>
+<p>Alternatively, use <strong>Box-Cox</strong> transformations <code>caret::BoxCoxTrans()</code>, which is more straightforward, less prone to numerical issues and just as effective as Box and Tidwell. Box-Cox is a family of transformations:</p>
+<p><span class="math display">\[
+\begin{aligned}
+x^* = \begin{cases}
+\frac{x^\lambda - 1}{\lambda} &amp; \text{if } \lambda \neq 0 \\
+\log(x) &amp; \text{otherwise}
+\end{cases}
+\end{aligned}
+\]</span></p>
+<pre class="r"><code># compute box-cox transform lambda
+Ch1AreaTrans &lt;- BoxCoxTrans(segData$AreaCh1)
+# apply box-cox transform
+predict(Ch1AreaTrans, head(segData$AreaCh1))</code></pre>
 </div>
 <div id="transformation-for-outliers-examples" class="section level2">
 <h2>Transformation for Outliers / Examples</h2>
-<p>Tree-based models (due to splits) and SVM classification models (due to support vectors) are less prone to outliers.</p>
-<p>Center and scale data, then apply <strong>spatial sign</strong> transformation <code>caret::spatialSign()</code>.</p>
+<p>Tree-based models (due to splits) and SVM classification models (due to support vectors) are <strong>less prone to outliers</strong>.</p>
+<p>Center and scale data, then apply <strong>spatial sign</strong> transformation <code>caret::spatialSign()</code>. It projects predictor values onto a multi-dimensional sphere, this has the effect of making all samples to have the same distance from the center of the sphere. Mathematically, each sample is divided by its Euclidean norm:</p>
+<p><span class="math display">\[ x^*_{ij} = \frac{x_{ij}}{\sqrt{x_{ij}^2}} \]</span></p>
 </div>
 <div id="transformation-for-entire-dataset" class="section level2">
 <h2>Transformation for Entire Dataset</h2>
@@ -333,7 +348,7 @@ splom(~segRot[, 1:3],
 <li>designed for linear models, requires n &gt; p, more samples than predictors</li>
 <li>when it identifies issues, it does not determine which should be reomoved to solve the problem.</li>
 </ul>
-<p>p47, The book includes a huristic algorithm that iteratively remove predictors by looking at correlated predictor pairs and the remove the one with the <strong>higher</strong> average correlation with the rest of the predictors.</p>
+<p>p47, The book includes a huristic algorithm that iteratively <strong>remove predictors</strong> by looking at correlated predictor pairs and the remove the one with the <strong>higher average correlation</strong> with the rest of the predictors.</p>
 </div>
 <div id="one-hot-encoding" class="section level2">
 <h2>One-Hot Encoding</h2>
@@ -364,8 +379,6 @@ model.matrix(~ tt - 1, d)</code></pre>
 </div>
 <div id="code" class="section level2">
 <h2>Code</h2>
-<p><code>caret::preProcess()</code> can apply a pipeline of transformations to given data.</p>
-<p><code>caret::predict()</code> applys a model to given data.</p>
 <pre class="r"><code>data(segmentationOriginal)
 segData &lt;- subset(segmentationOriginal, Case == 'Train')
 cellID &lt;- segData$Cell
@@ -707,18 +720,18 @@ elasticnet::enet(x = as.matrix(solTrainXtrans), y = solTrainY, lambda = .001)</c
 <h2>SVM</h2>
 <p>Book focuses on <strong><span class="math inline">\(\epsilon\)</span>-insensitive regression</strong>.</p>
 <p>SVMs for regression use a function similar to the Huber function, but with difference.</p>
-<p>Given <span class="math inline">\(\epsilon\)</span> give by user, data points with residuals <strong>within</strong> the threshold do not contribute to the regression fit, while data points with an absolute difference <strong>greater</strong> than the threshold contribute a linear-scale amount.</p>
+<p>Given threshold <span class="math inline">\(\epsilon\)</span> give by user, data points with residuals <strong>within</strong> the threshold do not contribute to the regression fit, while data points with an absolute difference <strong>greater</strong> than the threshold contribute a linear-scale amount. <strong>Poorly predicted points define the line.</strong></p>
 <p>Consequence:</p>
 <ol style="list-style-type: decimal">
-<li>more robust t outliers,</li>
+<li>more robust for outliers,</li>
 <li>samples that fit well have <strong>no effect</strong> on the regression equation.</li>
 </ol>
-<p>Poorly predicted points define the line.</p>
 <p>SVM is over-parameterized, but the cost value effectively regularizes the model, helps to alleviate this problem.</p>
 <p>Individual training data points are required for new predictions, these are known as <strong>support vectors</strong>.</p>
-<p>Authors found that the cost parameter provides more flexibility for tuning the model and therefore suggest fixing a value for <span class="math inline">\(\epsilon\)</span> and tuning over the other kernel parameters.</p>
+<p>Authors found that the <strong>cost parameter provides more flexibility for tuning the model</strong> and therefore suggest <strong>fixing</strong> a value for <span class="math inline">\(\epsilon\)</span> and tuning over the other kernel parameters.</p>
 <p>Since the predictors enter into the model as sum of cross products, differences in predictor scales can affect the model. Therefore, data should be <strong>centered and scaled</strong> before feeding into svm.</p>
 <p>Bayesian analog to SVM: <em>relevance vector machine</em> (Tipping 2001). There are usually less relevance vectors than support vectors in model.</p>
+<p>With <code>kernlab</code> package, different SVM kernels have different tuning parameters. See SVM for classification for an example for radial basis kernel.</p>
 <pre class="r"><code># e1071::svm()
 # kernlab package has more extensive implementation of SVM for regression
 # use kernlab::ksvm
@@ -732,11 +745,15 @@ solTrainXtrans$solTrainY &lt;- solTrainY
 # supported kernels: rbfdot, polydot, vanilladot, etc.
 svmFit &lt;- ksvm(solTrainY ~ ., data = solTrainXtrans,
                # x = solTrainXtrans, y = solTrainY,
-               kernel = 'rbfdot', kpar = 'automatic',
+               kernel = 'rbfdot', 
+               kpar = 'automatic',
                C = 1, epsilon = .1)
 
 # use train() to tune model. method parameter can take:
-# svmRadial, svmLinear, svmPoly to fit different kernels
+# svmRadial, 
+# svmLinear, 
+# svmPoly 
+# to fit different kernels
 svmRTuned &lt;- train(solTrainY ~ ., data = solTrainXtrans,
                    method = 'svmRadial',
                    preProc = c('center', 'scale'),
@@ -1302,10 +1319,11 @@ confusionMatrix(data = creditResults$pred,
 <li>Prevalence is also dynamic, i.e. it changes, or can be different in different places or situations.</li>
 </ol>
 <p><strong>Youden’s <span class="math inline">\(J\)</span> Index</strong> <span class="math inline">\(= Sensitivity + Specificity - 1\)</span> measures the proportion of correctly predicted samples for both the event and nonevent groups.</p>
-<p><strong>Matthews Correlation Coefficient</strong> is related to Youden’s <span class="math inline">\(J\)</span> index. It has a value between -1 and +1, and can be found in package <code>mccr</code>. A value of +1 indicates perfect prediction, -1 means the worst possible, i.e. predicting everything wrong. It is defined, using terms from a confustion matrix, as: (if any of the 4 denominator sums is 0 then the MCC is set to 0.)</p>
+<p><strong>Matthews Correlation Coefficient</strong> is related to Youden’s <span class="math inline">\(J\)</span> index. It has a value between -1 and +1, and can be found in <code>ModelMetrics</code> package. A value of +1 indicates perfect prediction, -1 means the worst possible, i.e. predicting everything wrong. It is defined, using terms from a confustion matrix, as: (if any of the 4 denominator sums is 0 then the MCC is set to 0.)</p>
 <p><span class="math display">\[ MCC = \frac{TP \times TN - FP \times FN}{\sqrt{(TP + FP)(TP + FN)(TN + FP)(TN + FN)}} \]</span></p>
-<p><span class="math inline">\(MCC\)</span> has a generalized form to handle multi-class problems. <code>mccr:mccr()</code> only handles two-class problems, requires actual class labels and predicted class labels, labels must be numeric, 1 for positive, 0 for negative.</p>
-<p><code>ModelMetrics</code> package also has a MCC implementation that supports multi class problems. Example below to train with <code>caret::train</code> with custom metric.</p>
+<p><span class="math inline">\(MCC\)</span> has a generalized form to handle multi-class problems.</p>
+<p><code>ModelMetrics</code> package also has a MCC implementation that supports multi class problems. Example below to train with <code>caret::train</code> with custom metric. The predicted classes and ground truth need to be in one hot encoding format.</p>
+<p><code>mccr::mccr()</code> only handles two-class problems, requires actual class labels and predicted class labels, labels must be numeric, 1 for positive, 0 for negative.</p>
 <pre class="r"><code>library(ModelMetrics)
 
 data(iris)
@@ -1759,19 +1777,6 @@ plot(ldaRoc, type = &quot;s&quot;, add = TRUE, col = rgb(.2, .2, .2, .2),
 plot(lrRoc, type = &quot;s&quot;, col = rgb(.2, .2, .2, .2), add = TRUE, 
      legacy.axes = TRUE)
 plot(spLDARoc, type = &quot;s&quot;, add = TRUE, legacy.axes = TRUE)</code></pre>
-<pre class="r"><code># LGOCV = Leave Group Out CV
-ctrl &lt;- trainControl(method='LGOCV',
-                     summaryFunction = twoClassSummary, 
-                     classProbs = TRUE,
-                     index = list(TrainSet = pre2008),
-                     savePredictions = T)
-
-svmFit00 &lt;- train(allData[,fullSet], allData$Class,
-                  method = &quot;svmRadial&quot;,
-                  tuneGrid = svmrGrid,
-                  preProc = c(&quot;center&quot;, &quot;scale&quot;),
-                  metric = &quot;ROC&quot;,
-                  trControl = ctrl00)</code></pre>
 </div>
 </div>
 <div id="nonlinear-classification-models" class="section level1">
@@ -1816,8 +1821,9 @@ svmFit00 &lt;- train(allData[,fullSet], allData$Class,
 <p><code>earth</code> package fits MARS with a <strong>wider range of options</strong>, and can be used together with <code>fda(..., method = earth)</code>. Other parameters for <code>earth()</code> can be passed to <code>fda()</code> which will pass them to <code>earth()</code>.</p>
 <p><code>caret::train()</code> can fit FDA models with <code>method = 'fda'</code>. <code>caret:varImp()</code> also works.</p>
 </div>
-<div id="svm-1" class="section level3">
-<h3>SVM</h3>
+</div>
+<div id="svm-1" class="section level2">
+<h2>SVM</h2>
 <p>Vapnik 1995 extended SVM to incorporate a cost parameter on the sum of the training set points that are on the boundary or on the wrong side of the boundary.</p>
 <p>Large cost values increase model complexity rather than restrain it. When cost is <strong>low</strong>, model may <strong>underfit</strong> the data. When cost is <strong>too large</strong>, the model may <strong>overfit</strong> the data.</p>
 <p>Platt (2000) described a way to post-process SVM output to estimate class probabilities.</p>
@@ -1836,17 +1842,43 @@ svmFit00 &lt;- train(allData[,fullSet], allData$Class,
 <li><code>class.weights</code> parameter assigns asymmetric cost to each class. Syntax is to use <strong>named vectors</strong> of weights or costs. e.g. <code>class.weights = c(successful = 1, unsuccessful = 5)</code></li>
 <li>class probabilities are not affected by <code>class.weights</code></li>
 <li>use <code>predict(model, newdata = ..., type = 'prob')</code> to predict class probabilities.</li>
+<li><code>kernlab::sigest()</code> can be used to sample training data to provide potential <span class="math inline">\(\sigma\)</span> ranges for <strong>Gaussian radial basis</strong> kernel <span class="math inline">\(\exp(-\sigma\|x = u\|^2)\)</span>.</li>
 </ul>
+<pre class="r"><code>library(kernlab)
+library(caret)
+
+ctrl &lt;- trainControl(method = &quot;LGOCV&quot;,
+                     summaryFunction = twoClassSummary,
+                     classProbs = TRUE,
+                     index = list(TrainSet = pre2008),
+                     savePredictions = TRUE)
+
+# paper: 
+# Appearance-based object recognition using SVMs: which kernel should I use?
+# 2002
+sigmaRangeReduced &lt;- sigest(as.matrix(training[,reducedSet]))
+
+svmRGridReduced &lt;- expand.grid(sigma = sigmaRangeReduced[1],
+                               C = 2^(seq(-4, 4)))
+                               
+svmRFitReduced &lt;- train(x = training[,reducedSet], 
+                        y = training$Class,
+                        method = &quot;svmRadial&quot;,
+                        metric = &quot;ROC&quot;,
+                        preProc = c(&quot;center&quot;, &quot;scale&quot;),
+                        tuneGrid = svmRGridReduced,
+                        trControl = ctrl)
+svmRFitReduced</code></pre>
 </div>
-<div id="knn-1" class="section level3">
-<h3>KNN</h3>
+<div id="knn-1" class="section level2">
+<h2>KNN</h2>
 <p><code>caret::train(..., method='knn', ...)</code></p>
 <p>New sample’s predicted class is the class with the highest probability estimate of its neighbours.</p>
 <p>Prone to <strong>overfitting</strong> when <span class="math inline">\(K\)</span> is small.</p>
 <p>Book example revealed some numerical instability of KNN: as the number of neighbours increases, the probability of ties also increases.</p>
 </div>
-<div id="naive-bayes" class="section level3">
-<h3>Naive Bayes</h3>
+<div id="naive-bayes" class="section level2">
+<h2>Naive Bayes</h2>
 <p>Assumes that all of the predictors are <strong>independent</strong> of the others. Makes computation easier..</p>
 <p>Let <span class="math inline">\(Y\)</span> be the class variable and <span class="math inline">\(X\)</span> be the collections of predictor variables.</p>
 <p>Conditional probability with this assumption becomes:</p>
@@ -1907,7 +1939,6 @@ nBayesRoc &lt;- roc(response = nBayesFit$pred$obs,
                  predictor = nBayesFit$pred$successful,
                  levels = rev(levels(nBayesFit$pred$obs)))
 nBayesRoc</code></pre>
-</div>
 </div>
 </div>
 <div id="classification-trees" class="section level1">

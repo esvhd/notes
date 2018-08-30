@@ -120,6 +120,10 @@ f <- as.formula(f)
 
 # Data Preprocessing
 
+`caret::preProcess()` can apply a pipeline of transformations to given data.
+
+`caret::predict()` applys a model or transformation to given data.
+
 ## Transforming Features
 
 Rule of thumb: ratio of highest and lowest values **exceeds 20 indicates**
@@ -131,15 +135,37 @@ To resolve skewness in data, can apply either **log, square root or inverse**.
 
 Alternatively, use **Box-Cox** transformations `caret::BoxCoxTrans()`, which is 
 more straightforward, less prone to numerical issues and just as effective as 
-Box and Tidwell.
+Box and Tidwell. Box-Cox is a family of transformations:
+
+$$
+\begin{aligned}
+x^* = \begin{cases}
+\frac{x^\lambda - 1}{\lambda} & \text{if } \lambda \neq 0 \\
+\log(x) & \text{otherwise}
+\end{cases}
+\end{aligned}
+$$
+
+```{r boxcox, eval=F}
+# compute box-cox transform lambda
+Ch1AreaTrans <- BoxCoxTrans(segData$AreaCh1)
+# apply box-cox transform
+predict(Ch1AreaTrans, head(segData$AreaCh1))
+```
+
 
 ## Transformation for Outliers / Examples
 
 Tree-based models (due to splits) and SVM classification models (due to 
-support vectors) are less prone to outliers. 
+support vectors) are **less prone to outliers**. 
 
 Center and scale data, then apply **spatial sign** transformation 
-`caret::spatialSign()`.
+`caret::spatialSign()`. It projects predictor values onto a multi-dimensional
+sphere, this has the effect of making all samples to have the same distance
+from the center of the sphere.
+Mathematically, each sample is divided by its Euclidean norm:
+
+$$ x^*_{ij} = \frac{x_{ij}}{\sqrt{x_{ij}^2}} $$
 
 ## Transformation for Entire Dataset
 
@@ -281,9 +307,9 @@ but beyond linear regression, it may be **inadequate**:
 * when it identifies issues, it does not determine which should be reomoved to
 solve the problem.
 
-p47, The book includes a huristic algorithm that iteratively remove predictors by
-looking at correlated predictor pairs and the remove the one with the 
-**higher** average correlation with the rest of the predictors.
+p47, The book includes a huristic algorithm that iteratively 
+**remove predictors** by looking at correlated predictor pairs and the remove 
+the one with the **higher average correlation** with the rest of the predictors.
 
 
 ## One-Hot Encoding
@@ -327,10 +353,6 @@ Never mannually bin continuous variables.
 
 
 ## Code
-
-`caret::preProcess()` can apply a pipeline of transformations to given data.
-
-`caret::predict()` applys a model to given data.
 
 ```{r prepro, eval=FALSE}
 data(segmentationOriginal)
@@ -786,17 +808,15 @@ Book focuses on **$\epsilon$-insensitive regression**.
 SVMs for regression use a function similar to the Huber function, but with 
 difference. 
 
-Given $\epsilon$ give by user, data points with residuals **within** the 
-threshold do not contribute to the regression fit, while data points with
+Given threshold $\epsilon$ give by user, data points with residuals **within** 
+the threshold do not contribute to the regression fit, while data points with
 an absolute difference **greater** than the threshold contribute a linear-scale
-amount.
+amount. **Poorly predicted points define the line.**
 
 Consequence: 
 
-1. more robust t outliers, 
+1. more robust for outliers, 
 2. samples that fit well have **no effect** on the regression equation.
-
-Poorly predicted points define the line. 
 
 SVM is over-parameterized, but the cost value effectively regularizes the model,
 helps to alleviate this problem.
@@ -804,8 +824,9 @@ helps to alleviate this problem.
 Individual training data points are required for new predictions, these are 
 known as **support vectors**.
 
-Authors found that the cost parameter provides more flexibility for tuning the
-model and therefore suggest fixing a value for $\epsilon$ and tuning over the
+Authors found that the 
+**cost parameter provides more flexibility for tuning the model** 
+and therefore suggest **fixing** a value for $\epsilon$ and tuning over the
 other kernel parameters.
 
 Since the predictors enter into the model as sum of cross products, differences
@@ -814,6 +835,9 @@ in predictor scales can affect the model. Therefore, data should be
 
 Bayesian analog to SVM: *relevance vector machine* (Tipping 2001). There are 
 usually less relevance vectors than support vectors in model.
+
+With `kernlab` package, different SVM kernels have different tuning parameters.
+See SVM for classification for an example for radial basis kernel.
 
 ```{r svm, eval=FALSE}
 
@@ -830,11 +854,15 @@ solTrainXtrans$solTrainY <- solTrainY
 # supported kernels: rbfdot, polydot, vanilladot, etc.
 svmFit <- ksvm(solTrainY ~ ., data = solTrainXtrans,
                # x = solTrainXtrans, y = solTrainY,
-               kernel = 'rbfdot', kpar = 'automatic',
+               kernel = 'rbfdot', 
+               kpar = 'automatic',
                C = 1, epsilon = .1)
 
 # use train() to tune model. method parameter can take:
-# svmRadial, svmLinear, svmPoly to fit different kernels
+# svmRadial, 
+# svmLinear, 
+# svmPoly 
+# to fit different kernels
 svmRTuned <- train(solTrainY ~ ., data = solTrainXtrans,
                    method = 'svmRadial',
                    preProc = c('center', 'scale'),
@@ -1595,7 +1623,7 @@ proportion of correctly predicted samples for both the event and nonevent
 groups.
 
 **Matthews Correlation Coefficient** is related to Youden's $J$ index. It has
-a value between -1 and +1, and can be found in package `mccr`. 
+a value between -1 and +1, and can be found in `ModelMetrics` package. 
 A value of +1 indicates perfect prediction, -1 means the worst possible, i.e.
 predicting everything wrong.
 It is defined, using terms from a confustion matrix, as:
@@ -1604,12 +1632,14 @@ It is defined, using terms from a confustion matrix, as:
 $$ MCC = \frac{TP \times TN - FP \times FN}{\sqrt{(TP + FP)(TP + FN)(TN + FP)(TN + FN)}} $$
 
 $MCC$ has a generalized form to handle multi-class problems.
-`mccr:mccr()` only handles two-class problems, requires actual class labels 
-and predicted class labels, labels must be numeric, 1 for positive, 0 for
-negative. 
 
 `ModelMetrics` package also has a MCC implementation that supports multi class
 problems. Example below to train with `caret::train` with custom metric.
+The predicted classes and ground truth need to be in one hot encoding format.
+
+`mccr::mccr()` only handles two-class problems, requires actual class labels 
+and predicted class labels, labels must be numeric, 1 for positive, 0 for
+negative. 
 
 ```{r mcc, eval=F}
 
@@ -2196,21 +2226,6 @@ plot(lrRoc, type = "s", col = rgb(.2, .2, .2, .2), add = TRUE,
 plot(spLDARoc, type = "s", add = TRUE, legacy.axes = TRUE)
 ```
 
-```{r svm_class, eval=F}
-# LGOCV = Leave Group Out CV
-ctrl <- trainControl(method='LGOCV',
-                     summaryFunction = twoClassSummary, 
-                     classProbs = TRUE,
-                     index = list(TrainSet = pre2008),
-                     savePredictions = T)
-
-svmFit00 <- train(allData[,fullSet], allData$Class,
-                  method = "svmRadial",
-                  tuneGrid = svmrGrid,
-                  preProc = c("center", "scale"),
-                  metric = "ROC",
-                  trControl = ctrl00)
-```
 
 # Nonlinear Classification Models
 
@@ -2322,7 +2337,8 @@ to use **named vectors** of weights or costs. e.g.
 * use `predict(model, newdata = ..., type = 'prob')` to predict class 
 probabilities.
 * `kernlab::sigest()` can be used to sample training data to provide potential
-$\sigma$ ranges for **Gaussian radial basis** kernel.
+$\sigma$ ranges for **Gaussian radial basis** kernel
+$\exp(-\sigma\|x = u\|^2)$.
 
 
 ```{r svm_class, eval=F}

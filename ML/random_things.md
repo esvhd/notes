@@ -206,6 +206,31 @@ package Steven L. Scott.
 Allows us to model **trend, seasonality and either static or dynamic regression
 coefficients**.
 
+A structural time series model can be described by a pair of equations:
+
+$$
+\begin{aligned}
+y_t &= Z^T_t \alpha_t + \epsilon_t & \epsilon \sim \mathcal{N}(0, H_t) \\
+\alpha_{t+1} &= T_t \alpha_t + R_t \eta_t & \eta_t \sim \mathcal{N}(0, Q_t)
+\end{aligned}
+$$
+
+First equation above is called the **observation** equation, second is called
+the **transition** equation.
+
+$Z_t, T_t, R_t$ typicall contain a mix of known values (often 0 and 1), and
+unknown parameters.
+
+* $T_t$ is a square transition matrix
+* $R_t$ can be rectangular if a portion of the state transition is
+deterministic.
+* $Q_t$ is a full rank variance matrix
+$H_t$ is a positive scaler
+
+Models that can be described by the two equations above are said to be in
+**state space form**. ARIMA and VARMA models can be expressed in state space
+form.
+
 For paper from Scott above, an example model can be written as:
 
 $$
@@ -236,17 +261,18 @@ Also there is detailed discussion on seasonality in Brodersen's
 
 ## Bayesian Credible Region (CR) vs Frequentist Confidence Interval (CI)
 
-A great blog post by @jakevdp that had a more interesting comment section on this topic [here](http://jakevdp.github.io/blog/2014/06/12/frequentism-and-bayesianism-3-confidence-credibility/).
+A great blog post by @jakevdp that had a more interesting comment section on
+this topic [here](http://jakevdp.github.io/blog/2014/06/12/frequentism-and-bayesianism-3-confidence-credibility/).
 And an excellent [stackoverflow answer](https://stats.stackexchange.com/questions/2272/whats-the-difference-between-a-confidence-interval-and-a-credible-interval/2287#2287)
 
-Key point is the with CI, frequentists provide the right answer to the **wrong**
-question. 
+Key point is the with CI, frequentists provide the right answer to the
+**wrong** question.
 
-Typicall from the data given, we are interested in what the **given data** 
+Typicall from the data given, we are interested in what the **given data**
 tells us. That's what Bayesian CR tells us.
 
-Frequentist CI tells us, if you repeated see **data of this kind**, there is 
-$X%$ chance that the true value of $\theta$ falls inside of the CI. 
+Frequentist CI tells us, if you repeatedly see **data of this kind**, there is
+$X%$ chance that the true value of $\theta$ falls inside of the CI.
 
 But we are not interested in data of this kind, we are interested in what this
 piece of data tells us!

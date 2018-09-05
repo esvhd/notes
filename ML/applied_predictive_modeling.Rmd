@@ -83,7 +83,8 @@ some data is reserved for validation.
 
 ## Model Comparson Plots and Functions:
 
-* For regression, **predicted vs targets** and **predicted vs residuals**.
+* `lattice::xyplot()`, for regression, **predicted vs targets** and 
+**predicted vs residuals**. Supports formula.
 
 * `caret::defaultSummary()` for model summary.
 
@@ -95,7 +96,8 @@ some data is reserved for validation.
 use line plots to show resampledresults (RMSE or $R^2$) across different models. 
 Each line shows the **same** sample set across all models.
 
-* `xyplot.resamples()`
+* `caret::xyplot.resamples()` plots performance metrics from different CV folds 
+for a list of models. see `?xyplot.resample` example section.
 
 * `corrplot::corrplot(..., order='hclust')` for correlation matrix.
 
@@ -768,7 +770,7 @@ library(elasticnet)
 lm.ridge()
 
 # elastic-net, lambda parameter is ridge weight
-# or in glmnet package
+# or (1-alpha) in glmnet package for L2 weights
 elasticnet::enet(x = as.matrix(solTrainXtrans), y = solTrainY, lambda = .001)
 
 ```
@@ -2126,9 +2128,20 @@ Eilers et al. 2012 and Park and Hastie 2008 discussed this model in the context
 of large number of predictors and small training samples. The penalty term can 
 stabilize the logistic regression model coefficients in these cases.
 
-`glmnet` package uses elastic net style penalty. p303 for equation.
+`glmnet` package uses elastic net style penalty, the goal is to minimize 
+loss function:
+
+$$ \log(L(p))-\lambda \bigg[\frac{1-\alpha}{2} \| \beta \|^2 + \alpha |\beta|\bigg] $$
+
+Where $L(p)$ is the link, such as binomial likelihood function.
+
+Therefore there are two tuning parameters: `alpha` and `lambda`. Example 
+below.
 
 ```{r glm_reg, eval=F}
+# glmnet::glmnet requires matrix as inputs, not data.frame
+# x <- model.matrix(~ V1 + V2 - 1, Sonar)
+
 glmnGrid <- expand.grid(alpha = c(0,  .1,  .2, .4, .6, .8, 1),
                         lambda = seq(.01, .2, length = 40))
 set.seed(476)

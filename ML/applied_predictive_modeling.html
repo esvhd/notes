@@ -192,12 +192,12 @@ $(document).ready(function () {
 <div id="model-comparson-plots-and-functions" class="section level2">
 <h2>Model Comparson Plots and Functions:</h2>
 <ul>
-<li><p>For regression, <strong>predicted vs targets</strong> and <strong>predicted vs residuals</strong>.</p></li>
+<li><p><code>lattice::xyplot()</code>, for regression, <strong>predicted vs targets</strong> and <strong>predicted vs residuals</strong>. Supports formula.</p></li>
 <li><p><code>caret::defaultSummary()</code> for model summary.</p></li>
 <li><p><code>caret::featurePlot()</code> shows univariate plot of feature vs tarets.</p></li>
 <li><p><code>Hmisc::describe()</code> describes data by colume, p228</p></li>
 <li><p><code>parallelPlot(model)</code> <strong>parallel-coordinate plots</strong>: p230-231, use line plots to show resampledresults (RMSE or <span class="math inline">\(R^2\)</span>) across different models. Each line shows the <strong>same</strong> sample set across all models.</p></li>
-<li><p><code>xyplot.resamples()</code></p></li>
+<li><p><code>caret::xyplot.resamples()</code> plots performance metrics from different CV folds for a list of models. see <code>?xyplot.resample</code> example section.</p></li>
 <li><p><code>corrplot::corrplot(..., order='hclust')</code> for correlation matrix.</p></li>
 </ul>
 </div>
@@ -689,7 +689,7 @@ plsTune &lt;- train(x = solTrainXtrans, y = solTrainY,
 lm.ridge()
 
 # elastic-net, lambda parameter is ridge weight
-# or in glmnet package
+# or (1-alpha) in glmnet package for L2 weights
 elasticnet::enet(x = as.matrix(solTrainXtrans), y = solTrainY, lambda = .001)</code></pre>
 </div>
 </div>
@@ -1690,8 +1690,14 @@ plot(plsImpGrant, top=20, scales = list(y = list(cex = .95)))</code></pre>
 <p>For logistic regression, <code>L2</code> penalty can be added to maximizing log likelihood:</p>
 <p><span class="math display">\[ \underset{\beta}{argmax} \log L(p) - \lambda \sum_{j=1}^P \beta_j^2 \]</span></p>
 <p>Eilers et al. 2012 and Park and Hastie 2008 discussed this model in the context of large number of predictors and small training samples. The penalty term can stabilize the logistic regression model coefficients in these cases.</p>
-<p><code>glmnet</code> package uses elastic net style penalty. p303 for equation.</p>
-<pre class="r"><code>glmnGrid &lt;- expand.grid(alpha = c(0,  .1,  .2, .4, .6, .8, 1),
+<p><code>glmnet</code> package uses elastic net style penalty, the goal is to minimize loss function:</p>
+<p><span class="math display">\[ \log(L(p))-\lambda \bigg[\frac{1-\alpha}{2} \| \beta \|^2 + \alpha |\beta|\bigg] \]</span></p>
+<p>Where <span class="math inline">\(L(p)\)</span> is the link, such as binomial likelihood function.</p>
+<p>Therefore there are two tuning parameters: <code>alpha</code> and <code>lambda</code>. Example below.</p>
+<pre class="r"><code># glmnet::glmnet requires matrix as inputs, not data.frame
+# x &lt;- model.matrix(~ V1 + V2 - 1, Sonar)
+
+glmnGrid &lt;- expand.grid(alpha = c(0,  .1,  .2, .4, .6, .8, 1),
                         lambda = seq(.01, .2, length = 40))
 set.seed(476)
 glmnFit &lt;- train(x = training[,fullSet], 

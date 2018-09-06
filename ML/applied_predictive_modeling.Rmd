@@ -1834,7 +1834,9 @@ event rate.
 
 ```{r lift_chart, eval=F}
 ### Lift charts
-
+# creditResults is a data.frame
+# creditResults$obs are the actual classes
+# creditResults$prob are the predicted class probabilities 
 creditLift <- caret::lift(obs ~ prob, data = creditResults)
 xyplot(creditLift)
 ```
@@ -3097,7 +3099,18 @@ One implementation of random forest can use a class specified as the
 **stratification variable**, to bootstrap samples roughtly the same size per 
 class.
 
-`caret::downSample()` and `caret::upSample()`
+`caret::downSample()` and `caret::upSample()` to down sample the majority 
+or up sample the minority class. Example:
+
+```{r upsamp, eval=F}
+library(ISLR)
+library(dplyr)
+
+Caravan %>% count(Purchase)
+up.samp <- upSample(Caravan, Caravan$Purchase)
+up.samp %>% count(Purchase)
+```
+
 
 **SMOTE**, synthetic minority over-sampling technique, uses KNN nearest K 
 neighbours of a randomly chosen sample to impute new cases. Three parameters:
@@ -3110,7 +3123,13 @@ and its neighbours' predictors)
 `smoteTrain <- DMwR::SMOTE(y ~ ., data=training)` 
 
 When using **modified versions** of the training set, resampled estimates of 
-model performance can become **biased**.
+model performance can become **biased** - E.g. when using up-sampled data, 
+because the when splitting the training data for validation, the same samples
+are likely to be in both training and validation set, leading to more 
+optimistic assessment. (This is because in `caret` does CV after up/down
+sampling, i.e. `train()` takes the resampled data as input and does CV.)
+Setting a test set before creating the training set may help to mitigate this
+issue.
 
 Resample can help with class imbalance issues, but no approach is a clear 
 winner based on current research.
@@ -3180,6 +3199,23 @@ C5CostFit <- train(training[, predictors],
 * plot cost weights versus Kappa
 * plot cost weights versus Sensitivity and Specificity.
 
+## Other Methods (not in book)
+
+### Divide Majority Class into `L` Clusters
+
+Read in a Quora [answer](https://www.quora.com/In-classification-how-do-you-handle-an-unbalanced-training-set)
+
+Train `L` classifiers, one for each cluster, each with data from a cluster 
+and **all** of the minority class data. Essentially, we will have lots of 
+classifiers, each is trained with more balanced data.
+
+Finally use model averaging for the `L` classifiers and the final prediction.
+
+Alternatively, if the minority class has `N` examples, using agglomerative 
+clustering to find `N` clusters of the majority class, then use the resulting
+cluster mediods/mean as training data (actual examples are **not** used) 
+together with the minority class. However, this method significantly reduces
+dataset size.
 
 # Measuring Predictor Importance
 

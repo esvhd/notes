@@ -1465,7 +1465,9 @@ plot(creditROC, legacy.axes = TRUE)</code></pre>
 <li>Divide the % of true events for each probability threshold by the baseline event rate.</li>
 </ol>
 <pre class="r"><code>### Lift charts
-
+# creditResults is a data.frame
+# creditResults$obs are the actual classes
+# creditResults$prob are the predicted class probabilities 
 creditLift &lt;- caret::lift(obs ~ prob, data = creditResults)
 xyplot(creditLift)</code></pre>
 </div>
@@ -2422,7 +2424,13 @@ factorForm &lt;- as.formula(factorForm)</code></pre>
 <li>take a bootstrap sample across all classes such that they are balanced. <strong>Advantage</strong> of this approach is that the bootstrap selection can be run many times so that the estimate of variance can be obtained about the down-sampling.</li>
 </ul>
 <p>One implementation of random forest can use a class specified as the <strong>stratification variable</strong>, to bootstrap samples roughtly the same size per class.</p>
-<p><code>caret::downSample()</code> and <code>caret::upSample()</code></p>
+<p><code>caret::downSample()</code> and <code>caret::upSample()</code> to down sample the majority or up sample the minority class. Example:</p>
+<pre class="r"><code>library(ISLR)
+library(dplyr)
+
+Caravan %&gt;% count(Purchase)
+up.samp &lt;- upSample(Caravan, Caravan$Purchase)
+up.samp %&gt;% count(Purchase)</code></pre>
 <p><strong>SMOTE</strong>, synthetic minority over-sampling technique, uses KNN nearest K neighbours of a randomly chosen sample to impute new cases. Three parameters:</p>
 <ul>
 <li>amount of up-sampling</li>
@@ -2430,7 +2438,7 @@ factorForm &lt;- as.formula(factorForm)</code></pre>
 <li><span class="math inline">\(K\)</span> neighbours used to impute new cases (random combinations of this sample’s and its neighbours’ predictors)</li>
 </ul>
 <p><code>smoteTrain &lt;- DMwR::SMOTE(y ~ ., data=training)</code></p>
-<p>When using <strong>modified versions</strong> of the training set, resampled estimates of model performance can become <strong>biased</strong>.</p>
+<p>When using <strong>modified versions</strong> of the training set, resampled estimates of model performance can become <strong>biased</strong> - E.g. when using up-sampled data, because the when splitting the training data for validation, the same samples are likely to be in both training and validation set, leading to more optimistic assessment. (This is because in <code>caret</code> does CV after up/down sampling, i.e. <code>train()</code> takes the resampled data as input and does CV.) Setting a test set before creating the training set may help to mitigate this issue.</p>
 <p>Resample can help with class imbalance issues, but no approach is a clear winner based on current research.</p>
 </div>
 <div id="cost-sensitivy-training" class="section level2">
@@ -2477,6 +2485,16 @@ C5CostFit &lt;- train(training[, predictors],
 <li>plot cost weights versus Kappa</li>
 <li>plot cost weights versus Sensitivity and Specificity.</li>
 </ul>
+</div>
+<div id="other-methods-not-in-book" class="section level2">
+<h2>Other Methods (not in book)</h2>
+<div id="divide-majority-class-into-l-clusters" class="section level3">
+<h3>Divide Majority Class into <code>L</code> Clusters</h3>
+<p>Read in a Quora <a href="https://www.quora.com/In-classification-how-do-you-handle-an-unbalanced-training-set">answer</a></p>
+<p>Train <code>L</code> classifiers, one for each cluster, each with data from a cluster and <strong>all</strong> of the minority class data. Essentially, we will have lots of classifiers, each is trained with more balanced data.</p>
+<p>Finally use model averaging for the <code>L</code> classifiers and the final prediction.</p>
+<p>Alternatively, if the minority class has <code>N</code> examples, using agglomerative clustering to find <code>N</code> clusters of the majority class, then use the resulting cluster mediods/mean as training data (actual examples are <strong>not</strong> used) together with the minority class. However, this method significantly reduces dataset size.</p>
+</div>
 </div>
 </div>
 <div id="measuring-predictor-importance" class="section level1">

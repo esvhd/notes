@@ -3313,7 +3313,7 @@ event can be calculated for both classes, as $p_1$ and $p_2$, then:
 
 $$ \text{Odds Ratio} = \frac{p_1(1-p_1)}{p_2(1 - p_2)} $$
 
-Odds ratio represent the increase in the odds of the even when going from the
+Odds ratio represent the increase in the odds of the event when going from the
 first level of the predictor to the other.
 
 ```{r cat.odds, eval=F}

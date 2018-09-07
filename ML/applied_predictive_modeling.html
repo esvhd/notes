@@ -2560,7 +2560,7 @@ tVals &lt;- t(tVals)</code></pre>
 <p>For <strong>binary</strong> predictors and two-class problems, an effective method is to use the <strong>odds ratio</strong>. <code>stats::fisher.test()</code></p>
 <p>Odds of <span class="math inline">\(p\)</span> is <span class="math inline">\(p / (1 - p)\)</span>. The probability of an event can be calculated for both classes, as <span class="math inline">\(p_1\)</span> and <span class="math inline">\(p_2\)</span>, then:</p>
 <p><span class="math display">\[ \text{Odds Ratio} = \frac{p_1(1-p_1)}{p_2(1 - p_2)} \]</span></p>
-<p>Odds ratio represent the increase in the odds of the even when going from the first level of the predictor to the other.</p>
+<p>Odds ratio represent the increase in the odds of the event when going from the first level of the predictor to the other.</p>
 <pre class="r"><code>load('~/tmp/apm/grantData.RData')
 
 sp6table &lt;- table(training[pre2008, 'Sponsor62B'],

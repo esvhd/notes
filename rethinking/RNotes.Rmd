@@ -1,0 +1,75 @@
+---
+title: "R Notes"
+author: "zwl"
+date: "9/9/2018"
+output: html_document
+---
+
+# `R` Notes
+
+## Data Types
+
+`NA` represents missing data. 
+`NULL`` represents that the value in quesiton does not exist.
+
+**Vectors, matrices and arrays** must hold data of the **same** type. 
+**data.frame** can have columns of different types, but the lengths are equal.
+**Lists** can have different datatypes and can different sizes / dimensions.
+
+Matrices are stored in **column major order**. To take input that is row by
+row, use `matrix(..., byrow = T)`.
+
+`List` - Indexing with `[]` returns list, a subset of the orignial. `[[]]` 
+uses the data type of the element.
+
+Standard (conditional) indexing includes `NA`. To exclude `NA`, use `subset()`.
+
+To delete a component from a list: set the value to NULL. 
+
+Functions to check data types:
+
+* `mode()`
+* `typeof()`
+* `class()`
+
+When added vectors of different lengths, `R` **recycles** the shorter vector,
+i.e. repeats its value until the sizes are matched. I think this is so odd
+and can be very dangerous... The saving grace is that the longer vector must
+be integer multiples of the shorter one in length, i.e. 6 vs 2 works, but 5 vs 
+2 does not.
+
+`c()` will use the most common denominator of data types. It also will
+**squeeze / flatten** the inputs.
+
+```{r c}
+a <- c(1, 2, 3)
+b <- c(5, 6)
+c <- c(a, c(8, 9), b)
+c
+```
+
+Sequences: `:` operator generates **int**, `seq()` and `c()` generate 
+**float**.
+
+```{r identical}
+a <-  1:3
+b <- seq(1, 3, by=1)
+mode(a)
+mode(b)
+identical(a, b)
+```
+
+`data.frame` has `strongAsFactors=` parameter to determine whether string 
+columns should be factors.
+
+`sapply()` sequeezes output of `lapply()` into a single vector or matrix. 
+Both can take either list, matrices or data.frames.
+
+`tapply()` groups values in an input vector by a list of factors, than apply
+a function. `split()` does the grouping but does not apply a function.
+
+`by()` works like `tapply()` but takes objects rather than vectors.
+
+`table()` creates **contingency tables**. `subtable()` selects a subset.
+
+`addmargins()` computes marginal values. 

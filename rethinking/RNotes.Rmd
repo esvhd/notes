@@ -1,7 +1,7 @@
 ---
 title: "R Notes"
 author: "zwl"
-date: "9/9/2018"
+date: "Long, long ago..."
 output: html_document
 ---
 
@@ -73,3 +73,86 @@ a function. `split()` does the grouping but does not apply a function.
 `table()` creates **contingency tables**. `subtable()` selects a subset.
 
 `addmargins()` computes marginal values. 
+
+`<<-` superassignment operator, or use `assign()` to change global variables.
+
+On object memory usage, `R` doesn't have pointers... Instead when objects are
+assigned to multiple variables, they reference the same memory location, 
+i.e. the same copy, **until a modification is made**. 
+At this point a copy is then made. 
+
+For objects modified in an inner scope, the outer scope values are **not**
+changed.
+
+`pmin()` for pair-wise minimum.
+
+Set operators:
+
+* `union()`
+* `intersect()`
+* `setdiff()`
+* `setequal()`
+* `choose(n, k)`
+
+**IO** functions:
+
+* `scan()`
+* `readline()`
+* `cat()` print to screen
+* Connection is R's version of a file handler, `file()`, `url()`, `seek()` and
+`close()`, can open remote URLs like a file.
+* `file.info()`, `dir()` to list files, `file.exists()`, `getwd()`, `setwd()`
+
+
+**String** manipulation
+
+`grep(pattern, x)`, `nchar(x)` to find length of `x`, `paste(a, b, sep=',')` 
+to concatenate, `sprintf()` for formatting printing.
+
+`substr(x, start, stop)`, `strsplit(x, split)`, `regexpr(pattern, text)`,
+`grepexpr(pattern, text)` find all instances.
+
+**Debug** tools
+
+* `browser()` to set break in code, or `browser(condition)`
+* `setBreakpoint(file, line_num)`
+* `untrace()` to cancel
+* `trace(f, t)` to call func `t` whenever func `f` is called
+* call `traceback()` when errors occur
+
+Useful global environmental vars to set:
+
+```{r env, eval = F}
+# dump when error occurrs, after a crash, call debugger() to examine
+options(error=dump.frames)
+# to alwyas enter debug mode:
+# options(error=recover)
+# to turn off
+# options(error=NULL)
+
+# show runtime errors instead of warnings
+options(warn=2)
+```
+
+**Performance**
+
+Use `system.time()` to time code.
+
+`rm(list = ls())` to remove objects from memory, `gc()` to call garbage
+collector.
+
+Changing a value in a vector may cause the entire vector to be recomputed. 
+Use `tracemem(x)` to find the memory location of `x`.
+
+To profile code:
+
+```{r rprof, eval = F}
+Rprof()
+# some code to profile
+Rprof(NULL)
+summaryRprof()
+```
+
+Use `invisible(code)` to hide result/output from code.
+
+Some packages that handle large amount of data: `ff`, `bigmemory`.

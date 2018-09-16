@@ -29,3 +29,9 @@ ModelMetrics
 mccr
 CORElearn
 DMwR
+urca
+tidyverse
+xgboost
+zoo
+janitor
+

@@ -12,6 +12,7 @@ party
 partykit
 lars
 randomForest
+ranger
 gbm
 xgboost
 glmnet
@@ -34,4 +35,4 @@ tidyverse
 xgboost
 zoo
 janitor
-
+extraTrees

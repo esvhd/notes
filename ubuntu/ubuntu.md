@@ -833,6 +833,13 @@ To uninstall:
 sudo apt-get remove icaclient
 ```
 
+Alternatively, use the command below to find out which cert is being used:
+
+```
+curl-config --ca
+```
+Download and replace with [file from Curl website](https://curl.haxx.se/ca/cacert.pem)
+
 # Ubuntu 18.04
 
 [Ubuntu UEFI Guide](https://help.ubuntu.com/community/UEFI), shows that there

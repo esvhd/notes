@@ -465,6 +465,21 @@ uses cuda 9.1.
 conda install pyyaml
 ```
 
+### `pip`
+
+Useful tip for manual uninstall [here](https://stackoverflow.com/questions/1550226/python-setup-py-uninstall/25209129)
+
+To record a list of installed files, you can use:
+
+```
+python setup.py install --record files.txt
+```
+
+Once you want to uninstall you can use xargs to do the removal:
+
+```
+cat files.txt | xargs rm -rf
+```
 
 ### Jupyter Notebook
 

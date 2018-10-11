@@ -889,6 +889,41 @@ Install `Gnome Tweaks`, go to Workspaces setting.
 
 Follow instructions [here](http://ubuntuhandbook.org/index.php/2016/01/mount-windows-10-in-ubuntu/)
 
+## How to recover GRUB
+
+Saw this problem 2018-10-11, some problem with grub not being able to update
+EFI due to lack of disk space.
+This [post](https://www.howtogeek.com/114884/how-to-repair-grub2-when-ubuntu-wont-boot/)
+had some useful tips.
+
+Basicall use Ubuntu boot USB to launch Try Ubuntu, then in terminal:
+
+```
+sudo apt-add-repository ppa:yannubuntu/boot-repair
+
+sudo apt-get update
+
+sudo apt-get install -y boot-repair
+
+boot-repair
+```
+
+This resolved the issue but created some more boot entries in grub.
+
+To remove these entries, edit `/etc/grub.d/25_custom`, see these two posts:
+
+* [AskUbuntu](https://askubuntu.com/questions/938633/boot-repair-created-too-many-grub-menu-entries-for-windows)
+* [Forum](https://ubuntuforums.org/showthread.php?t=2275315)
+
+```
+cp /etc/grub.d/25_custom ~/tmp/backup25_custom
+
+sudo /etc/grub.d/25_custom
+# delete all but the first 3 lines
+
+sudo update-grub
+```
+
 # Fix Windows Boot
 
 Based on this [post](https://www.quora.com/How-do-I-boot-into-Windows-10-from-Grub-Rescue-Mode), worked on my machine.

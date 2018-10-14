@@ -1347,8 +1347,9 @@ data(iris)
 # custom function for model metrics
 mccSummary &lt;- function(data, lev = NULL, model = NULL) {
   # get the levels from target labels
-  lvls &lt;- levels(data$obs)
-  num.classes = length(lvls)
+  if(is.null(lev))
+    lev &lt;- levels(data$obs)
+  num.classes = length(lev)
   
   # convert to one hot format
   oh &lt;- dummyVars(~ obs, data = data)
@@ -1356,14 +1357,14 @@ mccSummary &lt;- function(data, lev = NULL, model = NULL) {
   
   # get class probabilities, make sure they are in the same column order
   # as target labels, mcc cannot take data.frame so need matrix as input
-  pred.probs &lt;- as.matrix(data[, lvls])
+  pred.probs &lt;- as.matrix(data[, lev])
   
   out &lt;- ModelMetrics::mcc(actual = obs.oh, 
                            predicted =pred.probs, 
                            cutoff = 1 / num.classes)
   auc &lt;- ModelMetrics::mauc(actual = obs.oh, predicted = pred.probs)
   
-  return(c(MCC=out, AUC=auc['mauc'], num.classes=num.classes))
+  return(c(MCC=out, AUC=auc[['mauc']], num.classes=num.classes))
 }
 
 ctrl &lt;- trainControl(method='repeatedcv', 

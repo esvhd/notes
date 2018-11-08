@@ -43,6 +43,9 @@ Recently I've had lots of random feeze-and-crash events with Ubuntu 16.04 LTS, k
     # Nov 2017 - trying with intel_idle.max_cstate=1 as posts say it's very power wasting.
     GRUB_CMDLINE_LINUX_DEFAULT="quiet splash pcie_aspm=off"
 
+**Nov 2018**: based on this [post](https://unix.stackexchange.com/questions/327730/what-causes-this-pcieport-00000003-0-pcie-bus-error-aer-bad-tlp), added kernel option `pci=nommconf`. So far, I am no longer seeing
+PCI bus error messages in `/var/log/syslog`.
+
 ## Logs
 
 Some logs can be cached before it's written. Do the following to turn off cache so events are logged immediately.

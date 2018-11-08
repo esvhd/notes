@@ -36,3 +36,6 @@ xgboost
 zoo
 janitor
 extraTrees
+sandwich
+lubridate
+xts

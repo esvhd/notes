@@ -39,3 +39,7 @@ extraTrees
 sandwich
 lubridate
 xts
+devtools
+coda
+mvtnorm
+loo

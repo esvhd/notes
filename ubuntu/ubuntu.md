@@ -43,8 +43,10 @@ Recently I've had lots of random feeze-and-crash events with Ubuntu 16.04 LTS, k
     # Nov 2017 - trying with intel_idle.max_cstate=1 as posts say it's very power wasting.
     GRUB_CMDLINE_LINUX_DEFAULT="quiet splash pcie_aspm=off"
 
-**Nov 2018**: based on this [post](https://unix.stackexchange.com/questions/327730/what-causes-this-pcieport-00000003-0-pcie-bus-error-aer-bad-tlp), added kernel option `pci=nommconf`. So far, I am no longer seeing
-PCI bus error messages in `/var/log/syslog`.
+**Nov 2018 Update**:
+Still saw PCIe Bus Error after upgrading to 18.04 LTS. However, based on this [post](https://unix.stackexchange.com/questions/327730/what-causes-this-pcieport-00000003-0-pcie-bus-error-aer-bad-tlp),
+**added kernel option** `pci=nommconf`. So far, I am no longer seeing PCI bus
+error messages in `/var/log/syslog`.
 
 ## Logs
 
@@ -248,6 +250,9 @@ Then use `iostat -d 30 /dev/sda5` to monitor `/dev/sda5` with refresh every 30 s
     sudo apt-get install zlib1g-dev
     sudo apt-get install libssl-dev
     sudo apt-get install libcurl4-openssl-dev
+
+    # clinfo for GPU, platform info, saw from lightgbm docs
+    sudo apt-get install clinfo
 
 # Font, Icon Sizes
 

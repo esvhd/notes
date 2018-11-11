@@ -370,6 +370,73 @@ Tuning parameter
 
 # LightGBM
 
+To install with GPU support:
+
+```
+pip install lightgbm --install-option=--gpu
+```
+
+Or build from source. GPU Tutorial has a section on installation
+[here](https://lightgbm.readthedocs.io/en/latest/GPU-Tutorial.html).
+
 Supports grouped categorical features, no need for one-hot encoding, which
-does not work well with trees (tends to grow unbalanced trees and needs to be
-very deep to achieve good accuracy).
+**does not work well with trees** (tends to grow unbalanced trees and needs to
+be very deep to achieve good accuracy), according to its docs on
+[Features](https://lightgbm.readthedocs.io/en/latest/Features.html).
+
+Parameter tuning [guide](https://lightgbm.readthedocs.io/en/latest/Parameters-Tuning.html). Key ones below:
+
+* `num_leaves`, normally set to less than `2^(max_depth)`
+* `min_data_in_leaf`, 100s or 1000s for large data set is often enough.
+* `max_depth`
+
+
+Also a section on GPU
+[Tuning](https://lightgbm.readthedocs.io/en/latest/GPU-Performance.html#how-to-achieve-good-speedup-on-gpu).
+
+Also a **great** [site](https://sites.google.com/view/lauraepp/parameters)
+comparing the parameters of `xgboost` and `lightgbm`.
+
+Good intro [post](http://mlexplained.com/2018/01/05/lightgbm-and-xgboost-explained/). Below is
+a summary based on this post.
+
+## Features
+
+* Grow trees **leave-wise**, as opposed to **level-wise**.
+    * Level-wise grows more balanced trees and can be seen as a regularized
+    growth strategy.
+    * Leave-wise can overfit easier, therefore is more suitable for **larger**
+    data sets.
+    * `xgboost` now supports both growth strategies.
+
+* Use histogram based methods to find best splits, significant time save versus
+finding split with all values of continuous features.
+    * Trade off between speed and accuracy. More bins leads to slower speed
+    but higher accuracy, vice verce.
+    * How to construct the bins? Equal bin intervals often result in an
+    **unbalanced** allocation of data. The **most balanced** method of dividing
+    the bins depends on the **gradient statistics**.
+    * `xgboost` offers parameter `tree_method='approx'` to compute a new set of
+    bins at each split using gradient statistics.
+    * both `lightgbm` and `xgboost` with `tree_method='hist'` will both
+    compute the bins at the beginning of training and reuse the same bins
+    throughout the training process.
+
+* Ignore sparse inputs during split finding, then assign them to whichever
+side that reduces the loss the most.
+    * `xgboost` treats missing data and zero values the same.
+    * `lightgbm` has option `zero_as_missing=True` to treat zeros the same
+    as missing.
+    * `lightgbm` by default treats missing values the same way as `xgboost`,
+    via option `use_missing=True`.
+
+* Subsampling the data - concentrate on data points with larger gradients.
+    To avoid **biased** sampling, `lightgbm` also randomly samples from data
+    with small gradients, with increased weights assigned to them when
+    computing their loss contribution.
+
+* Excusive feature bundling, some features are never non-zero at the same
+time / in the same sample. Therefore they can be *bundled* together. However,
+finding the most efficient bundle is NP-hard... `lightgbm` uses an
+approximating algo to tolerat a certain degree of overlap $\gamma$ within
+a feature bundle.

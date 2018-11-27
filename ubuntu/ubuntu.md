@@ -962,3 +962,30 @@ To install Ubuntu:
 
 Goto Windows Settings -> Update & Securities -> Recovery -> Advanced Options
 -> Reboot
+
+# Compile `tensorflow` from source
+
+As of 2018-11-27
+
+Follow instruction [here](https://www.python36.com/how-to-install-tensorflow-gpu-with-cuda-9-2-for-python-on-ubuntu/2/),
+with one [twist](https://github.com/tensorflow/tensorflow/issues/23401).
+
+Also had to install a few packages first:
+
+```
+conda install protobuf
+pip install google
+pip install keras_preprocessing --no-deps
+pip install keras_applications --no-deps
+```
+
+Follow the instruction to build a whl file.
+
+Cuda 9.2 needs higher ubuntu drivers, run:
+
+```
+# to find the drivers available
+ubuntu-drivers devices
+# install driver with:
+# sudo apt install nvidia-driver-xxx
+```

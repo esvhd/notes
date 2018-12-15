@@ -691,6 +691,12 @@ Packages installed:
     Package Control
     Python PEP8 Autoformat
     SublimeLinter
+    MarkdownPreview
+    MarkdownEditing
+    TodoReview
+    Jedi - python autocompletion
+    SublimeCodeIntel
+    SublimeREPL
 
 ### Sidebar / Tab Font size
 

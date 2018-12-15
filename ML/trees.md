@@ -359,6 +359,15 @@ Source: ESL p351
 
 <img src='img/algo_compare.png' width=600/>
 
+# Gradient Boosting Trees
+
+Nicely written series on GBM [here](https://explained.ai/gradient-boosting/index.html).
+
+For **L1** loss, train boosters on the **sign of residual vectors**. The model is bootstrapped with the **median** of data points, and learns the group median. More robust against outliers.
+
+For **L2** loss, train boosters on the **value of residual vectors**. The model is boostrapped with the **average** of data points, and learns the group average. More sensitive to outliers.
+
+
 # XGBoost
 
 `xgboost` now supports 3 base learners, one of which is `dart`, which applies

@@ -681,18 +681,21 @@ User settings / key bindings can be found in Gmail. Labelled as `Code`.
 
 Instructions [here](https://realpython.com/blog/python/setting-up-sublime-text-3-for-full-stack-python-development/)
 
+`Markdown Preview` tool has instructions for reloading Markdown files live.
+
 Packages installed:
 
     Anaconda
     AutoDocstring
     GitGutter
     Side bar
-    Markdown Preview
     Package Control
     Python PEP8 Autoformat
     SublimeLinter
+    SublimeCodeIntel
     MarkdownPreview
     MarkdownEditing
+    LiveReload
     TodoReview
     Jedi - python autocompletion
     SublimeCodeIntel

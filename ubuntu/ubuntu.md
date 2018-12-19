@@ -683,6 +683,9 @@ Instructions [here](https://realpython.com/blog/python/setting-up-sublime-text-3
 
 `Markdown Preview` tool has instructions for reloading Markdown files live.
 
+For generating Markdown table of content, use `MarkdownTOC`, update user
+setting to use `autolink="true"`.
+
 Packages installed:
 
     Anaconda
@@ -695,6 +698,7 @@ Packages installed:
     SublimeCodeIntel
     MarkdownPreview
     MarkdownEditing
+    MarkdownTOC
     LiveReload
     TodoReview
     Jedi - python autocompletion

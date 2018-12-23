@@ -4,6 +4,82 @@
 * Asus X99-E WS motherboard
 * 2x Nvidia GeForce 1080 Ti Founders
 
+<!-- MarkdownTOC levels="1,2,3,4" autolink="true" -->
+
+- [Ubuntu Setup Notes](#ubuntu-setup-notes)
+- [Partitions](#partitions)
+    - [Recovery](#recovery)
+    - [Random Crashes Aug 2017](#random-crashes-aug-2017)
+    - [Logs](#logs)
+    - [Ethernet](#ethernet)
+    - [Turn off Power Management for WiFi](#turn-off-power-management-for-wifi)
+    - [DNS Server Update](#dns-server-update)
+    - [Update Ubuntu Packages](#update-ubuntu-packages)
+    - [Update VIM](#update-vim)
+    - [Ubuntu Disable Suspend](#ubuntu-disable-suspend)
+    - [Disable X screensavers](#disable-x-screensavers)
+    - [Mount Apple Time Capsule](#mount-apple-time-capsule)
+    - [Mount Options - Read Only](#mount-options---read-only)
+    - [Ubuntu Package Installation](#ubuntu-package-installation)
+    - [Useful Ubuntu Packages](#useful-ubuntu-packages)
+        - [Disk IO](#disk-io)
+        - [Etc](#etc)
+- [Font, Icon Sizes](#font-icon-sizes)
+    - [Chrome Menu Bar Size](#chrome-menu-bar-size)
+    - [Icon Size](#icon-size)
+    - [Change Mouse Cursor Size, Font Size](#change-mouse-cursor-size-font-size)
+    - [Unity 8](#unity-8)
+    - [Change Hostname](#change-hostname)
+    - [SSH on Ubuntu](#ssh-on-ubuntu)
+- [Nvidia Driver / GeForce 1080 Ti Founders](#nvidia-driver--geforce-1080-ti-founders)
+    - [Best Way to Install Cuda + Nvidia Drivers](#best-way-to-install-cuda--nvidia-drivers)
+        - [Nvidia Driver](#nvidia-driver)
+        - [Cuda](#cuda)
+        - [cuDNN 7.0 for Cuda 9.0](#cudnn-70-for-cuda-90)
+        - [PCIe Bus ERROR](#pcie-bus-error)
+    - [Previous Failed Attempts](#previous-failed-attempts)
+        - [Driver Installation Issues, version 381.22](#driver-installation-issues-version-38122)
+    - [Others](#others)
+        - [Disable Secure Boot](#disable-secure-boot)
+    - [Software Updates](#software-updates)
+        - [Conda](#conda)
+        - [Python packages](#python-packages)
+        - [`pip`](#pip)
+        - [Jupyter Notebook](#jupyter-notebook)
+            - [Password](#password)
+            - [Matplotlib `figure.figsize`](#matplotlib-figurefigsize)
+            - [Cell Width](#cell-width)
+            - [Crontab](#crontab)
+            - [Extension Widgets](#extension-widgets)
+            - [Showing Different Conda envs](#showing-different-conda-envs)
+    - [RStudio / MRO](#rstudio--mro)
+        - [MRO](#mro)
+        - [RStudio](#rstudio)
+        - [Rethinking / Rstan](#rethinking--rstan)
+        - [TA-Lib](#ta-lib)
+    - [Sublime Text 3](#sublime-text-3)
+        - [Sidebar / Tab Font size](#sidebar--tab-font-size)
+    - [GCC v7](#gcc-v7)
+        - [Change GCC/gfortran default version](#change-gccgfortran-default-version)
+    - [Manage PPA](#manage-ppa)
+    - [APT Dependencies](#apt-dependencies)
+    - [Kernel Update](#kernel-update)
+        - [Remove old kernel](#remove-old-kernel)
+    - [Chinese Input](#chinese-input)
+- [Citrix Receiver](#citrix-receiver)
+- [Ubuntu 18.04](#ubuntu-1804)
+    - [Packages](#packages)
+    - [Settings](#settings)
+    - [Mount Windows Partitions](#mount-windows-partitions)
+    - [How to recover GRUB](#how-to-recover-grub)
+- [Fix Windows Boot](#fix-windows-boot)
+    - [Convert from MBR to GPT](#convert-from-mbr-to-gpt)
+- [Compile `tensorflow` from source](#compile-tensorflow-from-source)
+- [`LightGBM` installation](#lightgbm-installation)
+
+<!-- /MarkdownTOC -->
+
+
 # Ubuntu Setup Notes
 
 I largely followed this [post](https://blog.slavv.com/the-1700-great-deep-learning-box-assembly-setup-and-benchmarks-148c5ebe6415) for the installation and software configuration instructions.
@@ -1002,3 +1078,16 @@ ubuntu-drivers devices
 # install driver with:
 # sudo apt install nvidia-driver-xxx
 ```
+
+
+# `LightGBM` installation
+
+On mac I had problem with `libomp`. Turns out `anaconda` came with an older version. 
+
+Error:
+
+```
+Error #15: Initializing libomp.dylib, but found libiomp5.dylib already initialized
+```
+
+Solution according to [this](https://blog.csdn.net/Jimmyzqb/article/details/83017650), which worked, is to remove `lib*omg*` in `anaconda3/lib`.

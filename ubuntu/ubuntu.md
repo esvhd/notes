@@ -58,6 +58,7 @@
         - [Rethinking / Rstan](#rethinking--rstan)
         - [TA-Lib](#ta-lib)
     - [Sublime Text 3](#sublime-text-3)
+        - [Key Bindings](#key-bindings)
         - [Sidebar / Tab Font size](#sidebar--tab-font-size)
     - [GCC v7](#gcc-v7)
         - [Change GCC/gfortran default version](#change-gccgfortran-default-version)
@@ -514,34 +515,36 @@ Edit `.condarc` to reorder channel priorities.
 
 ### Python packages
 
-    conda install pytorch torchvision cuda91 -c pytorch
-    conda install hdbscan tabulate joblib holoviews
-    conda install seaborn tqdm watermark xarray datashader
+```
+conda install pytorch torchvision cuda91 -c pytorch
+conda install hdbscan tabulate joblib holoviews watermark xarray
+conda install seaborn tqdm watermark xarray datashader
 
-    conda install -c districtdatalabs yellowbrick
-    # conda install -c bokeh datashader
+conda install -c districtdatalabs yellowbrick
+# conda install -c bokeh datashader
 
-    # for difficult to build cartopy and pynio.
-    conda install -c conda-forge cartopy pynio
+# for difficult to build cartopy and pynio.
+conda install -c conda-forge cartopy pynio
 
-    pip install hypertools janitor
+pip install hypertools
+conda install -c conda-forge pyjanitor
 
-    pip install git+https://github.com/bashtage/arch.git
-    pip install --upgrade google-api-python-client
+pip install git+https://github.com/bashtage/arch.git
+pip install --upgrade google-api-python-client
 
-    # 2to3 converter & AutoPEP 8 in jupyter
-    conda install jupyter_contrib_nbextensions autopep8
+# 2to3 converter & AutoPEP 8 in jupyter
+conda install jupyter_contrib_nbextensions autopep8
 
-    # enable config page
-    jupyter nbextensions_configurator enable --user
+# enable config page
+jupyter nbextensions_configurator enable --user
 
-    # filterpy
-    git clone https://github.com/rlabbe/filterpy.git
-    cd filterpy
-    python setup.py install
+# filterpy
+pip install git+https://github.com/rlabbe/filterpy.git
+# git clone https://github.com/rlabbe/filterpy.git
+# cd filterpy
+#python setup.py install
+```
 
-2018-03-04: `tensorflow 1.6` currently uses cuda 9.0, whereas `pytorch 0.3.1`
-uses cuda 9.1.
 
 `keras`: install from github source, will also need to install `pyyaml`:
 
@@ -613,9 +616,7 @@ Step:
 
 [`jupyter-contrib-nbextensions`](http://jupyter-contrib-nbextensions.readthedocs.io/en/latest/install.html#enabling-disabling-extensions) has a `2to3 converter` to convert Python 2.x notebooks to 3.x.
 
-```
-conda install jupyter_contrib_nbextensions
-```
+See conda section above for installation.
 
 #### Showing Different Conda envs
 
@@ -775,11 +776,26 @@ Packages installed:
     MarkdownPreview
     MarkdownEditing
     MarkdownTOC
+    lsBookmark
     LiveReload
     TodoReview
     Jedi - python autocompletion
     SublimeCodeIntel
     SublimeREPL
+
+For `SublimeCodeIntel`, need to run:
+
+```
+pip install -U CodeIntel
+```
+
+### Key Bindings
+
+`Jedi Autocomplete` has a key for `(`, sometimes this prevents one from typing a normal `(`, change it to something else.
+
+`Anaconda` package has nicer goto definition / find reference functions.
+
+`PEP8 Autoformat` has better code formatting function. 
 
 ### Sidebar / Tab Font size
 

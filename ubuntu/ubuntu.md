@@ -517,7 +517,7 @@ Edit `.condarc` to reorder channel priorities.
 
 ```
 conda install pytorch torchvision cuda91 -c pytorch
-conda install hdbscan tabulate joblib holoviews watermark xarray
+conda install hdbscan tabulate joblib holoviews watermark
 conda install seaborn tqdm watermark xarray datashader
 
 conda install -c districtdatalabs yellowbrick
@@ -527,6 +527,10 @@ conda install -c districtdatalabs yellowbrick
 conda install -c conda-forge cartopy pynio
 
 pip install hypertools
+
+# 2019-01: pyjanitor somehow seem be have frozen some packages,
+# couldn't update sklearn, had to remove sklearn, which also removed
+# pyjanitor and reinstall sklearn to get the latest version.
 conda install -c conda-forge pyjanitor
 
 pip install git+https://github.com/bashtage/arch.git
@@ -566,6 +570,12 @@ Once you want to uninstall you can use xargs to do the removal:
 
 ```
 cat files.txt | xargs rm -rf
+```
+
+To install a package from currency directory so that latest code changes are laoded, use the following:
+
+```
+pip install --editable .
 ```
 
 ### Jupyter Notebook
@@ -626,6 +636,16 @@ Essentiall, first activate the new environment, run the following:
 
 ```
 python -m ipykernel install --user --name myenv --display-name "Python (myenv)"
+```
+
+To remove kernels, see [this](https://stackoverflow.com/questions/42635310/remove-kernel-on-jupyter-notebook)
+
+```
+jupyter kernelspec list
+# remove the folders representing the kernel you don't need.
+
+# have not tried the line below but should also work:
+# jupyter kernelspec uninstall yourKernel
 ```
 
 ## RStudio / MRO

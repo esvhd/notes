@@ -677,6 +677,8 @@ Install with `deb` package for `16.04` still works.
 Install package with the following, found [here](https://support.rstudio.com/hc/en-us/community/posts/209074748-Installing-RStudio-Desktop-on-Ubuntu-16-04-LTS).
 
     sudo dpkg -i downloaded_file.deb
+
+    # if there are dependency issues, run the following line
     sudo apt-get -f install
 
 To remove:

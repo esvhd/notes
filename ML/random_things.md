@@ -1,5 +1,20 @@
 # Notes on random stuff I read about...
 
+
+- [Notes on random stuff I read about...](#notes-on-random-stuff-i-read-about)
+  - [Heatmap Clustering](#heatmap-clustering)
+  - [Permutation Importance for Random Forest Feature Importance](#permutation-importance-for-random-forest-feature-importance)
+  - [Loss Functions](#loss-functions)
+    - [Mean Square Error (MSE), L2 Loss](#mean-square-error-mse-l2-loss)
+    - [Mean Absolute Error (MAE), L1 Loss](#mean-absolute-error-mae-l1-loss)
+    - [Huber Loss](#huber-loss)
+    - [Log-Cosh Loss](#log-cosh-loss)
+    - [Quantile Loss](#quantile-loss)
+  - [Causal Impact](#causal-impact)
+    - [Bayesian Structural Time Series](#bayesian-structural-time-series)
+  - [Bayesian Credible Region (CR) vs Frequentist Confidence Interval (CI)](#bayesian-credible-region-cr-vs-frequentist-confidence-interval-ci)
+
+
 ## Heatmap Clustering
 
 [post](http://nicolas.kruchten.com/content/2018/02/seriation/)

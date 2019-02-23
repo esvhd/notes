@@ -1,4 +1,5 @@
+# install with pip install -r filename
 #hypertools
 google-api-python-client
-janitor
-TA-Lib
+#TA-Lib
+arviz

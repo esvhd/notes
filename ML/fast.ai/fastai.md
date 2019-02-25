@@ -108,8 +108,9 @@ def add_datepart(df, fldname, drop=True, time=False):
 
 Use `u-net` - it has a smiliar idea as ResNet / dense net, for the down-sampling and up-sampling processes that had the same dimension, a skip connection is added to the up-sampling output. However, instead of adding, concat was used.
 
-**De-convolution** - increase the output size, the reverse of convolution. E.g. using nearest neighbour interpolation (lesson 7).
+**De-convolution** - increase the output size, the reverse of convolution. E.g. using nearest neighbour interpolation (lesson 7). 
 
+`u-net` lessson 7 has code to use a pre-trained u-net. The froze section for u-net is the first encoder / convolution layers, i.e. layers before de-convolution.
 
 ## Tabular Problems with NN
 
@@ -149,6 +150,8 @@ Uses `pathlib`
 
 `fastai` adds a `.pca()` method to `torch.Tensor`! 
 
+`MSELossFlat()` loss function for tensor MSE. 
+
 ### `DataBunch`
 
 Some coding conventions:
@@ -170,11 +173,20 @@ Some coding conventions:
 ```
 # lesson 6, Rossmann problem
 
-TabularList.from_df(...)
-           .split_by_idx(...)
-           # log=True log transform of the dependent variables / y's
-           .label_from_df(cols=dep_vars, label_cls=FlatList, log=True)
-           .databunch()
+# TabularList inherits from ItemList
+
+(TabularList.from_df(...)         # returns TabularList
+            .split_by_idx(...)    # returns ItemLists
+            # Some dark magic going on here...
+            # ItemLists does not have the method label_from_df below, it's in
+            # ItemList...
+            # In ItemLists.__init__() there is a line that assigns 
+            # self.__class__ = LabelLists
+            # which turns it into a LabelLists...
+            # log=True log transform of the dependent variables / y's
+            # returns LabelLists
+            .label_from_df(cols=dep_vars, label_cls=FlatList, log=True)
+            .databunch())
 ```
 
 Taking `log` of dependent variables / `y`, essentially converts a RMSPE (root mean square percent error) to RMSE. Therefore, the network can be trained with normal RMSE loss.
@@ -274,6 +286,7 @@ learn.show_results()
 
 `MergeLayer`: can handle either residual block (add `x`) or dense block (concatenates `x`). DenseNet works very well for **smaller**
 datasets.
+
 
 ## `pytorch`
 

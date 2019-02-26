@@ -48,7 +48,9 @@
         - [Jupyter Notebook](#jupyter-notebook)
             - [Password](#password)
             - [Matplotlib `figure.figsize`](#matplotlib-figurefigsize)
+            - [Load Extension at Start](#load-extension-at-start)
             - [Cell Width](#cell-width)
+            - [Table of Contention extension](#table-of-contention-extension)
             - [Crontab](#crontab)
             - [Extension Widgets](#extension-widgets)
             - [Showing Different Conda envs](#showing-different-conda-envs)
@@ -598,6 +600,26 @@ This is created through `ipython profile create`. Insert the following at the en
 c.InlineBackend.rc = {'figure.figsize': (12, 4)}
 ```
 
+#### Load Extension at Start
+
+Goto `~/.ipython/profile_defaults`, add these lines for both `ipython_config.py` and `ipython_kernel_config.py`.
+
+```
+## lines of code to run at IPython startup.
+c.InteractiveShellApp.exec_lines = ['%autoreload 2']
+
+## A list of dotted module names of IPython extensions to load.
+c.InteractiveShellApp.extensions = ['autoreload']
+```
+
+To load packages at startup, create `~/.ipython/profile_defaults/startup` folder, then add file `00-first.py`, with the content below
+
+```
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+```
+
 
 #### Cell Width
 
@@ -607,6 +629,10 @@ File content should be:
 ```
 .container { width:90% !important; }
 ```
+
+#### Table of Contention extension
+
+Check out this [extension](https://github.com/minrk/ipython_extensions).
 
 
 #### Crontab

@@ -515,6 +515,14 @@ Some posts suggested disabling secure book in BIOS helped with the `drm` issue, 
 
 Edit `.condarc` to reorder channel priorities.
 
+To **pin** a package to a particular version, go to the current python environment folder, find `conda-meta` folder, then created a file called
+`pinned`, then add the package and version to pin.
+
+```
+# e.g.
+pytorch=1.0.1
+```
+
 ### Python packages
 
 ```

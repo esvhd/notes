@@ -57,6 +57,7 @@
     - [RStudio / MRO](#rstudio--mro)
         - [MRO](#mro)
         - [RStudio](#rstudio)
+        - [MacOS Mojave / Rstan](#macos-mojave--rstan)
         - [Rethinking / Rstan](#rethinking--rstan)
         - [TA-Lib](#ta-lib)
     - [Sublime Text 3](#sublime-text-3)
@@ -719,6 +720,35 @@ To remove:
 
     sudo dpkg --purge rstudio
 
+
+### MacOS Mojave / Rstan
+
+Mojave caused a lot of problem for install `rstan`. Some instructions here. As of 2019-03-14.
+
+1. Make sure `xcode` is installed, then run
+
+```
+sudo xcode-select -rest
+sudo xcode-select -install
+
+# start XCode and accept License.
+```
+
+2. Install Mac headers.
+
+```
+sudo installer -pkg \
+/Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg \
+-target /
+```
+
+3. Update `~/.R/Makevars`:
+
+```
+sudo touch ~/.R/Makevars && sudo echo 'CPPFLAGS="-isystem /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include"' >> ~/.R/Makevars
+```
+
+
 ### Rethinking / Rstan
 
 Create `.Rprofile` file and write the line below for MRO.
@@ -745,7 +775,12 @@ correctly.
 
 Then run in `R`:
 
-    install.packages("rstan", repos = "https://cloud.r-project.org/", dependencies=TRUE)
+```
+# use four cores
+Sys.setenv(MAKEFLAGS = "-j4")
+
+install.packages("rstan", repos = "https://cloud.r-project.org/", dependencies=TRUE)
+```
 
 If SSL authentication issues pop up, need to installed some other packages
 with `apt-get` first. See section above on useful packages. See this

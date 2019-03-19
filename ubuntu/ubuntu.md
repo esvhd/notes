@@ -845,6 +845,8 @@ Download library [here](http://www.ta-lib.org/hdr_dw.html)
 
 ## Sublime Text 3
 
+Best way to install for Linux is to follow the official instruction using `apt`, which will then take care of future updates automatically. Link [here](https://www.sublimetext.com/docs/3/linux_repositories.html#apt).
+
 User settings / key bindings can be found in Gmail. Labelled as `Code`.
 
 Instructions [here](https://realpython.com/blog/python/setting-up-sublime-text-3-for-full-stack-python-development/)
@@ -897,19 +899,20 @@ Run `PackageResourceViewer`, edit `Adaptive.sublime-theme`.
 Code needed:
 
 ```
-    {
-        "class": "sidebar_label",
-        "fg": ["background", 255, 255, 255, 0.8],
-        "font.size": 18
-    },
-    {
-        "class": "tab_label",
-        "fg": [152, 152, 152],
-        "font.size": 16,
-        "shadow_color": [0, 0, 0, 0.25],
-        "shadow_offset": [0, -1]
-    },
-
+# latest sublime text v3200
+{
+    "class": "sidebar_label",
+    "fg": ["background", 255, 255, 255, 0.8],
+    "font.size": 20
+},
+# search for tab_label
+{
+    "class": "tab_label",
+    "fg": [152, 152, 152],
+    "font.size": 18,
+    "shadow_color": [0, 0, 0, 0.25],
+    "shadow_offset": [0, -1]
+},
 ```
 
 

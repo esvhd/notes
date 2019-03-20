@@ -894,7 +894,7 @@ pip install -U CodeIntel
 
 Install package: `PackageResourceViewer`
 
-Run `PackageResourceViewer`, edit `Adaptive.sublime-theme`.
+Run `PackageResourceViewer` or `prv`, go to `Themes`, find the default and edit `Adaptive.sublime-theme`.
 
 Code needed:
 

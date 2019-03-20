@@ -5,7 +5,7 @@ Some notes based on Active Portfolio Management (APM) 2nd edition by Grinold and
 For basic vol metrics for portfolio, check out my code for risk parity. 
 
 
-## CAPM
+# CAPM
 
 $r_p(t)$ - Portfolio $p$ excess returns for time period $t$.
 
@@ -21,7 +21,7 @@ $\theta_p$ is the **residual return**, **assumption** is that this residual retu
 
 $$\sigma^2_p = \beta^2_p \sigma^2_M + w^2_p $$
 
-$w^2_p$ is the **residual variance** of portfolio $p$, i.e. the variance of $\theta_p$.
+$w^2_p$ is the **residual variance** of portfolio $p$, i.e. the variance of $\theta_p$. Its shape is $1\times1$
 
 CAPM states that the expected residual retrn on all assets and any portfolio is equal zero, i.e. $E[\theta_p] = 0$.
 
@@ -33,7 +33,7 @@ For ex-post / realized returns, can be plotted in the same way, the deviation fr
 
 CAPM expected return forecasts will only be as good as the estimate of beta.
 
-## Risk Models
+# Risk Models
 
 $h_p$ - portfolio asset weights, $N \times 1$
 
@@ -55,11 +55,11 @@ $F$ - factor covariance matrix, $K \times K$
 
 $\Delta$ - specific return variance, $N \times N$ diagonal matrix.
 
-Hence $N \times N$ covariance matrix $V$ is $V = X \cdot F \cdot X^T + \Delta$
+$V$ - $N \times N$ covariance matrix, $V = X \cdot F \cdot X^T + \Delta$
 
 Portfolio factor exposure: $x_p = X^T \cdot h_p$, shape is $K \times N \cdot N \times 1 = K \times 1$
 
-Portfolio factor variance: 
+Portfolio factor variance, $1 \times 1$ shape: 
 
 $$
 \begin{aligned}
@@ -70,16 +70,18 @@ $$
 
 Portfolio **active** factor exposure: $x_{PA} = X^T \cdot h_{PA}$, shape $K \times N \cdot N \times 1 = K \times 1$
 
-Active Risk / Tracking Error:
+**Active Risk / Tracking Error**, $\Psi_p$:
 
 $$
 \begin{aligned}
-\Psi^2_p &= x^T_{PA} \cdot F \cdot x_{PA} + h^T_{PA} \cdot \Delta h_{PA} \\
+\Psi^2_p &= x^T_{PA} \cdot F \cdot x_{PA} + h^T_{PA} \cdot \Delta \cdot h_{PA} \\
 &= h^T_{PA} \cdot V \cdot h_{PA}
 \end{aligned}
 $$
 
-In both portfoli variance and trackig error, we broken them down into factor and specific risks. This works only with the assumption that factor risk and specific risk are **uncorrelated**.
+$\Psi_p$ has shape $1 \times K \cdot K \times K \cdot K \times 1 + 1 \times N \cdot N \times N \cdot N \times 1 = 1 \times 1$
+
+In both portfolio variance and trackig error, we broken them down into factor and specific risks. This works only with the assumption that factor risk and specific risk are **uncorrelated**.
 
 Asset level beta, $N \times 1$ vector, is:
 
@@ -93,4 +95,70 @@ The APM book p77 has alternative definitions for beta which breaks them down int
 
 Active beta (my understnding): $\beta_{PA} = h^T_{PA} \cdot \beta$.
 
-Residual Covariance matrix $VR$ is given by: $VR = V - \beta \cdot \sigma^2_B \cdot \beta^T$. Shape is $N \times N - N \times 1 \cdot 1 \times 1 \cdot 1 \times N = N \times N$
+**Residual Covariance** matrix $VR$ is given by: $VR = V - \beta \cdot \sigma^2_B \cdot \beta^T$. Shape is $N \times N - N \times 1 \cdot 1 \times 1 \cdot 1 \times N = N \times N$
+
+## Risk Attribution
+
+### Position Marginal Contribution
+
+This section computes each position's risk contribution.
+
+Marginal Contribution to Total Risk, **MCTR**, change in $\sigma_p$ for a $1\%$ change in holdings $h_p$:
+
+$$ MCTR = \frac{\partial\sigma_p}{\partial h^T_p} = \frac{V \times h_p}{\sigma_p} $$
+
+Shape is $(N \times N \cdot N \times 1 ) / (1 \times 1) = N \times 1$
+
+$h_{PR} = h_p - \beta_p \times h_B$ - **residual holding vector**, shape $N \times 1$
+
+Marginal Contribution to Residual Risk, **MCRR**, with hape $N \times 1$:
+
+$$ MCRR = \frac{VR \times h_p}{w_p} = \frac{V \times h_{PR}}{w_p} $$
+
+Marginal Contribution to Active Risk, **MCAR**, with shape $N \times 1$:
+
+$$ MCAR = \frac{V \times h_{PA}}{\Psi_p} $$
+
+
+### Factor Marginal Contribution
+
+This sectionc computes each factor's risk contribution. See book for details.
+
+
+# Exceptional Return / Value Added
+
+**Exceptional Return** is the difference between forecast / predicted return and concensus return.
+
+Active management **value-added** is the expected Exceptional Returns mintues a penalty of active variance.
+
+Expected return can be decomposed into **four parts**:
+
+$$ E[R_n] = 1 + i_F + \beta_n \times \mu_B + \beta_n \times \Delta f_B + \alpha_n $$
+
+These terms are:
+
+1. Time Preimum, $i_F$
+2. Risk Premium, $\beta_n \times \mu_B$
+3. Exceptional Benchmark Returns, $\beta_n \times \Delta f_B$, difference between expected excess return on benchmark and long term expected excess return.
+4. $\alpha$ is the expected residual return
+
+$\mu_B$: expected excess return on benchmark, typically a long run (70+ year) average.
+
+$r_B$ - benchmark excess returns
+
+$r_n$ - excess return for asset $n$
+
+$\beta_n$ - asset $n$'s excess return beta vs the benchmark excess return. Defined as:
+
+$$ \beta_n = \frac{Cov(r_B, r_n)}{Var(r_B)} $$
+
+$R_n$ - total return for asset $n$
+
+$f_B$ - expected benchmark excess returns, $f$ means forecast
+
+$\Delta f_B = f_B - \mu_B$
+
+Forecast expected return for asset $n$ is $f_n = \beta_n \times f_B + \alpha_n$.
+
+
+

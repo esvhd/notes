@@ -13,7 +13,7 @@ $r_M(t)$ - market portfolio excess returns.
 
 Excess return defined as return over risk free asset for the same time period.
 
-**Assume** that we know the beta $\beta_p$ of a portfolio $p$ versus the market portfolio $M$, we can decompose portfolio return into two parts:
+**Assume** that we know the **beta** $\beta_p$ of a portfolio $p$ versus the market portfolio $M$, we can decompose portfolio return into two parts:
 
 $$ r_p = \beta_p \times r_M + \theta_p $$
 
@@ -21,7 +21,7 @@ $\theta_p$ is the **residual return**, **assumption** is that this residual retu
 
 $$\sigma^2_p = \beta^2_p \sigma^2_M + w^2_p $$
 
-$w^2_p$ is the **residual variance** of portfolio $p$, i.e. the variance of $\theta_p$. Its shape is $1\times1$
+$w^2_p$ is the **residual variance** of portfolio $p$, i.e. the variance of $\theta_p$, aka. $Var(\theta_p)$. Its shape is $1\times1$
 
 CAPM states that the expected residual retrn on all assets and any portfolio is equal zero, i.e. $E[\theta_p] = 0$.
 
@@ -83,17 +83,17 @@ $\Psi_p$ has shape $1 \times K \cdot K \times K \cdot K \times 1 + 1 \times N \c
 
 In both portfolio variance and trackig error, we broken them down into factor and specific risks. This works only with the assumption that factor risk and specific risk are **uncorrelated**.
 
-Asset level beta, $N \times 1$ vector, is:
+**Asset level beta**, $N \times 1$ vector, is:
 
 $$\beta = \frac{V \cdot h_B}{\sigma^2_B}$$
 
-Portfolio beta, shape $1 \times 1$:
+**Portfolio beta**, shape $1 \times 1$:
 
 $$\beta_p = h^T_p \cdot \beta$$
 
 The APM book p77 has alternative definitions for beta which breaks them down into factor and specific components.
 
-Active beta (my understnding): $\beta_{PA} = h^T_{PA} \cdot \beta$.
+**Active beta** (my understnding): $\beta_{PA} = h^T_{PA} \cdot \beta$.
 
 **Residual Covariance** matrix $VR$ is given by: $VR = V - \beta \cdot \sigma^2_B \cdot \beta^T$. Shape is $N \times N - N \times 1 \cdot 1 \times 1 \cdot 1 \times N = N \times N$
 
@@ -148,7 +148,7 @@ $r_B$ - benchmark excess returns
 
 $r_n$ - excess return for asset $n$
 
-$\beta_n$ - asset $n$'s excess return beta vs the benchmark excess return. Defined as:
+$\beta_n$ - asset $n$'s **excess return beta** vs the benchmark excess return. Defined as:
 
 $$ \beta_n = \frac{Cov(r_B, r_n)}{Var(r_B)} $$
 
@@ -160,5 +160,95 @@ $\Delta f_B = f_B - \mu_B$
 
 Forecast expected return for asset $n$ is $f_n = \beta_n \times f_B + \alpha_n$.
 
+## Utility Function
 
+A simple utility function to maximize is to trade residual return versus residual risk. E.g. 
+
+$$ U_p = \alpha_p - \lambda_R \times w^2_p $$
+
+Where $\lambda_R$ is a measure of risk aversion to residual risk.
+
+# Information Ratio
+
+Defined as: 
+
+$$ IR_p = \frac{\alpha_p}{w_p} $$
+
+By definition, benchmark and risk free assets have 0 IR, since they have 0 $\alpha_p$.
+
+Subsitituting into the utility function above:
+
+$$ U_p = w_p \times IR_p - \lambda_R \times w^2_p $$
+
+To maximize utility, set $\partial{U_p}/\partial{w_p} = 0$, the **optimal residual risk** $w_p$, denoted by $w^*$ is:
+
+$$ w^* = \frac{IR_p}{2\lambda_R} $$
+
+The following simple formula gives an **approximation** of the $IR$:
+
+$$ IR = IC \times \sqrt{BR} $$
+
+$IC$ - **Information Coefficient**, measure the **correlation** between predicted returns and realized returns.
+
+$BR$ - **Breath**, defined as the number of independent predictions of **exceptional returns** made per year.
+
+Hence, with the above **optimal residual risk** formula:
+
+$$ w^* = \frac{IR}{2\lambda_R} = \frac{IC \times \sqrt{BR}}{2\lambda_R} $$
+
+Therefore, the desired level of risk has a linear relationship with $IR$ and $\sqrt{BR}$.
+
+The Value Added is:
+
+$$ VA^* = \frac{IR^2}{4\lambda_R} = \frac{IC^2 \times BR}{4\lambda_R} $$
+
+$VA$ has a linear relationship with $IC^2$ and $BR$.
+
+If instead of predicting expected exceptional returns, we predict the sign of exceptional returns, we have:
+
+$$
+\begin{aligned}
+IC &= \frac{1}{N}\big[N_1 - (N - N_1)\big] = 2 \bigg(\frac{N_1}{N}\bigg) - 1 \\
+&= Accuracy - (1 - Accuracy) \\
+&= 2 \times Accuracy - 1
+\end{aligned}
+$$
+
+Where:
+
+* $N$ is the total number of predictions, $P + N$, no. of positive and negative classes
+* $N_1$ is the number of correct predictions, $TP + TN$, true positive and true negatives.
+
+This is reminds me of the binary classification loss for class labels $[0, 1]$.
+
+$$ \mathcal{L} = \frac{1}{N}\sum^N_{i=1}\big[\hat{y}_i (1 - y_i) + (1 - \hat{y}_i) y_i \big] $$
+
+Where:
+
+* $y_i$ is the ground truth for sample $i$
+* $\hat{y}_i$ is the predicted label for sample $i$
+
+Therefore, we can compare the two metric, correlation and hit ratio between forecasts. 
+
+## Additivity
+
+$$IR^2 = IC^2_1 \times BR_1 + IC^2_2 \times BR_2 $$
+
+Big assumption here is that each IC is derived from independent information, i.e. no correlated features.
+
+## Assumptions
+
+1. Sources of information should be **independent**. Don't bet on the same information twice. 
+
+Dependency over time is also an issue. E.g. quarterly predictions should be based on **new** information from each quarter.
+
+For the additivity example above, if 2 strategies each have skill IC, but information correlation is $\gamma$, then the combined IR is:
+
+$$ IR_{combined} = IC^2 \times \sqrt(\frac{2}{1 + \gamma}) $$
+
+2. The law assumes that each of the $BR$ active bets has the **same level of skill**. If the levels of skill measured by $IC$ are different, and we plot $BR$ vs $IC^2$, then the overall $IC$ is the area under this curve.
+
+3. The strongest assumption behind the law is that the manager will build portfolios that use the information in the optimal way, utilising its value.
+
+Other practical portfolio constraints such as short sale would result in a drop in realized $IR$.
 

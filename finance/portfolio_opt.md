@@ -174,6 +174,8 @@ Defined as:
 
 $$ IR_p = \frac{\alpha_p}{w_p} $$
 
+$IR$ measures the **annual** $\alpha_p$ (residual return) relative to $w_p$ (stdev of residual return).
+
 By definition, benchmark and risk free assets have 0 IR, since they have 0 $\alpha_p$.
 
 Subsitituting into the utility function above:
@@ -186,11 +188,11 @@ $$ w^* = \frac{IR_p}{2\lambda_R} $$
 
 The following simple formula gives an **approximation** of the $IR$:
 
-$$ IR = IC \times \sqrt{BR} $$
+$$ IR \approx IC \times \sqrt{BR} $$
 
 $IC$ - **Information Coefficient**, measure the **correlation** between predicted returns and realized returns.
 
-$BR$ - **Breath**, defined as the number of independent predictions of **exceptional returns** made per year.
+$BR$ - **Breath**, defined as the number of independent predictions of **exceptional returns** made per year. See p328, $BR$ is more difficult to measure than either $IC$ or $IR$.
 
 Hence, with the above **optimal residual risk** formula:
 
@@ -234,7 +236,7 @@ Therefore, we can compare the two metric, correlation and hit ratio between fore
 
 $$IR^2 = IC^2_1 \times BR_1 + IC^2_2 \times BR_2 $$
 
-Big assumption here is that each IC is derived from independent information, i.e. no correlated features.
+Big **assumption** here is that each IC is derived from independent information, i.e. no correlated predictions between $IC_1$ and $IC_2$.
 
 ## Assumptions
 
@@ -252,3 +254,18 @@ $$ IR_{combined} = IC^2 \times \sqrt(\frac{2}{1 + \gamma}) $$
 
 Other practical portfolio constraints such as short sale would result in a drop in realized $IR$.
 
+## Performance Evaluation
+
+When comparing portfolios, we can estimate the $\alpha$ of a portfolio with OLS regression. $\alpha$ in this case is the **intercept** of the OLS formula. 
+
+$$ r(t) = \alpha + \beta \times r_B(t) + \epsilon(t) $$
+
+In the context of traditional statistical testing, $t$-statistics is then:
+
+$$ t-stat = \frac{\alpha}{stdev(\alpha)} $$
+
+This links it back to $IR$ which uses **annualised** $\alpha$. 
+
+$$ IR \approx = frac{t-stat}{\sqrt{T}} $$
+
+Where $T$ is a floating scaler of no. of years.

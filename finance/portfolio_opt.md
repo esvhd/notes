@@ -194,6 +194,8 @@ $IC$ - **Information Coefficient**, measure the **correlation** between predicte
 
 $BR$ - **Breath**, defined as the number of independent predictions of **exceptional returns** made per year. See p328, $BR$ is more difficult to measure than either $IC$ or $IR$.
 
+See derivation of this and assumptions made in Grinold & Kahn p166-p168.
+
 Hence, with the above **optimal residual risk** formula:
 
 $$ w^* = \frac{IR}{2\lambda_R} = \frac{IC \times \sqrt{BR}}{2\lambda_R} $$
@@ -246,7 +248,7 @@ Dependency over time is also an issue. E.g. quarterly predictions should be base
 
 For the additivity example above, if 2 strategies each have skill IC, but information correlation is $\gamma$, then the combined IR is:
 
-$$ IR_{combined} = IC^2 \times \sqrt(\frac{2}{1 + \gamma}) $$
+$$ IR_{combined} = IC^2 \times \sqrt{\frac{2}{1 + \gamma}} $$
 
 2. The law assumes that each of the $BR$ active bets has the **same level of skill**. If the levels of skill measured by $IC$ are different, and we plot $BR$ vs $IC^2$, then the overall $IC$ is the area under this curve.
 

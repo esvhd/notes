@@ -1,4 +1,4 @@
-# Portfolio Optimization
+# Portfolio optimisation
 
 Some notes based on Active Portfolio Management (APM) 2nd edition by Grinold and Kahn.
 
@@ -41,6 +41,14 @@ $h_B$ - benchmark asset weights, $N \times 1$
 
 $h_{PA} = h_p - h_B$ - active weights
 
+$r_p$ - portfolio return
+
+$r_B$ - benchmark return
+
+$r_{PA}$ - portfolio active return, $r_p - r_B$
+
+$\beta_p$ - portfolio beta to benchmark
+
 $N$ - no. of assets
 
 $X$ - asset factor exposure matrix, $N \times K$ matrix
@@ -82,6 +90,18 @@ $$
 $\Psi_p$ has shape $1 \times K \cdot K \times K \cdot K \times 1 + 1 \times N \cdot N \times N \cdot N \times 1 = 1 \times 1$
 
 In both portfolio variance and trackig error, we broken them down into factor and specific risks. This works only with the assumption that factor risk and specific risk are **uncorrelated**.
+
+**Active Returns vs Residual Returns**
+
+Active return is the difference between portfolio return and benchmark return:
+
+$$ r_{PA} = r_p - r_B = \theta_p + \beta_{PA} \times r_B $$
+
+Active risk is defined as:
+
+$$ \Psi_p = \sqrt{r_{PA}} = \sqrt{w^2_p + \beta^2_{PA} \times \sigma^2_B} $$
+
+**Active return = residual return** when the manager avoids benchmark timing and set $\beta_p = 1$.
 
 **Asset level beta**, $N \times 1$ vector, is:
 
@@ -144,7 +164,7 @@ These terms are:
 
 $\mu_B$: expected excess return on benchmark, typically a long run (70+ year) average.
 
-$r_B$ - benchmark excess returns
+$r_B$ - benchmark excess returns over risk free asset.
 
 $r_n$ - excess return for asset $n$
 
@@ -264,10 +284,59 @@ $$ r(t) = \alpha + \beta \times r_B(t) + \epsilon(t) $$
 
 In the context of traditional statistical testing, $t$-statistics is then:
 
-$$ t-stat = \frac{\alpha}{stdev(\alpha)} $$
+$$ \text{t-stat} = \frac{\alpha}{stdev(\alpha)} $$
 
 This links it back to $IR$ which uses **annualised** $\alpha$. 
 
-$$ IR \approx = frac{t-stat}{\sqrt{T}} $$
+$$ IR \approx = \frac{\text{t-stat}}{\sqrt{T}} $$
 
 Where $T$ is a floating scaler of no. of years.
+
+# Portfolio Construction
+
+Portfolio constrained optimisation objective, for $N$ assets:
+
+$$ \underset{h_{p, i} > 0, |h_{PA, i} |< 5\% \forall i \in N}{\operatorname{argmax}} h^T_{PA} \alpha' - \lambda' \cdot h^T_{PA} \cdot V \cdot h_{PA} $$
+
+Constraints are:
+
+* no short sale
+* active position deviation from benchmark < 5%. This number can change.
+* See $\Psi^2_{p}$ definition in sections above.
+
+The **modified alpha** is:
+
+$$ \alpha' = \bigg(\frac{IR}{\Psi^*_p}\bigg) \times V \times h^*_{PA} $$
+
+Appropriate active risk aversion is:
+
+$$\lambda' = \frac{IR}{2 \times \Psi^*_p} $$
+
+Alpha has a **scale**, $stdev(\alpha) \sim \sigma \times IC$. If they don't have the right scale, scale alpha before use.
+
+Outsized alpha estimates can have undue influence, they shoud be **trimmed**.
+
+## Dispersion
+
+The concept of dispersion measures the performance difference between the best and worst performing separate account mandates from a manager. 
+
+If alpha and risk stay absolutely **constant** over time, then dispersion persists. Then the remaining tracking error is bounded by:
+
+1. transaction cost, $TC$
+2. manager's risk aversion, $\lambda_A$
+
+Specifically:
+
+$$ \Psi^2 \leq \frac{TC}{2 \times \lambda_A} $$
+
+In practice, alpha and risk **vary** over time, then convergence of performance will occur. However, this is a general argument and **does not** imply any particular time scale.
+
+Dual-benchmark optimisation - essentially trying to balance two objectives - would trade off return versus dispersion. 
+
+## Alpha Analysis
+
+My thoughts on this is that the material and maths used hevily rely on the assumption that factor returns and specific returns are **uncorrelated**, and that components of specific returns are also **uncorrelated**. 
+
+These assumption most likely won't hold in practice especially looking at a corporate bond or equity market risk model. 
+
+The technical appendix also has a section on the impact of **covariance matrix estimation error**. Worth a read.

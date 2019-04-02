@@ -1,8 +1,28 @@
-# Portfolio optimisation
+# Portfolio Optimisation
 
 Some notes based on Active Portfolio Management (APM) 2nd edition by Grinold and Kahn.
 
 For basic vol metrics for portfolio, check out my code for risk parity. 
+
+<!-- MarkdownTOC levels="1,2,3", autolink=true -->
+
+- CAPM
+- Risk Models
+    - Risk Attribution
+        - Position Marginal Contribution
+        - Factor Marginal Contribution
+- Exceptional Return / Value Added
+    - Utility Function
+    - Value Added
+- Information Ratio
+    - Additivity
+    - Assumptions
+    - Performance Evaluation
+- Portfolio Construction
+    - Dispersion
+    - Alpha Analysis
+
+<!-- /MarkdownTOC -->
 
 
 # CAPM
@@ -184,9 +204,57 @@ Forecast expected return for asset $n$ is $f_n = \beta_n \times f_B + \alpha_n$.
 
 A simple utility function to maximize is to trade residual return versus residual risk. E.g. 
 
-$$ U_p = \alpha_p - \lambda_R \times w^2_p $$
+$$ U_p = \alpha_p - \lambda_R \times w^2_p = f_p - \lambda_T \times \sigma^2_p$$
 
 Where $\lambda_R$ is a measure of risk aversion to residual risk.
+
+When we have **no information**, $f_p = \mu_B$, with rearranging the utility function above, we see that the level of risk aversion that leads us to choose the benchmark is:
+
+$$ \lambda_T = \frac{\mu_B}{2\sigma^2_B} $$
+
+E.g. for $\mu_B = 6\%$ and $\sigma_B = 20\%$, we have $\lambda_T = .06 / (2 \times .2^2) \approx .75$.
+
+## Value Added
+
+Risk and return can be split into three parts:
+
+* **Intrinsic**, $f_B - \lambda_T \times \sigma^2_B$, comes from benchmark return.
+* **Timing**, $VA_{t} = \beta_{PA}\times \Delta f_B - \lambda_{BT} \times \beta^2_{PA} \times \sigma^2_B$, a manager's **active beta**
+* **Residual**, $VA_{r} = \alpha_p - \lambda_R \times w^2_p$, due to manager's residual positions. 
+
+In other words, **value added** is the sum of last two parts above, i.e., returns from active beta and residual positions.
+
+The objective of active management is to **maximise value added**, defined as:
+
+$$ VA = \big( \beta_{PA} \times \Delta f_B - \lambda_{BT} \times \beta^2_{PA} \times \sigma^2_B \big) + \big(\alpha_p - \lambda_R \times w^2_p \big)$$
+
+To **maximize benchmark timing**:
+
+$$ \frac{\partial{VA_t}}{\partial \beta_PA} = \Delta f_B - 2 \lambda_{BT} \cdot \beta_{PA} \cdot \sigma^2_B $$
+
+Hence the **optimal** level of $\beta_{PA}$ is:
+
+$$\beta^*_{PA} = \frac{\Delta f_B}{2 \cdot \lambda_{BT} \cdot \sigma^2_B} $$
+
+Active beta equals zero when:
+
+* No benchmark forecast, i.e. $\Delta f_B = 0$
+* High level or benchmark timing risk aversion, i.e. high $\lambda_{BT}$
+
+Looking at the value added for benchmark timing, $VA_t$:
+
+$$
+\begin{aligned}
+VA_t &= \beta^*_{PA} \times \Delta f_B - \lambda_{BT} \cdot (\beta^*_{PA})^2 \cdot \sigma^2_B \\
+&= \frac{(\Delta f_B)^2}{2 \cdot \lambda_{BT} \cdot \sigma^2_B} - \lambda_{BT} \cdot \sigma^2_{B} \frac{(\Delta f_B)^2}{4 \cdot \lambda^2_{BT} \cdot \sigma^4_B} \\
+&= \frac{2 (\Delta f_B)^2 - (\Delta f_B)^2}{4 \cdot \lambda_{BT} \cdot \sigma^2_B} \\
+&= \frac{(\Delta f_B)^2}{4 \cdot \lambda_{BT} \cdot \sigma^2_B} 
+\end{aligned}
+$$
+
+We can use this formula to assess the impact of benchmark timing, e.g. assuming $\sigma_B = 17\%$, $\Delta f_B = 4\%$, with median risk aversion $\lambda_{BT} = 9.$, $VA_t = 0.04^2 / (4 \times 9 \times 0.17^2) \approx 0.00154$. The book is not clear here about the unit of $VA$. In the text it refers to this as $15.4$bp, both $VA$ and $\beta^*_{PA}$ are scaled by $1e-2$...
+
+Finance text is really not precise when it comes to maths and units. In the text, in calculations the authors used 4 to represent 4% return... This means that $\lambda_{BT}$ here is in different scale. To follow the more accurate way of representing 4% as 0.04, $lambda_{BT}$ in the book needs to be scaled up by 100.
 
 # Information Ratio
 

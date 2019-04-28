@@ -202,6 +202,22 @@ Also, I needed to **upgrade to the latest distribution linux kernel for the driv
     sudo apt-get upgrade       # Strictly upgrades the current packages
     sudo apt-get dist-upgrade  # Installs updates (new ones)
 
+### Updating PGP keys
+
+Had problems with expired PGP keys with Brave Browser when runing `apt update`. To resolve this, I needed to remove the expired keys and add them back again.
+
+To show trusted keys:
+
+```
+sudo apt-key list
+```
+
+Based on this [post](https://askubuntu.com/questions/107177/how-can-i-remove-gpg-key-that-i-added-using-apt-key-add/846877#846877), the last 8 chars are the key names. To remove a key:
+
+```
+sudo apt-key del ABCDEFGH
+```
+
 ## Update VIM
 
 This is needed to `.vimrc` setup, based on this [post](https://askubuntu.com/questions/284957/vi-getting-multiple-sorry-the-command-is-not-available-in-this-version-af/284960#284960).

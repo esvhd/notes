@@ -15,6 +15,7 @@
     - [Turn off Power Management for WiFi](#turn-off-power-management-for-wifi)
     - [DNS Server Update](#dns-server-update)
     - [Update Ubuntu Packages](#update-ubuntu-packages)
+        - [Updating PGP keys](#updating-pgp-keys)
     - [Update VIM](#update-vim)
     - [Ubuntu Disable Suspend](#ubuntu-disable-suspend)
     - [Disable X screensavers](#disable-x-screensavers)
@@ -220,7 +221,7 @@ sudo apt-key del ABCDEFGH
 
 ## Update VIM
 
-This is needed to `.vimrc` setup, based on this [post](https://askubuntu.com/questions/284957/vi-getting-multiple-sorry-the-command-is-not-available-in-this-version-af/284960#284960).
+This is needed for `.vimrc` setup, based on this [post](https://askubuntu.com/questions/284957/vi-getting-multiple-sorry-the-command-is-not-available-in-this-version-af/284960#284960).
 
 ```
 sudo apt-get install vim-gui-common

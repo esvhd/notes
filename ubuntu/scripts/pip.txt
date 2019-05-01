@@ -1,5 +1,0 @@
-# install with pip install -r filename
-#hypertools
-google-api-python-client
-#TA-Lib
-arviz

@@ -1,7 +1,0 @@
-{
-    // "python_interpreter": "/usr/anaconda3/bin/python",
-  // "anaconda_linting": false,
-  "enable_signatures_tooltip": true,
-  "enable_signatures_and_doc": true,
-  "anaconda_linting": false,
-}

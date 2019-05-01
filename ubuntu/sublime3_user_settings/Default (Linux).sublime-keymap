@@ -1,9 +1,0 @@
-[
-	{ "keys": ["ctrl+left"], "command": "jump_back" },
-    { "keys": ["ctrl+right"], "command": "jump_forward" },
-    { "keys": ["shift+space"], "command": "move",
-        "args": {"by": "characters", "forward": true} },
-    { "keys": ["ctrl+shift+r"], "command": "goto_symbol_in_project" }
-    // { "keys": ["ctrl+minus"], "command": "navigation_history_back"},
-    // { "keys": ["ctrl+="], "command": "navigation_history_forward"},
-]

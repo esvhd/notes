@@ -18,13 +18,20 @@ $v(s)$ - **value function** for a Markove Reward Process is the **expected retur
 
 $\mathcal{A}$ - a finite set of **actions**.
 
+$\pi$ - **policy**
+
+$v_{pi}(s)$ - **state-value function** for state $s$ with policy $\pi$.
+
 ## Markov Decision Process
 
-The lesson starts with **Markov Process (Chain)**, defined by:
+The lesson starts with **Markov Process (Chain)**, defined by probability transition matrix from state $s$ to state $s'$:
 
 $$\mathcal{P}_{ss'} = \mathbb{P}[\mathcal{S}_{t+1} = s' \mid \mathcal{S}_t = s] $$
 
-Then to **Markove Reward Process**, adding a reward function and discount factor:
+
+## Markov Reward Process
+
+Then to **Markove Reward Process**, adding a reward function $\mathcal{R}_s$ and discount factor $\gamma$:
 
 $$
 \begin{aligned}
@@ -51,11 +58,105 @@ $$ v = \mathcal{R} + \gamma \mathcal{P} v $$
 
 where `v.shape = (N, 1)` for `N` states.
 
-Then finally to the **Markov Decision Process**, aka MDP by adding actions, changing the transition probability matrix to:
+To solve for $v$, we have:
+
+$$
+\begin{aligned}
+(I - \gamma \mathcal{P}) v &= \mathcal{R} \\
+v &= (I - \gamma \mathcal{P})^{-1} \mathcal{R}
+\end{aligned}
+$$
+
+Because this invovles inverting matrices, the complexity is $O(n^3)$ for $n$ states. For large MRPs, need other methods such as:
+
+* Dynamic programming
+* Monte Carlo evaluation
+* Temporal-Difference learning
+
+## Markov Decision Process
+
+### Adding Action
+
+Then finally to the **Markov Decision Process**, aka **MDP** by adding actions $\mathcal{A}_t$, changing the transition probability matrix to:
 
 $$\mathcal{P}^a_{ss'} = \mathbb{P}[\mathcal{S}_{t+1} = s' \mid \mathcal{S}_t = s, \mathcal{A}_t = a] $$
 
 And changing reward function to:
 
 $$\mathcal{R}^a_s = \mathbb{E}[R_{t+1} \mid \mathcal{S} = s_t, \mathcal{A}_t = a] $$
+
+### Adding Policy
+
+A policy $\pi$ is a distribution over actions given states:
+
+$$ \pi(a \mid s) = \mathbb{P}\big[ A_t = a \mid S_t = s \big] $$
+
+* A policy fully defines the behaviour of an agent.
+* MDP policies depend on the current state (not the history)
+    - i.e. Policies are stationary (time-independent), $A_t \sim \pi(\cdot \mid S_t), \forall t > 0$
+
+Given an MDP $\mathcal{M} = \langle \mathcal{S}, \mathcal{A}, \mathcal{P}, \gamma \rangle$ and a policy $\pi$:
+
+* Markov process is defined as $\langle \mathcal{S}, \mathcal{P}^{\pi} \rangle$
+* MRP is defined as $\langle \mathcal{S}, \mathcal{P}^{\pi}, \mathcal{R}^{\pi}, \gamma \rangle$
+
+Where:
+
+$$
+\begin{aligned}
+\mathcal{P}^{\pi}_{s,s'} &= \sum_{a \in \mathcal{A}} \pi(a \mid s)\mathcal{P}^{a}_{ss'}\\
+\mathcal{R}^{\pi}_s &= \sum_{a in \mathcal{A}} \pi(a \mid s)\mathcal{R}^a_s
+\end{aligned}
+$$
+
+### Value Function
+
+**State-value function** of an MDP is the expected return starting from state $s$, and then following policy $\pi$:
+
+$$ v_{\pi}(s) = \mathbb{E} [G_t \mid S_t = s] $$
+
+**Action-value function** $q_{\pi}(s, a)$, is the epxected return starting from state $s$, taking action $a$, and then following policy $\pi$:
+
+$$ q_{\pi}(s, a) = \mathbb{E}[G_t \mid S_t=s, A_t=a] $$
+
+**Bellman Expectation Equation**
+
+The state-value function can be decomposed into **immediate reward** plus **discounted value** of successor state:
+
+$$ v_{\pi}(s) = \mathbb{E}_{\pi}[R_{t+1} + \gamma v_{\pi}(S_{t+1}) \mid S_t = s] $$
+
+The action-value function can be decomposed as:
+
+$$ q_{\pi}(s, a) = \mathbb{E}[R_{t+1} + \gamma q_{\pi}(S_{t+1}, A_{t+1}) \mid S_t = s, A_t = a] $$
+
+Therefore, the Bellman Expectation Equation for $V^{\pi}$is defined as: 
+
+$$ v_{\pi}(s) = \sum_{a \in \mathcal{A}} \pi(a \mid s) q_{\pi}(s, a) $$
+
+and for $Q^{\pi}$:
+
+$$ q_{\pi}(s, a) = \mathcal{R}^a_s + \gamma \sum_{s' \in \mathcal{S}} \mathcal{P}^a_{ss'} v_{\pi}(s') $$
+
+Substitute $q_{\pi}(s, a)$ into $v_{\pi}(s)$, we have:
+
+$$ v_{\pi}(s) = \sum_{a \in \mathcal{A}} \pi(a \mid s) \bigg( \mathcal{R}^a_s + \gamma \sum_{s' \in \mathcal{S}} \mathcal{P}^a_{ss'} v_{\pi}(s') \bigg)$$
+
+And substitute $v_{\pi}(s)$ into $q_{\pi}(s, a)$:
+
+$$ q_{\pi}(s, a) = \mathcal{R}^a_s + \gamma \sum_{s' \in \mathcal{S}} \mathcal{P}^a_{ss'} \sum_{a \in \mathcal{A}} \pi(a' \mid s') q_{\pi}(s', a') $$
+
+In matrix form:
+
+$$ v_{\pi} = \mathcal{R}^{\pi} + \gamma \mathcal{P}^{\pi} v_{\pi} $$
+
+with direction solution:
+
+$$ v_{\pi} = (I - \gamma \mathcal{P}^{\pi})^{-1} \mathcal{R}^{\pi} $$
+
+
+### Optimal Value Function
+
+Two optimal value function, **state and action-value functions**, they are the maximium overall policies.
+
+Once we know the optimal value functions, the MDP is **solved**.
 

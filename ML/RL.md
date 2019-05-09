@@ -206,3 +206,47 @@ How to read the charts on slide 18? x and y-axes show no. of cars at each locati
 
 * Complexity $O(m n^2)$ if based on state-value function, for $m$ actions and $n$ states
 * Complexity $O(m^2 n^2)$ if based on action-value function
+
+## Model-Free Prediction
+
+Goal is to estimate the value function of an **unknown** MDP.
+
+### Monte Carlo 
+
+Instead of iterating through all states, sample from stats under policy ${\pi}$. Instead of computing the expectation of value function, use **empirical** mean return instead of **expected** return. 
+
+Relies on law of large numbers for empirical mean to converge to true mean. Variance reduces in the order of $1/N$ where $N$ is the number of samples.
+
+Keeps a running mean of value functions at each state visited. See slides for algorithms:
+
+* First-visit MC policy eval, only eval the first time visiting a state, counter is increased only at the first visit.
+* Every-visit MC policy eval, counter increased every time a state is visted, return is estimated at every visit.
+
+Which is better? Depends on the setting, will visit during TD section.
+
+**Running Mean** for online training
+
+$$
+\begin{aligned}
+\mu_k &= \frac{1}{k} \sum^k_{j=1} x_j \\
+&= \frac{1}{k} \bigg(x_k + \sum^{k-1}_{j=1} x_j \bigg) \\
+&= \frac{1}{k} \big(x_k + (k - 1) \mu_{k-1}\big) \\
+&= \mu_{k-1} + \frac{1}{k} (x_k - \mu_{k-1})
+\end{aligned}
+$$
+
+In code:
+
+```{python}
+def running_mean(running_mu, k, data):
+    mu_new = running_mu + 1 / (k + 1) * (data - running_mu)
+    return mu_new, k+1
+```
+
+
+### Temporal Differencing
+
+* TD learns directly from episodes and non-episodes of experience.
+* TD is also model-free
+* TD learns from **incomplete** epsidoes, by **bootstrapping**
+

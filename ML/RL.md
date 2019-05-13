@@ -320,6 +320,15 @@ $$ V(S_t) \leftarrow V(S_t) + \alpha \big(G^\lambda_t - V(S_t)\big) $$
 
 Question: Why geometric weights? Answer: computationally efficient, no need to remember previous $\lambda$ state, same cost as TD(0).
 
+**Backward View TD($\lambda$)** can be implemented more efficiently, updates online, every step, from incomplete sequences.
+
+### Eligibility Traces
+
+Credit assignment problem: how much error does each state cause?
+
+Summary table on slide 55.
+
+
 
 ### Advantages & Disadvantages of MC vs TD
 
@@ -350,8 +359,117 @@ Good question asked about the upward sloping TD RMS error curve. Answer: this is
 | Sensitive to Initial Values | No (my sense) | No | Yes |
 | Converges to | NA | Min MSE | Max Likelihood Markov |
 
-### Eligibility Traces
 
-Credit assignment problem: how much error does each state cause?
+# Model-Free Control
 
-Summary table on slide 55.
+**On-policy** learning: learn about policy $\pi$ from experience sampled from $\pi$. 
+
+**Off-policy** learning: learn about policy $\pi$ from experience sampled from $\mu$.
+
+With **greedy** policy improvments over $V(S)$ requires model of MDP, which means it **does not** work if we want to do **model-free** learning. (Need probability transition matrix to update state-value function.)
+
+Thus, we have to try **greedy** policy imporovement over **action-value** function $Q(s, a)$, which is model free.
+
+## $\epsilon$-Greedy Exploration
+
+With probability $\epsilon$ to choose a random action, otherwise with probability $1 - \epsilon$ to choose the greedy action.
+
+Theorem to prove that $\epsilon$-greedy policy will find the optimal policy on slide 14.
+
+## Monte-Carlo Control
+
+Every **episode**:
+
+* Policy evaluation, MC policy evaluation, $Q \approx q_{\pi}$
+* Policy improvement, $\epsilon$-greedy update
+
+**GLIE**: Greedy in the Limit with Infinite Exploration, slide page 17-18. Theorem: GLIE MC control converges to the optimal action-value function, $q_*(s, a)$.
+
+A subtle issue here is that, when we estimate / update $Q(S_t, A_t)$, we are not really computing the mean for a random I.D. variable. Because policy is being improved upon, it changes over time. 
+
+GILE Algo: 
+
+Sample $k$th epsidoe using $\pi$. For each state $S_t$ and action $A_t$ in the **epsidoe**:
+
+$$
+\begin{aligned}
+N(S_t, A_t) &\leftarrow N(S_t, A_t) + 1 \\
+Q(S_t, A_t) &\leftarrow Q(S_t, A_t) + \frac{1}{N(S_t, A_t)}\big( G_t - Q(S_t, A_t)\big)
+\end{aligned}
+$$
+
+Given $N(S_1, A_1) = 1$, this algo is not sensitive to initialisation of $Q$, i.e. at the start $G_t$ is used as the action-value.
+
+Improve policy based on new action-value function:
+
+$$
+\begin{aligned}
+\epsilon &\leftarrow 1 / k \\
+\pi &\leftarrow \epsilon-\text{greedy}(Q)
+\end{aligned}
+$$
+
+
+## MC vs TD Control
+
+### SARSA
+
+**SARSA** algo: for state $S$ and action $A$, sample the environment to compute the reward $R$, arriving at a new state $S'$, and follow current policy to choose action $A'$.
+
+Every **time-step**:
+
+* Policy evaluation, SARSA, $Q \approx q_{\pi}$
+* Policy improvement, $\epsilon$-greedy policy improvement
+
+Update formula:
+
+$$ Q(S, A) \leftarrow Q(S, A) + \alpha \big(R + \lambda Q(S', A') - Q(S, A)) $$
+
+Theorem states that for Sarsa to converge we need:
+
+* GLIE sequence of policy $\pi_t(a \mid s)$
+* Robbin-Monro sequence of step-sizes $\alpha_t$
+
+David Silver: In practice, we often ignore Robbin-Monro, and sometimes even GLIE, Sarsa converges anyway. 
+
+n-Step Sarsa is quite similar to TD(n) to update n-step Q-return:
+
+$$
+\begin{aligned}
+q^{(n)}_t &= R_{t+1} + \gamma R_{t+2} + \cdots + \lambda^{n-1}R_{t+n} + \lambda^n Q(S_{t+n}) \\
+Q(S_t, A_t) &\leftarrow Q(S_t, A_t) + \alpha \big(q^{(n)}_t - Q(S_t, A_t)\big)
+\end{aligned}
+$$
+
+### Sarsa($\lambda$)
+
+Similarly, to find the best $n$, use **Sarsa($\lambda$)**, using weight $(1-\lambda)\lambda^n$, **forward-view** below:
+
+$$
+\begin{aligned}
+q^{\lambda}_t &= (1 - \lambda)\sum^{\infty}_{n=1} \lambda^{n-1} q^{(n)}_t \\
+Q(S_t, A_t) &\leftarrow Q(S_t, A_t) + \alpha \big(q^{\lambda}_t - Q(S_t, A_t)\big)
+\end{aligned}
+$$
+
+But again, foward-view is **not** an **online** algorithm. So we need a backward-view version. To do so, we need to build **eligibilty traces** again.
+
+Sarsa($\lambda$) has one eligibility trace for each state-action pair.
+
+$$
+\begin{aligned}
+E_0(s, a) &= 0 \\
+E_t(s, a) &= \gamma \lambda E_{t-1}(s, a) + \mathcal{1}(S_t = s, A_t = a)
+\end{aligned}
+$$
+
+**Identificaton function** $\mathcal{1}(S_t = s, A_t = a)$ means when in state $s$ taking action $a$, the function returns 1, i.e. increase the eligibility trace by 1.
+
+Then, the update becomes:
+
+$$
+\begin{aligned}
+\delta_t &= R_{t+1} + \lambda Q(S_{t+1}, A_{t+1}) - Q(S_t, A_t) \\
+Q(s, a) &\leftarrow Q(s, a) + \alpha \delta_t E_t(s, a) \text{  # update all states}
+\end{aligned}
+$$

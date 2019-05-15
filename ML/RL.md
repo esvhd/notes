@@ -454,7 +454,7 @@ $$
 
 But again, foward-view is **not** an **online** algorithm. So we need a backward-view version. To do so, we need to build **eligibilty traces** again.
 
-Sarsa($\lambda$) has one eligibility trace for each state-action pair.
+Sarsa($\lambda$) has **one** eligibility trace for **each state-action pair**.
 
 $$
 \begin{aligned}
@@ -465,7 +465,7 @@ $$
 
 **Identificaton function** $\mathcal{1}(S_t = s, A_t = a)$ means when in state $s$ taking action $a$, the function returns 1, i.e. increase the eligibility trace by 1.
 
-Then, the update becomes:
+Then, the update $Q(s, a) for every states $s$ and actions $a$:
 
 $$
 \begin{aligned}
@@ -473,3 +473,75 @@ $$
 Q(s, a) &\leftarrow Q(s, a) + \alpha \delta_t E_t(s, a) \text{  # update all states}
 \end{aligned}
 $$
+
+Gridworld example on page 33:
+
+Left picture is an example of Sarsa. 
+
+With **Sarsa**, when a path is sampled and reaches the reward, only the last action-state before the reward would be updated. Previous steps would only see 0 reward. In the next iteration, when the reward is reached, the reward then starts to propagate back one step further. Therefore, update propagates back very slowly, you'd need **lots** of iterations to update all the states. 
+
+Right picture is Sarsa($\lambda$), the size of the arrow indicates the value of eligibility trace. 
+
+With **Sarsa($\lambda$)**, when the reward is reached, **all** previous action-state pairs would be updated, according to the eligibility traces. Defeats the **tyrany of time steps**.
+
+Question: why wait until seeing the reward to update Q's?
+
+A: great question. Actually the updates happen every step, they just contain zero information. Only when you reach the reward, would you **gain information**. 
+
+### Off-Policy Learning
+
+Evaluating **target policy** $\pi(a \mid s)$ to compute $v_\pi(s)$ or $q_\pi(s, a)$, while folloing **behaviour policy** $\mu(a \mid s)$.
+
+#### Importance Sampling
+
+Estimating the expectation of a different distribution. 
+
+$$
+\begin{aligned}
+E_{X \sim P} [f(X)] &= \sum P(x)f(X) \\
+&= \sum Q(X)\frac{P(X)}{Q(X)}f(X) \\
+&= E_{X \sim Q} \bigg[\frac{P(X)}{Q(X)}f(X) \bigg]
+\end{aligned}
+$$
+
+MC off-policy learning with importance sampling is a really **bad** idea. Extremely high variance.
+
+TD off-policy: use TD targets generated from $\mu$ to evaluate $\pi$. 
+
+* Weight TD target $R + \gamma V(S')$ by importance sampling
+* Only need a single importance sampling correction:
+
+$$ V(S_t) \leftarrow V(S_t) + \alpha\bigg( \frac{\pi(A_t \mid S_t)}{\mu(A_t \mid S_t)} (R_{t+1} + \gamma V(S_{t+1})) - V(S_t)\bigg) $$
+
+TD learning still has high variance, can still blow up, but much better than MC.
+
+#### Q-Learning
+
+Better than TD w/ importance sampling. 
+
+* Consider off-policy learning of action-values $Q(s, a)$.
+* Next action is chosen using **behaviour policy** $A_{t+1} \sim \mu(\cdot \mid S_t)$
+* But consider **alternative** successor action $A' \sim \pi(\cdot \mid S_t)$
+* Then update $Q(S_t, A_t)$ towards value of **alternative action**:
+
+$$ Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \big(R_{t+1} + \gamma Q(S_{t+1}, A') - Q(S_t, A_t) \big) $$
+
+The special case of this is **Q-Learning** (**SARSAMAX**): **target policy** $\pi$ is **greedy** w.r.t. $Q(s, a)$:
+
+$$ \pi(S_{t+1}) = \underset{a'}{\operatorname{argmax}} Q(S_{t+1}, a') $$
+
+Essentially, go with S, A, R, $S'$, then choose the max of $A'$:
+
+$$ Q(S, A) \leftarrow Q(S, A) + \alpha \big(R + \gamma \underset{a'}{\operatorname{max}}Q(S', a') - Q(S, A) \big) $$
+
+Theorem: Q-learning control converges to the optimal action-value function, $Q(s, a) \rightarrow q_*(s, a)$
+
+Slide 46 compares DP methods with TD/Q-learning.
+
+| Full Backup (DP) | Sample Backup (TD) |
+|------------------|--------------------|
+| Iterative Policy Evaluation <br> $V(s) \leftarrow E[R +\gamma V(S') \mid s]$ | TD Learning <br> $V(S) \overset{a}{\leftarrow} R + \gamma V(S')$ |
+| Q-Policy Iteration <br> $Q(s, a) \leftarrow E[R + \gamma Q(S' A') \mid s, a]$ | Sarsa <br> $Q(A, S) \overset{a}{\leftarrow} R + \gamma Q(S', A')$ |
+| Q-Value Iteration <br> $Q(s, a) \leftarrow E\bigg[R + \gamma \underset{a' \in \mathcal{A}}{\operatorname{max}} Q(S', a') \mid s, a\bigg]$ | Q-Learning <br> $Q(S, A) \overset{a}{\leftarrow} R + \gamma \underset{a' \in \mathcal{A}}{\operatorname{max}} Q(S', a')$ |
+
+Where $x \overset{a}{\leftarrow} y \equiv x \leftarrow x + \alpha (y - x)$, $\equiv$ indicates **equivalence relation / identical**. 

@@ -1,6 +1,8 @@
 # Reinforcement Learning Notes 
 
-Based on Dan Silver's 2016 UCL course, videos [here](#https://www.youtube.com/playlist?list=PLqYmG7hTraZDM-OYHWgPebj2MfCFzFObQ).
+Based on David Silver's 2016 UCL course, videos [here](#https://www.youtube.com/playlist?list=PLqYmG7hTraZDM-OYHWgPebj2MfCFzFObQ).
+
+[Slides](http://goo.gl/vUiyjq)
 
 # Notation
 
@@ -465,7 +467,7 @@ $$
 
 **Identificaton function** $\mathcal{1}(S_t = s, A_t = a)$ means when in state $s$ taking action $a$, the function returns 1, i.e. increase the eligibility trace by 1.
 
-Then, the update $Q(s, a) for every states $s$ and actions $a$:
+Then, the update $Q(s, a)$ for every states $s$ and actions $a$:
 
 $$
 \begin{aligned}
@@ -476,7 +478,7 @@ $$
 
 Gridworld example on page 33:
 
-Left picture is an example of Sarsa. 
+**Left** picture is an example of Sarsa, i.e. only the last step gets the update when we reach an award. Previous steps get 0.
 
 With **Sarsa**, when a path is sampled and reaches the reward, only the last action-state before the reward would be updated. Previous steps would only see 0 reward. In the next iteration, when the reward is reached, the reward then starts to propagate back one step further. Therefore, update propagates back very slowly, you'd need **lots** of iterations to update all the states. 
 
@@ -517,7 +519,7 @@ TD learning still has high variance, can still blow up, but much better than MC.
 
 #### Q-Learning
 
-Better than TD w/ importance sampling. 
+Better than TD with importance sampling. 
 
 * Consider off-policy learning of action-values $Q(s, a)$.
 * Next action is chosen using **behaviour policy** $A_{t+1} \sim \mu(\cdot \mid S_t)$
@@ -534,9 +536,9 @@ Essentially, go with S, A, R, $S'$, then choose the max of $A'$:
 
 $$ Q(S, A) \leftarrow Q(S, A) + \alpha \big(R + \gamma \underset{a'}{\operatorname{max}}Q(S', a') - Q(S, A) \big) $$
 
-Theorem: Q-learning control converges to the optimal action-value function, $Q(s, a) \rightarrow q_*(s, a)$
+**Theorem**: Q-learning control converges to the optimal action-value function, $Q(s, a) \rightarrow q_*(s, a)$
 
-Slide 46 compares DP methods with TD/Q-learning.
+**Great slide 46 compares DP methods with TD/Q-learning.**
 
 | Full Backup (DP) | Sample Backup (TD) |
 |------------------|--------------------|
@@ -545,3 +547,139 @@ Slide 46 compares DP methods with TD/Q-learning.
 | Q-Value Iteration <br> $Q(s, a) \leftarrow E\bigg[R + \gamma \underset{a' \in \mathcal{A}}{\operatorname{max}} Q(S', a') \mid s, a\bigg]$ | Q-Learning <br> $Q(S, A) \overset{a}{\leftarrow} R + \gamma \underset{a' \in \mathcal{A}}{\operatorname{max}} Q(S', a')$ |
 
 Where $x \overset{a}{\leftarrow} y \equiv x \leftarrow x + \alpha (y - x)$, $\equiv$ indicates **equivalence relation / identical**. 
+
+
+# Value Function Approximation
+
+In RL we require training methods that is suitable for **non-stationary, non-iid** data.
+
+**Notation**: functions with $\hat{q}$ or $\hat{v}$ are function approximations of the true values of $q$ and $v$. 
+
+## Incremental Methods
+
+In RL, there is **no supervisor, only rewards**. Hence, in practice, we substitue a **target** for $v_\pi(s)$. 
+
+* MC - target is the return $G_t$
+* TD(0) - target is the TD target $R_{t+1} + \gamma \hat{v}(S_{t+1}, w)$
+* TD($\lambda$) - the target is the $lambda$-return $G^{\lambda}_t$
+
+### MC
+
+MC evaluation converges to a **local optimum**, even when using non-linear function approximation.
+
+### TD(0)
+
+Linear TD(0) converges (close) to **global optimum**.
+
+### TD($\lambda$)
+
+Slide 25, the summary of these is that between TD(0) ($\lambda=0$) and MC ($\lambda=1$), there is usually a sweet spot (black solid lines).
+
+Biased estimate, but has been proven that it can still converge.
+
+The dimension of **eligibility traces** is the same as the features that represent the state.
+
+Question at around 46-mins: On slide 17, why the does the TD(0) gradient only contain $\hat{v}(S, w)$, not $\hat{v}(S', w)$? Note: $\hat{v}$ means it's a function approximation of the true $v$.
+
+A: Family of techniques known as **Residual Gradient Methods**. Do not want to reverse time and update the step $t+1$ towards $t$ where you haven't seen the result. Don't really undertand it.... Feels like a hack as the derivative of the loss function w.r.t. weights would look at both terms.
+
+* TD does not follow the gradient of **any** objective function. 
+* This is why TD can diverge when off-policy or using non-linear function approximiation.
+* **Gradient TD** follows true gradient of projected Bellman error
+
+### Action-Value Function Approximation / Incremental Control
+
+Subtitute a target for $q_\pi(S, A)$, like prediction / state-value function approximation.
+
+Goal is to minimize the squared error between the function approximation $\hat{q}(S, A, w)$ and the true values $q(S, A, w)$.
+
+<a id='pred_convergence'></a>
+### Convergence of Prediction Algo
+
+| On / Off-policy | Algo | Table Lookup | Linear | Non-Linear |
+|---|:---:|---|---|-----|
+| On-Policy | MC | Yes | Yes | Yes |
+| On-Policy | LSMC | Yes | Yes |  |
+| On-Policy | TD(0) | Yes | Yes | No | 
+| On-Policy | TD($\lambda$) | Yes | Yes | No |
+| On-Policy | LSTD | Yes | Yes |  |
+| On-Policy | Gradien TD | Yes | Yes | Yes |
+| Off-Policy | MC | Yes | Yes | Yes |
+| Off-Policy | LSMC | Yes | Yes |  |
+| Off-Policy | TD(0) | Yes | No | No | 
+| Off-Policy | TD($\lambda$) | Yes | No | No |
+| Off-Policy | LSTD | Yes | Yes |  |
+| Off-Policy | Gradien TD | Yes | Yes | Yes |
+
+| On / Off-policy | Algo | Table Lookup | Linear | Non-Linear |
+|---|:---:|---|---|-----|
+| On-Policy | MC | Yes | Yes | Yes |
+| On-Policy | TD(0) | Yes | Yes | No | 
+| On-Policy | TD($\lambda$) | Yes | Yes | No |
+| On-Policy | Gradien TD | Yes | Yes | Yes |
+| Off-Policy | MC | Yes | Yes | Yes |
+| Off-Policy | TD(0) | Yes | No | No | 
+| Off-Policy | TD($\lambda$) | Yes | No | No |
+| Off-Policy | Gradien TD | Yes | Yes | Yes |
+
+<a id='control_convergence'></a>
+### Convergence of Control Algos
+
+| Algo | Table Lookup | Linear | Non-Linear |
+|:---:|---|---|-----|
+| MC Control | Yes | (Yes) | No |
+| Sarsa | Yes | (Yes) | No |
+| Q-Learning | Yes | No | No |
+| Gradient Q-Learning | Yes | Yes | No |
+| LSPI | Yes | (Yes) | No |
+
+(Yes) - chatters around near optimal value function.
+
+
+# Batch Methods
+
+## Experience Reply
+
+Finds the least square (min MSE) solution.
+
+* Sample (state, value) from experience
+* Apply SGD update with this sample as data input
+
+Experience replay **decorrelates the original non-iid data** (as data is sampled from a memory / dataset), therefore, stablise non-linear methods in training.
+
+## Deep Q-Networks (DQN)
+
+Uses **experience replay** and **fixed Q-targets**. Algo:
+
+* Take action $a_t$ according to $\epsilon$-greedy policy
+* Store transition $(s_t, a_t, r_{t+1}, s_{t+1})$ in replay memory $\mathcal{D}$
+* Sample mini-batches of size 64 of transitions $(s, a, r, s')$ from $\mathcal{D}$
+* Compute Q-learning targets w.r.t. **old, fixed parameters $w^-$**, i.e. fixed Q-targets.
+* Optimize MSE between Q-network (action-value function) and Q-learning targets (from the old network with $w^-$)
+
+$$\mathcal{L}_i(w_i) = \mathbb{E}_{s,a,r,s' \sim D}\bigg[ \big(r + \gamma \underset{a'}{\max} Q(s', a'; w^-_i) - Q(s, a; w_i)\big)^2 \bigg] $$
+
+* Using variant of SGD. 
+
+DQN is **stable** with NN / Non-linear methods, handles the issues mentioned before with non-linear function approximators. Due to:
+
+* Experience reply (handling non-iid data)
+* Keep two Q-Networks, bootstrap towards an older network a few thousands steps ago. I.e. use old network with params $w^-$ (frozen) to compute Q-learning targets, but update gradients in the new network with params $w$. Every few thousands steps after, swap replace the old network with the latest / current network.
+
+Question asked at 1h22min on this two-network approach more. If we didn't keep the old network fixed and just had one network, while we are doing SGD, the parameters of the network get updated with each data sample / batch, which means that the Q-targets keep moving as well. This causes problem for the training process and can blow up.
+
+## Linear Least Square Prediction
+
+* For N features, direction solution with inverting a maxtrix is $O(N^3)$
+* Incremental solution time is $O(N^2)$ using Shermann-Morrison
+
+Flavours available:
+
+* LSMC - with MC returns
+* LSTD - with TD targets
+* LSTD($\lambda$) - use TD($\lambda$) $\lambda$-return
+
+**Convergence** of LS prediction algos [here](#pred_convergence) (for LS value prediction).
+
+To do control, use LSPI (Least Square Policy Iteration). **Convergence** of LS control algos [here](#control_convergence) (for LS control).
+

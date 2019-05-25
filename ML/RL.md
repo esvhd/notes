@@ -683,3 +683,89 @@ Flavours available:
 
 To do control, use LSPI (Least Square Policy Iteration). **Convergence** of LS control algos [here](#control_convergence) (for LS control).
 
+
+# Policy Gradient
+
+There are cases where representing policy can be more compact then representing values.
+
+**Advantages**:
+
+* Better convergence properties 
+* Effective in high dimensional or continuous action spaces (With value methods, we need to compute **max** of some values, which can be expensive)
+* Can learn stochastic policies (when **state aliasing** occurrs, i.e. partially observed environment, or feature space cannot fully represent states, stochastic policies are better than deterministic policies)
+
+**Disadvantages**:
+
+* Typically converge to a **local** rather than **global** optimum
+* Evaluating a policy is typically inefficient and **high** variance (naive methods)
+
+## Policy Objective Function
+
+In episodic environments, we cna use start value
+
+$$ J_1(\theta) = V^{\pi_\theta}(s_1) = \mathbb{E}_{\pi_\theta}[v_1] $$
+
+In continuing environments we can use **average value**
+
+$$ J_{av}v(\theta) = \sum_s d^{\pi_\theta}(s)V^{\pi_\theta}(s) $$
+
+Or the **average reward per time-step**:
+
+$$ J_{av}v(\theta) = \sum_s d^{\pi_\theta}(s) \sum_a \pi_\theta(s, a)\mathcal{R}^a_s $$
+
+$d^{\pi_\theta}(s)$ is a stationary distribution of Markov chain for $\pi_\theta$, i.e. the probability of being in state $s$ under policy $\pi_\theta$.
+
+Goal: find $\theta$ that **maximises** $J(\theta)$
+
+
+## Score Function
+
+**Likelihood ratio**:
+
+$$ 
+\begin{aligned}
+\triangledown_\theta \pi_\theta(s, a) &= \pi_\theta(s, a) \frac{\triangledown_\theta \pi_\theta(s, a)}{\pi_\theta(s, a)} \\
+&= \pi_\theta(s, a) \triangledown_\theta \log \pi_\theta(s, a)
+\end{aligned}
+$$
+
+This is because $\triangledown_x(log x) = \frac{1}{x}$, let $x = \pi_\theta(s, a)$ and using the chain rule, we have:
+
+$$ \frac{d}{d\theta} \log \pi_\theta(s, a) = \frac{1}{\pi_\theta(s, a)} \frac{d}{d\theta} \pi_\theta(s, a) $$
+
+**Score function** is $\triangledown_\theta \pi_\theta(s, a)$
+
+## Softmax Policy
+
+$\phi(s, a)$ is a feature. Score function is feature minus average of all features:
+
+$$ \triangledown_\theta \log \pi_\theta(s, a) = \phi(s, a) - \mathbb{E}_{\pi_\theta} [\phi(s, \cdot)] $$
+
+## Gaussian Policy
+
+Natural for continuous action space. 
+
+Parameterised by mean and variance. 
+
+Mean is linear combination of state features $\mu(s) = \phi(s)^T \theta$
+
+Variance can be fixed $\sigma^2$ or also parameterised. 
+
+Score function is:
+
+$$ \triangledown_\theta \log \pi_\theta(s, a) = \frac{(a - \mu(s))\phi(s)}{\sigma^2} $$
+
+## Policy Gradient Theorem
+
+For any differentiable policy $\pi_\theta(s, a)$, for any of the policy objective, $J = J_1$, $J_{av}R$, or $\frac{1}{1-\gamma}J_{av}V$, the policy gradient is:
+
+$$\triangledown_\theta J(\theta) = \mathbb{E}_{\pi_\theta} \big[ \triangledown_\theta \log \pi_\theta(s, a) Q^{\pi_\theta}(s, a) \big] $$
+
+Where $Q^{\pi_\theta}(s, a)$ is the action-value function. This is still **model-free**, i.e. we can sample $(s, a)$.
+
+Intuitively, this is: expectation of how to improve our policy times the reward we see. 
+
+
+## Actor-Critic Methods
+
+

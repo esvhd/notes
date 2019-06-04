@@ -1628,6 +1628,8 @@ To interpret them:
 
 Good reference [here](https://en.wikipedia.org/wiki/Precision_and_recall).
 
+### Metrics
+
 **Sensitivity / True Positive Rate / Recall** $= \frac{TP}{TP + FN}$, 
 denominator is the ground truth number of positive events.
 
@@ -1767,7 +1769,7 @@ if there are other costs or benefits.
 
 ## Receiver Operating Charastics (ROC) Curve
 
-ROC plots False Positive Rate (FPR) on x-ais and Sensitivity (TPR) on y-axis.
+**ROC plots False Positive Rate (FPR) on x-ais and Sensitivity / Recall (TPR) on y-axis.**
 
 **Advantage**: **insensitive** to disparities in the class proportions.
 
@@ -1776,7 +1778,7 @@ individual ROC curve is uniformly better than other models' ROC curves.
 
   * There is loss of info in summarizing these curves, especically if one
   particular area of the curve is of interest.
-  * **Partial Area Under the ROC Curve (McClish 1989) is an alternative that
+  * **Partial Area Under the ROC Curve** (McClish 1989) is an alternative that
   focus on specific parts of the curve.
   
 ROC multi-class extensions: 
@@ -1838,6 +1840,68 @@ plot(creditROC)
 ### Old-school:
 plot(creditROC, legacy.axes = TRUE)
 ```
+
+## Precision-Recall AUC (PR-AUC) vs ROC-AUC
+
+**PR-AUC plots Recall on the x-axis and Precision on the y-axis.** ROC has
+recall on the y-axis.
+
+Goal is to have a model at the upper right corner, i.e. **high precision**, 
+**low recall**. In the extreme case or precision == 1 and recall == 1, 
+we have a classifier that has **only true positives, no false positives, **
+**no false negatives**.
+
+The main differences versus ROC is that PR-AUC is not affected by 
+**True Negatives**, i.e. not in either precision or recall. 
+When **TN** is large, i.e., where there is significant imbalance problems, 
+**PR-AUC** is preferred.
+
+Useful [link](https://www.kaggle.com/general/7517#41179) explaining the 
+difference with example.
+
+Example, info retrieval, 100 relevant docs out of a list of 1 million docs. 
+
+Method 1: 100 retrieved, 90 relevant. 
+
+```{r pr_auc1, eval=F}
+TP <- 90
+FP <- 100 - 90
+
+# 100 true cases, 10 were not selected
+FN <- 100 - 90
+
+# TN = out of all negatives, how many were picked as negative
+# 1mm docs, only 100 are relevant, others are not
+TN <- - 1e9 - 100 - FP
+
+TPR <- TP / (TP + FN)
+FPR <- FP / (FP + TN)
+
+p <- TP / (TP + FP)
+r <- TP / (TP + FN)
+```
+
+Method 2: 2000 retrieved, 90 relevant. 
+
+```{r pr_auc2, eval=F}
+TP <- 90
+FP <- 2000 - TP
+
+# 100 true cases, 10 were not selected
+FN <- 100 - TP
+
+# 1mm docs, only 100 are relevant, others are not
+TN <- 1e6 - 100 - FP
+
+TPR <- TP / (TP + FN)
+FPR <- FP / (FP + TN)
+
+p <- TP / (TP + FP)
+r <- TP / (TP + FN)
+```
+
+The `FRP` number used by ROC for both methods above show small differences, 
+whereas **precision would show large differences**.
 
 ## Lift Charts
 

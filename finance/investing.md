@@ -86,3 +86,78 @@ Use equally weighted combination of 4 factors. Objective is to maximize portfoli
 * max deviation from bench spread 0.5%
 * max duration deviation from bench 0.5
 * rebalanced monthly.
+
+
+# Defensive Factor Timing
+
+Kristin Fergis, Katelyn Gallagher, Philip Hodges, Ked Hogans - BlackRock, 2019
+
+## Risk Features
+
+Use macro indicators and market measures to develope two features:
+
+* Risk Tolerance Index (RTI) = $corr[q(R_t), q(\sigma_t)]$
+    - $q(R^i_t)$ denotes the ranking of asset $i$ for time period $t$ - the paper used **3-month rolling periods with weekly returns**.
+    - $q(\sigma^i_t)$ denotes the ranking of vol for the same assets
+    - Essentially this measures the correlation of two ranking vectors, returns and vol.
+* Diversification Ratio (DR) = $\frac{\sum_i w_i \sigma_i}{\sigma_p}$, where:
+    - $w_i$ is the weight for asset $i$
+    - $\sigma_i$ is the vol of asset $i$
+    - $\sigma_p$ is the vol of the portfolio
+
+The paper used these two indicators to de-risk a macro-factor portfolio. 
+
+## Macro Factors
+
+Representative factors, not reflecting actual investment accounts. Portfolio allocates to each factor based on % of risk / vol budget.
+
+The problem with this model here I see is that looking at the valuation metrics for these factors, there isn't much variation over time - they can be either rich or cheap for very long periods of time.
+
+**Economic Growth**:
+
+* Long: equity futures, listed REITS, commodities
+* Short: cash
+* Valuation Indcator: 
+    - variation of Shiller's CAPE: market-value weighted global CAPE then take inverse to compute earnings yield.
+    - Difference between earnings yield and bond yields
+
+**Real Rates**:
+
+* Long: baset of sovereign inflation linkers
+* Short: cash
+* Indcators: real rates vs expected GDP growth
+
+**Inflation**:
+
+* Long: basket of nominal sovereign bonds
+* Short: basket of sovereign inflation linkers with matching maturity
+* Indcators: 5yr market inflation breakeven vs inflation expectation (surveys and trailing realized inflation)
+
+**Credit**:
+
+* Long: IG and HY bonds
+* Short: Govt bonds
+* Indcators: current spreads vs loss given default
+
+**EM**:
+
+* Long: EM equity, EM debts
+* Short: DM equity, DM govt bonds
+* Indcators:
+    - Equity: Shiller's earnings yield and dividend yield (not sure why div yield is needed...)
+    - Bonds: EM spread over UST.
+    - Political risk regression model
+
+**Liqiudity**:
+
+* Long: Small-cap equity
+* Short: Large-cap equity, vol futures
+* Indicators: 
+    - Equity: Shiller earnings yield
+    - Vol: 
+        + carry implied by the VIX term structure
+        + ratio of current prices, spot VIX, to short-term realized vol of SPX index
+
+
+
+

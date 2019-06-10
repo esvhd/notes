@@ -159,5 +159,31 @@ The problem with this model here I see is that looking at the valuation metrics 
         + ratio of current prices, spot VIX, to short-term realized vol of SPX index
 
 
+# Rethinking Alternative Data in Institutional Investment
+
+Describes a **defensive and defensible** strategy towards using alternative data.
+
+3 V's of big data + IBM's new V:
+
+* Volume
+* Velocity 
+* Variety
+* Veracity - the degree of uncertainty around a dataset
+
+Authors proposed 6 attributes to access alt-data:
+
+* Reliability
+* Granularity
+* Freshness
+* Comprehensiveness
+* Actionability
+* Scarcity
+
+Interesting point that if investors are paying 3rd parties for their alt-data capability, in the long run this is just subsidising the 3rd party in enhancing their capability. 
 
 
+# Factors
+
+## Beta Against Beta (BAB)
+
+Aslo see related topic from [Low-Risk Anomalies in Global Fixed Income: Evidence from Major Broad Markets, Carvalho et al., 2014](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2321012)

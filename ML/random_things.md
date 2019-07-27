@@ -2,22 +2,22 @@
 
 <!-- MarkdownTOC levels='2,3' autolink="true" -->
 
-- [Heatmap Clustering](#heatmap-clustering)
-- [Permutation Importance for Random Forest Feature Importance](#permutation-importance-for-random-forest-feature-importance)
-- [Loss Functions](#loss-functions)
-    - [Mean Square Error \(MSE\), L2 Loss](#mean-square-error-mse-l2-loss)
-    - [Mean Absolute Error \(MAE\), L1 Loss](#mean-absolute-error-mae-l1-loss)
+- [Notes on random stuff I read about...](#notes-on-random-stuff-i-read-about)
+  - [Heatmap Clustering](#heatmap-clustering)
+  - [Permutation Importance for Random Forest Feature Importance](#permutation-importance-for-random-forest-feature-importance)
+  - [Loss Functions](#loss-functions)
+    - [Mean Square Error (MSE), L2 Loss](#mean-square-error-mse-l2-loss)
+    - [Mean Absolute Error (MAE), L1 Loss](#mean-absolute-error-mae-l1-loss)
     - [Huber Loss](#huber-loss)
     - [Log-Cosh Loss](#log-cosh-loss)
     - [Quantile Loss](#quantile-loss)
-- [Causal Impact](#causal-impact)
+  - [Causal Impact](#causal-impact)
     - [Bayesian Structural Time Series](#bayesian-structural-time-series)
-- [Bayesian Credible Region \(CR\) vs Frequentist Confidence Interval \(CI\)](#bayesian-credible-region-cr-vs-frequentist-confidence-interval-ci)
-- [Estimations for Time Series with Autocorrelation](#estimations-for-time-series-with-autocorrelation)
-- [Partial Dependency Plots](#partial-dependency-plots)
+  - [Bayesian Credible Region (CR) vs Frequentist Confidence Interval (CI)](#bayesian-credible-region-cr-vs-frequentist-confidence-interval-ci)
+  - [Estimations for Time Series with Autocorrelation](#estimations-for-time-series-with-autocorrelation)
+  - [Partial Dependency Plots](#partial-dependency-plots)
 
 <!-- /MarkdownTOC -->
-
 
 ## Heatmap Clustering
 
@@ -327,11 +327,11 @@ This is computationally intensive. Fortunately, for trees, this can be done effi
 
 Jeremy Howard showed some interesting python packages for interpreting results in this [video](https://www.youtube.com/watch?v=0v93qHDqq_g&feature=youtu.be&t=1h7m34s&source=post_page---------------------------):
 
-* `pdp` (`R` has a package with the same name)
+* `pdpbox` (`R` package `pdp`)
 * `treeinterpreter`
 
 
-TODO: 
+TODO:
 
 https://stats.stackexchange.com/questions/50560/how-to-calculate-partial-dependence-when-i-have-4-predictors
 

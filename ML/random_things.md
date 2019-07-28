@@ -4,7 +4,6 @@
 
 - [Notes on random stuff I read about...](#notes-on-random-stuff-i-read-about)
   - [Heatmap Clustering](#heatmap-clustering)
-  - [Permutation Importance for Random Forest Feature Importance](#permutation-importance-for-random-forest-feature-importance)
   - [Loss Functions](#loss-functions)
     - [Mean Square Error (MSE), L2 Loss](#mean-square-error-mse-l2-loss)
     - [Mean Absolute Error (MAE), L1 Loss](#mean-absolute-error-mae-l1-loss)
@@ -15,7 +14,6 @@
     - [Bayesian Structural Time Series](#bayesian-structural-time-series)
   - [Bayesian Credible Region (CR) vs Frequentist Confidence Interval (CI)](#bayesian-credible-region-cr-vs-frequentist-confidence-interval-ci)
   - [Estimations for Time Series with Autocorrelation](#estimations-for-time-series-with-autocorrelation)
-  - [Partial Dependency Plots](#partial-dependency-plots)
 
 <!-- /MarkdownTOC -->
 
@@ -30,71 +28,6 @@ Talked about 3 methods:
 1. Agglomerative clustering,
 2. Optimal Leaf Ordering (starts with agglomerative clustering output then reorder branches of the dendrogram so as to minimize the sum of dissimilarities between adjacent leaves),
 3. Traveling salesman (find the order of rows that minimizes the sum of dissmilarities, unconstrained by the clustering tree).
-
-
-## Permutation Importance for Random Forest Feature Importance
-
-See this [post](http://parrt.cs.usfca.edu/doc/rf-importance/index.html), [github](https://github.com/parrt/random-forest-importances)
-
-`sklearn` Random Forest feature importance and `R`'s default Randome Forest feature importance strategies are **biased**.
-
-Solution is to compute **permutation importance** from Breiman and Cutler. Existing packages:
-
-* Python: `rfpimp` through `pip`
-* R: use `importance=T` in random forest constructor then `type=1` and `scale=F` in `R`'s `importance()` function.
-
-Feature importance will only be reliable **if your model is trained with suitable hyper-parameters**.
-
-Permutation importance works for all models, not just random forests. The procedure is as follows:
-
-1. Train the model as usual
-2. Record a baseline: score the model by passing a validation or test set.
-3. For each feature (columns), permute the column values, compute the same score.
-4. The importance of a feature is **the difference of scores between the baseline and the drop in score after permutation**.
-
-The importance metrics here are **not** normalized and do not sum to 1. The specific values of importance do not matter, what matters is the **relative predictive strength**, i.e. ranking.
-
-A more direct and accurate strategy is the **drop-column importance**. This requires establishing a baseline, and then drop a feature column and **re-train** the model. Clearly, this is more computationally intensive. The importance measure is the drop of score from the baseline, as before.
-
-Here's the code snippet from the post.
-
-```
-import numpy as np
-
-def permutation_importances(rf, X_train, y_train, metric):
-    baseline = metric(rf, X_train, y_train)
-    imp = []
-    for col in X_train.columns:
-        save = X_train[col].copy()
-        X_train[col] = np.random.permutation(X_train[col])
-        m = metric(rf, X_train, y_train)
-        X_train[col] = save
-        imp.append(baseline - m)
-    return np.array(imp)
-
-
-def dropcol_importances(rf, X_train, y_train):
-    rf_ = clone(rf)
-    rf_.random_state = 999
-    rf_.fit(X_train, y_train)
-    baseline = rf_.oob_score_
-    imp = []
-    for col in X_train.columns:
-        X = X_train.drop(col, axis=1)
-        rf_ = clone(rf)
-        rf_.random_state = 999
-        rf_.fit(X, y_train)
-        o = rf_.oob_score_
-        imp.append(baseline - o)
-    imp = np.array(imp)
-    I = pd.DataFrame(
-            data={'Feature':X_train.columns,
-                  'Importance':imp})
-    I = I.set_index('Feature')
-    I = I.sort_values('Importance', ascending=True)
-    return I
-```
-
 
 ## Loss Functions
 
@@ -287,7 +220,7 @@ And an excellent [stackoverflow answer](https://stats.stackexchange.com/question
 Key point is the with CI, frequentists provide the right answer to the
 **wrong** question.
 
-Typicall from the data given, we are interested in what the **given data**
+Typically from the data given, we are interested in what the **given data**
 tells us. That's what Bayesian CR tells us.
 
 Frequentist CI tells us, if you repeatedly see **data of this kind**, there is
@@ -302,41 +235,3 @@ piece of data tells us!
 For a data set with $T$ observations, $\rho_l$ is the autocorrelation with $l$-lag, we have:
 
 $$ var(\hat{x}) = \big[ \frac{T + 2 \sum_{t=1}^T (T - l) \rho_l}{T} \big] \frac{1}{T} var(x_t) $$
-
-
-## Partial Dependency Plots
-
-Based on **ESL** p369-370.
-
-Definitions: let feature space be $X \in \mathbb{R}^{N \times p}$, let $X_S \in \mathbb{R}^{N \times l}$ where $l < p$ be a subset of features. Let $C$ be the **complement** set, so $S \cup C = \{1, 2, \cdots, p\}$.
-
-One way to define **average**or **partial** dependence of $f(X)$ on $X_S$ is:
-
-$$ f_S (X_S) = \mathbb{E}_{X_C} f(X_S, X_C) $$
-
-What this means is that we compute the following:
-
-$$ \bar{f}_S (X_S) = \frac{1}{N} \sum_{i=1}^{N} f(X_S, x^{(i)}_C) $$
-
-where $x^{(i)}_C$ is the $i$th example out of $N$ observations in the complement $C$ set, i.e. use $X_S$ and $x^{(i)}_C$ to form a new dataset (for features in $C$ we use values of $x^{(i)}_C$), then pass through the model, repeat $N$ times (using each of the $N$ examples), then take the average.
-
-Alternatively, for each unique value of $X_S$, create a new dataset with $X_C$, run prediction and take average.
-
-This is computationally intensive. Fortunately, for trees, this can be done efficiently without reference to the data.
-
-
-Jeremy Howard showed some interesting python packages for interpreting results in this [video](https://www.youtube.com/watch?v=0v93qHDqq_g&feature=youtu.be&t=1h7m34s&source=post_page---------------------------):
-
-* `pdpbox` (`R` package `pdp`)
-* `treeinterpreter`
-
-
-TODO:
-
-https://stats.stackexchange.com/questions/50560/how-to-calculate-partial-dependence-when-i-have-4-predictors
-
-https://www.alexpghayes.com/blog/understanding-multinomial-regression-with-partial-dependence-plots/
-
-http://rstudio-pubs-static.s3.amazonaws.com/283647_c3ab1ccee95a403ebe3d276599a85ab8.html
-
-https://medium.com/@hiromi_suenaga/machine-learning-1-lesson-4-a536f333b20d

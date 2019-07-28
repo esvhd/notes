@@ -6,6 +6,10 @@
   - [Permutation Importance for Random Forest Feature Importance](#permutation-importance-for-random-forest-feature-importance)
   - [Partial Dependency Plots (PDP)](#partial-dependency-plots-pdp)
   - [Individual Conditional Expectation (ICE) Plots](#individual-conditional-expectation-ice-plots)
+  - [Shapely Adaptive Explanation (SHAP)](#shapely-adaptive-explanation-shap)
+    - [LIME](#lime)
+    - [Classic Shapely Value Esitmation](#classic-shapely-value-esitmation)
+    - [SHAP](#shap)
   - [Stratified Partial Dependence (StratPD)](#stratified-partial-dependence-stratpd)
     - [Paper Notation](#paper-notation)
     - [Stratification](#stratification)
@@ -99,12 +103,10 @@ Alternatively, for each unique value of $X_S$, create a new dataset with $X_C$, 
 
 This is computationally intensive. Fortunately, for trees, this can be done efficiently without reference to the data.
 
-
 Jeremy Howard showed some interesting python packages for interpreting results in this [video](https://www.youtube.com/watch?v=0v93qHDqq_g&feature=youtu.be&t=1h7m34s&source=post_page---------------------------):
 
 - `pdpbox` (`R` package `pdp`)
 - `treeinterpreter`
-
 
 ## Individual Conditional Expectation (ICE) Plots
 
@@ -113,6 +115,46 @@ Jeremy Howard showed some interesting python packages for interpreting results i
 This is similar to PDP. ICE measures that dependency of a model on $X_C$, whereas PDP measures the average marginal effect of $X_C$ for the model.
 
 Instead of holding $X_C$ constant, ICE chooses and example $x^{(i)}$, fixes $x^{(i)}_S$ constant and iterates through all possible values of $X_C$.
+
+## Shapely Adaptive Explanation (SHAP)
+
+Python package [`shap`](https://github.com/slundberg/shap), [paper](http://papers.nips.cc/paper/7062-a-unified-approach-to-interpreting-model-predictions)
+
+[`treeexplainer` paper](https://arxiv.org/abs/1905.04610)
+
+Unifies a few different approaches:
+
+- LIME
+- DeepLIFT
+- Layer-wise relevance propagation
+- Shape Regression Values / Shapely Sampling Values
+- Quantitative Input Influence
+
+### LIME
+
+[paper](https://arxiv.org/abs/1602.04938)
+
+TODO: summarise paper
+
+### Classic Shapely Value Esitmation
+
+**Shapely regression values** is a feature importance metrics for linear regression models in the presence of multi-collinearity.
+
+Define a feature set $F$, where $S$ is a subset of $F$, i.e. $S \subseteq F$. For a feature $i$, the Shapely regression value is computed as follows:
+
+1. Fit a model **with** this feature, $f_{S\cup \{i\}}$, i.e. subset $S$ plus feature $i$
+2. Fit a model **without** this feature, $f_S$
+3. Prediction from both models are compared on the same inputs, $f_{S\cup \{i\}}(x_{S\cup \{i\}}) - f_S (x_S)$
+4. This difference is computed for all possible subsets $S \subseteq F \setminus \{i\}$
+5. Shapely regression value is the weighted average of these possible differences:
+
+$$ \phi_{i} = \sum_{s\subseteq F \setminus \{i\}} \frac{\mid S \mid! (\mid F \mid - \mid S \mid - 1)!}{\mid F \mid} \big[ f_{S\cup \{i\}}(x_{S\cup \{i\}}) - f_S (x_S)\big]$$
+
+This is clearly computationally hard to do in practice. **Shapely sampling values** are approximations of this equation by **integrating over samples from the training set** (What does this mean?). This eliminates the need to retrain the model and allows fewer than $2^{\mid F\mid}$ differences to be computed.
+
+### SHAP
+
+TODO: summarise
 
 ## Stratified Partial Dependence (StratPD)
 
@@ -125,7 +167,7 @@ illogic new samples are created, e.g. a 1 bedroom flat with 3 bathrooms.
 Neither method has a way of showing that the model may not have seen some
 areas of the space through data. I.e. 15 bedroom house prices, or pregnant males...
 
-PDP/ICE also assumes that features are independent. Co-dependces, aka colinearity, causes problem for PDP/ICE interpretations.
+PDP/ICE also assumes that features are independent. Co-dependces, aka collinearity, causes problem for PDP/ICE interpretations.
 
 ### Paper Notation
 

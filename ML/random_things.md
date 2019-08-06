@@ -4,6 +4,11 @@
 
 - [Notes on random stuff I read about...](#notes-on-random-stuff-i-read-about)
   - [Heatmap Clustering](#heatmap-clustering)
+  - [Multi-Class Classification Scoring](#multi-class-classification-scoring)
+    - [Confusion Matrix - `sklearn` format](#confusion-matrix---sklearn-format)
+    - [Macro Averaging](#macro-averaging)
+    - [Micro Averaging](#micro-averaging)
+    - [Comparison](#comparison)
   - [Loss Functions](#loss-functions)
     - [Mean Square Error (MSE), L2 Loss](#mean-square-error-mse-l2-loss)
     - [Mean Absolute Error (MAE), L1 Loss](#mean-absolute-error-mae-l1-loss)
@@ -28,6 +33,52 @@ Talked about 3 methods:
 1. Agglomerative clustering,
 2. Optimal Leaf Ordering (starts with agglomerative clustering output then reorder branches of the dendrogram so as to minimize the sum of dissimilarities between adjacent leaves),
 3. Traveling salesman (find the order of rows that minimizes the sum of dissmilarities, unconstrained by the clustering tree).
+
+## Multi-Class Classification Scoring
+
+[sklearn docs](https://scikit-learn.org/stable/modules/model_evaluation.html#from-binary-to-multiclass-and-multilabel)
+
+Good example on [StackExchange](https://datascience.stackexchange.com/questions/15989/micro-average-vs-macro-average-performance-in-a-multiclass-classification-settin/16001).
+
+### Confusion Matrix - `sklearn` format
+
+Actual vertically, Predicted horizontally.
+
+|                   | Negative (Predicted) | Positive (Predicted) |
+| ----------------- | -------------------- | -------------------- |
+| Negative (Actual) | TN                   | FP                   |
+| Positive (Actual) | FN                   | TP                   |
+
+### Macro Averaging
+
+Confusion matrix is computed for **each** class separately, each class has its own
+metrics such as precision / recall / F1. Overall scores are simple / unweighted
+averages of all class scores.
+
+This can hide imbalanced class problems when the infrequent class is the more
+important one.
+
+### Micro Averaging
+
+Confusion matrix is computed **globally for all classes**.
+
+**Preferred** when correctly predicting the infrequent class is the task of interest.
+
+### Comparison
+
+With **macro** averaging, the confusion matrix is each class is computed in a
+one-vs-other fashion. Then this is used to compute precision / recall / F1
+score for each class separately first. The overall metrics are simple / unweighted
+averages of the metrics for all classes.
+
+In a multi-class setting, with **micro** averaging, confusion matrix is computed
+for all classes at the same time. Hence, False Positive and False Negative
+numbers are always the **same**, i.e. for a false negative in one class,
+there is a false positive for another class.
+
+Therefore, in a multi-class setting, **micro** averaging will always give the
+**same** precision and recall. Better in imbalanced class problems than macro
+averaging.
 
 ## Loss Functions
 

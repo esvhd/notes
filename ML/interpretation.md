@@ -3,12 +3,16 @@
 <!-- MarkdownTOC levels='1,2,3' autolink="true" -->
 
 - [Notes on Feature Importance and Interpretation](#notes-on-feature-importance-and-interpretation)
+  - [Logistic Regression](#logistic-regression)
   - [Permutation Importance for Random Forest Feature Importance](#permutation-importance-for-random-forest-feature-importance)
   - [Partial Dependency Plots (PDP)](#partial-dependency-plots-pdp)
   - [Individual Conditional Expectation (ICE) Plots](#individual-conditional-expectation-ice-plots)
-  - [Shapely Adaptive Explanation (SHAP)](#shapely-adaptive-explanation-shap)
+  - [Shapley Adaptive Explanation (`SHAP`)](#shapley-adaptive-explanation-shap)
+    - [Notation](#notation)
+    - [Additive Feature Attribution Methods](#additive-feature-attribution-methods)
     - [LIME](#lime)
-    - [Classic Shapely Value Esitmation](#classic-shapely-value-esitmation)
+    - [Shapley Value](#shapley-value)
+    - [Classic Shapley Value Esitmation](#classic-shapley-value-esitmation)
     - [SHAP](#shap)
   - [Stratified Partial Dependence (StratPD)](#stratified-partial-dependence-stratpd)
     - [Paper Notation](#paper-notation)
@@ -19,6 +23,15 @@
   - [TODO:](#todo)
 
 <!-- /MarkdownTOC -->
+
+## Logistic Regression
+
+$$ \log\big(\frac{p(y=1)}{1 - p(y=1)} \big) = \beta_0 + \beta_1 x_1 + \cdots + \beta_p x_p $$
+
+A change in a feature $i$ by one unit changes the **odds ratio** by a factor of $e^{\beta_i}$.
+
+Edge case: logistic regression can suffer from **complete separation**: if there is a feature that completely separates the data, logistic regression can no longer be trained - the weight for that feature would **not** converge.
+
 
 ## Permutation Importance for Random Forest Feature Importance
 
@@ -116,19 +129,41 @@ This is similar to PDP. ICE measures that dependency of a model on $X_C$, wherea
 
 Instead of holding $X_C$ constant, ICE chooses and example $x^{(i)}$, fixes $x^{(i)}_S$ constant and iterates through all possible values of $X_C$.
 
-## Shapely Adaptive Explanation (SHAP)
+## Shapley Adaptive Explanation (`SHAP`)
 
 Python package [`shap`](https://github.com/slundberg/shap), [paper](http://papers.nips.cc/paper/7062-a-unified-approach-to-interpreting-model-predictions)
 
 [`treeexplainer` paper](https://arxiv.org/abs/1905.04610)
+
+Kaggle has a short [course](https://www.kaggle.com/learn/machine-learning-explainability) on `SHAP`.
 
 Unifies a few different approaches:
 
 - LIME
 - DeepLIFT
 - Layer-wise relevance propagation
-- Shape Regression Values / Shapely Sampling Values
+- Shape Regression Values / Shapley Sampling Values
 - Quantitative Input Influence
+
+### Notation
+
+- $f$ - original prediction model
+- $x$ - single sample
+- $f(x)$ - single prediction
+- $x'$ - **simplified** input, through **mapping function** $x = h_x(x')$. In thi spaper $x'$ is a indicator vector to identify which features are present, i.e. $x' = (0, 1, 1)$ means feature $x0$ is not present but ($x_1, $_2)$ are.
+- Local methods try to ensure $z' \approx x'$, and $g(z') \approx f(h_x(z'))$
+
+### Additive Feature Attribution Methods
+
+General form:
+
+$$ g(z') = \phi_0 + \sum_{i=1}^{M} \phi_i z'_i $$
+
+where:
+
+- $z' \in {0, 1}^M$
+- $M$ is the number of simplified input features
+- $\phi_i \in \mathbb{R}$
 
 ### LIME
 
@@ -136,25 +171,64 @@ Unifies a few different approaches:
 
 TODO: summarise paper
 
-### Classic Shapely Value Esitmation
+Cody's blog: LIME fits a simple linear model at the local level where the target $y$ is the prediction / output of the complex model. If the features are in the same scale, then the coefficients of this local linear model represents the importance of the features.
 
-**Shapely regression values** is a feature importance metrics for linear regression models in the presence of multi-collinearity.
+In LIME, **localness* is defined by a kernel distance function. I.e. draw samples from training dataset, then weight samples by the kernel function output.
 
-Define a feature set $F$, where $S$ is a subset of $F$, i.e. $S \subseteq F$. For a feature $i$, the Shapely regression value is computed as follows:
+### Shapley Value
+
+Some notes based on [this](https://christophm.github.io/interpretable-ml-book/shapley.html)
+
+For data matrix $X \in R^{n \times p}$, and model $f$, the Shapley value for feature $j$ in sample $x^{(i)}$, a.k.a $x^{(i)}_j$, is the contribution of feature $j$ to the prediction of $f(x^{(j)})$, compared to the **average prediction** for the data set.
+
+Good blog [post](https://towardsdatascience.com/one-feature-attribution-method-to-supposedly-rule-them-all-shapley-values-f3e04534983d) from Cody Marie Wild ()
+
+- If a model is **linear**, or if the features are truly **independent**, then no matter what **values of the features** or the **sequence in which features are added to the model** , the contribution of a given feature is the **same**.
+
+The Shapley value formula gives us a way to calculate the average impact of all permutations of how a feature could have contributed to the prediction.
+
+In the `SHAP` paper, when predicting with $S\cup F \setminus {i}$ features actually means using the **average value of feature $i$** for training the dataset in the same model, i.e. **there isn't a second model that is trained without feature $i$**.
+
+### Classic Shapley Value Esitmation
+
+**Shapley regression values** is a feature importance metrics for linear regression models in the presence of multi-collinearity.
+
+Define a feature set $F$, where $S$ is a subset of $F$, i.e. $S \subseteq F$. For a feature $i$, the Shapley regression value is computed as follows:
 
 1. Fit a model **with** this feature, $f_{S\cup \{i\}}$, i.e. subset $S$ plus feature $i$
-2. Fit a model **without** this feature, $f_S$
+2. Fit a model **without** this feature, $f_S$. In `shap`'s implementation, this means usin gthe same model as step 1, but with feature $i$ replaced with its average value.
 3. Prediction from both models are compared on the same inputs, $f_{S\cup \{i\}}(x_{S\cup \{i\}}) - f_S (x_S)$
 4. This difference is computed for all possible subsets $S \subseteq F \setminus \{i\}$
-5. Shapely regression value is the weighted average of these possible differences:
+5. Shapley regression value is the weighted average of these possible differences:
 
-$$ \phi_{i} = \sum_{s\subseteq F \setminus \{i\}} \frac{\mid S \mid! (\mid F \mid - \mid S \mid - 1)!}{\mid F \mid} \big[ f_{S\cup \{i\}}(x_{S\cup \{i\}}) - f_S (x_S)\big]$$
+$$ \phi_{i} = \sum_{S \subseteq F \setminus \{i\}} \frac{\mid S \mid! (\mid F \mid - \mid S \mid - 1)!}{\mid F \mid} \big[ f_{S\cup \{i\}}(x_{S\cup \{i\}}) - f_S (x_S)\big]$$
 
-This is clearly computationally hard to do in practice. **Shapely sampling values** are approximations of this equation by **integrating over samples from the training set** (What does this mean?). This eliminates the need to retrain the model and allows fewer than $2^{\mid F\mid}$ differences to be computed.
+Intuitively, $\mid S \mid!$ is the no. of permutations that $S$ can appear bfore $i$, $(\mid F \mid - \mid S \mid - 1)!$ is the no. of permutations that the remaining features can appear after $i$.
+
+This is clearly computationally hard to do in practice. **Shapley sampling values** are approximations of this equation by **integrating over samples from the training set** (What does this mean?). This eliminates the need to retrain the model and allows fewer than $2^{\mid F\mid}$ differences to be computed.
+
+Shapley regression value is the only attribution method that satisties the properties of **Efficient, Symmetry, Dummy and Additivity**.
 
 ### SHAP
 
 TODO: summarise
+
+SHAP values are the Shapley values of a conditional expectation function of the original model. They are solutions to:
+
+
+$$ \phi_i(f, x) = \sum_{z' \subseteq x'} \frac{\mid z' \mid! (\mid M \mid - \mid z' \mid - 1)!}{\mid M \mid} \big[ f_{x}(z') - f_x (z' \setminus i)\big]$$
+
+Where:
+
+- $'z' \approx x'$, with mapping function $x = h_x(x')$
+- $z' \setminus i$ denotes setting $z'_i = 0$
+- $\mid z' \mid$ is the number of non-zero entries in $z'$
+- $z' \subseteq x'$ represents all $z'$ vectors where the non-zero entries are a subset of the non-zero entries in $x'$
+- $S$ is the set of non-zero indexes in $z$
+- $h_x(z') = z_S$, where $z_S$ has **missing** values for features not in the set $S$
+- Most models cannot handle **missing** values, we **approximate** $f(z_S) \approx E[f(z) | z_S]$
+- $f_x(z') = f(h_x(z')) = E[f(z) | z_S]$
+
 
 ## Stratified Partial Dependence (StratPD)
 

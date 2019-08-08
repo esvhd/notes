@@ -87,18 +87,22 @@ Good summary and comparison in this [post](https://heartbeat.fritz.ai/5-regressi
 ### Mean Square Error (MSE), L2 Loss
 
 Pros:
-* differentiable, gradient is continuous, easier to train / optimize
+
+- differentiable, gradient is continuous, easier to train / optimize
 
 Cons:
-* Sensitive to outliers compare to MAE
+
+- Sensitive to outliers compare to MAE
 
 ### Mean Absolute Error (MAE), L1 Loss
 
 Pros:
-* More robust, less affected by outliers / noisy data
+
+- More robust, less affected by outliers / noisy data
 
 Cons:
-* Gradient is the same for different points, harder to stablize as gradient remains large around minimum. Can use dynamic  learning rate to work around this, i.e. shrink learning rate around minimum.
+
+- Gradient is the same for different points, harder to stablize as gradient remains large around minimum. Can use dynamic  learning rate to work around this, i.e. shrink learning rate around minimum.
 
 **MSE** predicts the mean, **MAE** predicts the median of data.
 

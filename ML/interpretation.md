@@ -137,6 +137,8 @@ Python package [`shap`](https://github.com/slundberg/shap), [paper](http://paper
 
 Kaggle has a short [course](https://www.kaggle.com/learn/machine-learning-explainability) on `SHAP`.
 
+[Blog](https://towardsdatascience.com/interpretable-machine-learning-with-xgboost-9ec80d148d27) from one of the creators.
+
 Unifies a few different approaches:
 
 - LIME

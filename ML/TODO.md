@@ -35,6 +35,10 @@ Need to write some code to label financial data.
 
 ## ML TODO:
 
+Bias-Variance [paper](https://arxiv.org/abs/1812.11118)
+
+FB adaptive heads / all-attention layers
+
 Noam Brown Taxes hold them paper
 
 ML Courses [list](https://twitter.com/chipro/status/1157772112876060672)

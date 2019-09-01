@@ -1785,12 +1785,24 @@ r &lt;- TP / (TP + FN)</code></pre>
 <li>For each unique class probability value, calculate the percent of true events in all samples below the probability value</li>
 <li>Divide the % of true events for each probability threshold by the baseline event rate.</li>
 </ol>
+<div id="gain-chart" class="section level3">
+<h3>Gain Chart</h3>
+<p>Similar to lifts. The interpretation of gain chart is to illustrate by targeting the top x% of positive predictions, one can achieve a % of true positive cases <strong>higher</strong> than <em>x</em>, e.g. target 20% of the predicted users to hit 80% of positive response.</p>
+<p>Good example <a href="https://www.listendata.com/2014/08/excel-template-gain-and-lift-charts.html">here</a>. Some related <a href="http://saedsayad.com/model_evaluation_c.htm">material</a>.</p>
+<ol style="list-style-type: decimal">
+<li>sort predicted probabilities of validation set in decreasing order.</li>
+<li>split this set into percentiles / deciles</li>
+<li>for each percentile / decile group, calculate the % of events predicted</li>
+<li>compute the cumulative % of events predicted. This is the <strong>Gain</strong>.</li>
+<li>gain devided by the cumulative % of data gives the <strong>cumulative lift</strong>.</li>
+</ol>
 <pre class="r"><code>### Lift charts
 # creditResults is a data.frame
 # creditResults$obs are the actual classes
 # creditResults$prob are the predicted class probabilities 
 creditLift &lt;- caret::lift(obs ~ prob, data = creditResults)
 xyplot(creditLift)</code></pre>
+</div>
 </div>
 </div>
 <div id="discriminant-analysis-other-linear-classifiers" class="section level1">

@@ -1934,6 +1934,22 @@ in all samples below the probability value
 5. Divide the % of true events for each probability threshold by the baseline
 event rate.
 
+### Gain Chart
+
+Similar to lifts. The interpretation of gain chart is to illustrate by 
+targeting the top x% of positive predictions, one can achieve a % of true
+positive cases **higher** than *x*, e.g. target 20% of the predicted users
+to hit 80% of positive response.
+
+Good example [here](https://www.listendata.com/2014/08/excel-template-gain-and-lift-charts.html).
+Some related [material](http://saedsayad.com/model_evaluation_c.htm).
+
+1. sort predicted probabilities of validation set in decreasing order. 
+2. split this set into percentiles / deciles
+3. for each percentile / decile group, calculate the % of events predicted
+4. compute the cumulative % of events predicted. This is the **Gain**.
+5. gain devided by the cumulative % of data gives the **cumulative lift**.
+
 ```{r lift_chart, eval=F}
 ### Lift charts
 # creditResults is a data.frame

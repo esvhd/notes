@@ -1769,6 +1769,27 @@ FPR &lt;- FP / (FP + TN)
 p &lt;- TP / (TP + FP)
 r &lt;- TP / (TP + FN)</code></pre>
 <p>The <code>FRP</code> number used by ROC for both methods above show small differences, whereas <strong>precision would show large differences</strong>.</p>
+<div id="precision-recall-gain-curve" class="section level3">
+<h3>Precision-Recall-Gain Curve</h3>
+<p>Some thoughts on PR-AUC curve based on this <a href="http://people.cs.bris.ac.uk/~flach/PRGcurves//PRcurves.pdf">paper</a>:</p>
+<p>Notation: <span class="math inline">\(\pi\)</span> - % of the positive class.</p>
+<ul>
+<li><strong>Baseline</strong>: not any random classifier, but the <strong>always-positive</strong> classifier. This baseline has precision = <span class="math inline">\(\pi\)</span> and recall = 1.</li>
+<li><strong>ROC properties</strong>:
+<ul>
+<li><strong>Universal baseline</strong>: the random classifier, not affected by class distribution</li>
+<li><strong>Linear Interpolation</strong>: any point on a straight line between 2 classifiers A and B can be achieved by making a suitably biased random choice between A and B.</li>
+<li><strong>Optimality</strong>: point D dominates point E if D’s TPR and FPR are not worse than E’s and at least one of them is strictly better.</li>
+<li><strong>Area</strong>: well-defined meaning, it estimates the probability of a randomly chosen positive is ranked higher by the model than a randomly chosen negative.</li>
+<li><strong>Calibration</strong></li>
+</ul></li>
+<li>PR-AUC does not have these nice properties of ROC-AUC</li>
+<li>PR-AUC has an unachievable region at the lower right-hand side, the size of the area depends on the class distribution, see <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3858955/">this</a>.</li>
+</ul>
+<p>The paper proposes a <strong>Precision-Recal-Gain (PRG)</strong> curve, defined by:</p>
+<p><span class="math display">\[ \text{Precision-Gain} = \frac{precision - \pi}{(1 - \pi) \times precision} = 1 - \frac{\pi}{1 - \pi} \times \frac{FP}{TP} \]</span></p>
+<p><span class="math display">\[ \text{Recall-Gain} = \frac{recall - \pi}{(1 - \pi) \times recall} = 1 - \frac{\pi}{1 - \pi} \times \frac{FN}{TP} \]</span></p>
+</div>
 </div>
 <div id="lift-charts" class="section level2">
 <h2>Lift Charts</h2>

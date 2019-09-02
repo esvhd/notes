@@ -1903,6 +1903,35 @@ r <- TP / (TP + FN)
 The `FRP` number used by ROC for both methods above show small differences, 
 whereas **precision would show large differences**.
 
+### Precision-Recall-Gain Curve
+
+Some thoughts on PR-AUC curve based on this [paper](http://people.cs.bris.ac.uk/~flach/PRGcurves//PRcurves.pdf):
+
+Notation: $\pi$ - % of the positive class.
+
+- **Baseline**: not any random classifier, but the **always-positive** classifier. 
+  This baseline has precision = $\pi$ and recall = 1.
+- **ROC properties**:
+  - **Universal baseline**: the random classifier, not affected by class distribution
+  - **Linear Interpolation**: any point on a straight line between 2 classifiers
+  A and B can be achieved by making a suitably biased random choice between A
+  and B.
+  - **Optimality**: point D dominates point E if D's TPR and FPR are not worse
+  than E's and at least one of them is strictly better.
+  - **Area**: well-defined meaning, it estimates the probability of a randomly chosen 
+  positive is ranked higher by the model than a randomly chosen negative.
+  - **Calibration**
+- PR-AUC does not have these nice properties of ROC-AUC
+- PR-AUC has an unachievable region at the lower right-hand side, the size of
+the area depends on the class distribution, 
+see [this](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3858955/).
+
+The paper proposes a **Precision-Recal-Gain (PRG)** curve, defined by:
+
+$$ \text{Precision-Gain} = \frac{precision - \pi}{(1 - \pi) \times precision} = 1 - \frac{\pi}{1 - \pi} \times \frac{FP}{TP} $$
+
+$$ \text{Recall-Gain} = \frac{recall - \pi}{(1 - \pi) \times recall} = 1 - \frac{\pi}{1 - \pi} \times \frac{FN}{TP} $$
+
 ## Lift Charts
 
 `caret::lift()`

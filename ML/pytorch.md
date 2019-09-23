@@ -76,3 +76,9 @@ Docs [recommendations](https://pytorch.org/docs/stable/notes/serialization.html#
 
 When reloading models for inference, remember to call `model.eval()`, as by default models
 are loaded in training model.
+
+## Context Manager: `detect_anomoly` 
+
+See this [SO post](https://stackoverflow.com/questions/48158017/pytorch-operation-to-detect-nans) about using `detect_anomoly` to insert assertions in all steps of backprop to ensure NaN is tracked to the forward steps.
+
+See [docs](https://pytorch.org/docs/stable/autograd.html#torch.autograd.detect_anomaly)

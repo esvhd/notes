@@ -2,7 +2,7 @@
 
 Some notes based on Active Portfolio Management (APM) 2nd edition by Grinold and Kahn.
 
-For basic vol metrics for portfolio, check out my code for risk parity. 
+For basic vol metrics for portfolio, check out my code for risk parity.
 
 <!-- MarkdownTOC levels="1,2,3", autolink=true -->
 
@@ -87,7 +87,7 @@ $V$ - $N \times N$ covariance matrix, $V = X \cdot F \cdot X^T + \Delta$
 
 Portfolio factor exposure: $x_p = X^T \cdot h_p$, shape is $K \times N \cdot N \times 1 = K \times 1$
 
-Portfolio factor variance, $1 \times 1$ shape: 
+Portfolio factor variance, $1 \times 1$ shape:
 
 $$
 \begin{aligned}
@@ -109,7 +109,7 @@ $$
 
 $\Psi_p$ has shape $1 \times K \cdot K \times K \cdot K \times 1 + 1 \times N \cdot N \times N \cdot N \times 1 = 1 \times 1$
 
-In both portfolio variance and trackig error, we broken them down into factor and specific risks. This works only with the assumption that factor risk and specific risk are **uncorrelated**.
+In both portfolio variance and trackig error, we break them down into factor and specific risks. This works only with the **assumption** that factor risk and specific risk are **uncorrelated**.
 
 **Active Returns vs Residual Returns**
 
@@ -202,7 +202,7 @@ Forecast expected return for asset $n$ is $f_n = \beta_n \times f_B + \alpha_n$.
 
 ## Utility Function
 
-A simple utility function to maximize is to trade residual return versus residual risk. E.g. 
+A simple utility function to maximize is to trade residual return versus residual risk. E.g.
 
 $$ U_p = \alpha_p - \lambda_R \times w^2_p = f_p - \lambda_T \times \sigma^2_p$$
 
@@ -220,7 +220,7 @@ Risk and return can be split into three parts:
 
 * **Intrinsic**, $f_B - \lambda_T \times \sigma^2_B$, comes from benchmark return.
 * **Timing**, $VA_{t} = \beta_{PA}\times \Delta f_B - \lambda_{BT} \times \beta^2_{PA} \times \sigma^2_B$, a manager's **active beta**
-* **Residual**, $VA_{r} = \alpha_p - \lambda_R \times w^2_p$, due to manager's residual positions. 
+* **Residual**, $VA_{r} = \alpha_p - \lambda_R \times w^2_p$, due to manager's residual positions.
 
 In other words, **value added** is the sum of last two parts above, i.e., returns from active beta and residual positions.
 
@@ -248,7 +248,7 @@ $$
 VA_t &= \beta^*_{PA} \times \Delta f_B - \lambda_{BT} \cdot (\beta^*_{PA})^2 \cdot \sigma^2_B \\
 &= \frac{(\Delta f_B)^2}{2 \cdot \lambda_{BT} \cdot \sigma^2_B} - \lambda_{BT} \cdot \sigma^2_{B} \frac{(\Delta f_B)^2}{4 \cdot \lambda^2_{BT} \cdot \sigma^4_B} \\
 &= \frac{2 (\Delta f_B)^2 - (\Delta f_B)^2}{4 \cdot \lambda_{BT} \cdot \sigma^2_B} \\
-&= \frac{(\Delta f_B)^2}{4 \cdot \lambda_{BT} \cdot \sigma^2_B} 
+&= \frac{(\Delta f_B)^2}{4 \cdot \lambda_{BT} \cdot \sigma^2_B}
 \end{aligned}
 $$
 
@@ -258,7 +258,7 @@ Finance text is really not precise when it comes to maths and units. In the text
 
 # Information Ratio
 
-Defined as: 
+Defined as:
 
 $$ IR_p = \frac{\alpha_p}{w_p} $$
 
@@ -320,7 +320,7 @@ Where:
 * $y_i$ is the ground truth for sample $i$
 * $\hat{y}_i$ is the predicted label for sample $i$
 
-Therefore, we can compare the two metric, correlation and hit ratio between forecasts. 
+Therefore, we can compare the two metric, correlation and hit ratio between forecasts.
 
 ## Additivity
 
@@ -330,7 +330,7 @@ Big **assumption** here is that each IC is derived from independent information,
 
 ## Assumptions
 
-1. Sources of information should be **independent**. Don't bet on the same information twice. 
+1. Sources of information should be **independent**. Don't bet on the same information twice.
 
 Dependency over time is also an issue. E.g. quarterly predictions should be based on **new** information from each quarter.
 
@@ -346,7 +346,7 @@ Other practical portfolio constraints such as short sale would result in a drop 
 
 ## Performance Evaluation
 
-When comparing portfolios, we can estimate the $\alpha$ of a portfolio with OLS regression. $\alpha$ in this case is the **intercept** of the OLS formula. 
+When comparing portfolios, we can estimate the $\alpha$ of a portfolio with OLS regression. $\alpha$ in this case is the **intercept** of the OLS formula.
 
 $$ r(t) = \alpha + \beta \times r_B(t) + \epsilon(t) $$
 
@@ -354,7 +354,7 @@ In the context of traditional statistical testing, $t$-statistics is then:
 
 $$ \text{t-stat} = \frac{\alpha}{stdev(\alpha)} $$
 
-This links it back to $IR$ which uses **annualised** $\alpha$. 
+This links it back to $IR$ which uses **annualised** $\alpha$.
 
 $$ IR \approx = \frac{\text{t-stat}}{\sqrt{T}} $$
 
@@ -386,7 +386,7 @@ Outsized alpha estimates can have undue influence, they shoud be **trimmed**.
 
 ## Dispersion
 
-The concept of dispersion measures the performance difference between the best and worst performing separate account mandates from a manager. 
+The concept of dispersion measures the performance difference between the best and worst performing separate account mandates from a manager.
 
 If alpha and risk stay absolutely **constant** over time, then dispersion persists. Then the remaining tracking error is bounded by:
 
@@ -399,12 +399,12 @@ $$ \Psi^2 \leq \frac{TC}{2 \times \lambda_A} $$
 
 In practice, alpha and risk **vary** over time, then convergence of performance will occur. However, this is a general argument and **does not** imply any particular time scale.
 
-Dual-benchmark optimisation - essentially trying to balance two objectives - would trade off return versus dispersion. 
+Dual-benchmark optimisation - essentially trying to balance two objectives - would trade off return versus dispersion.
 
 ## Alpha Analysis
 
-My thoughts on this is that the material and maths used hevily rely on the assumption that factor returns and specific returns are **uncorrelated**, and that components of specific returns are also **uncorrelated**. 
+My thoughts on this is that the material and maths used hevily rely on the assumption that factor returns and specific returns are **uncorrelated**, and that components of specific returns are also **uncorrelated**.
 
-These assumption most likely won't hold in practice especially looking at a corporate bond or equity market risk model. 
+These assumption most likely won't hold in practice especially looking at a corporate bond or equity market risk model.
 
 The technical appendix also has a section on the impact of **covariance matrix estimation error**. Worth a read.

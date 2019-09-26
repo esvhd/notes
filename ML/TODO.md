@@ -35,7 +35,15 @@ Need to write some code to label financial data.
 
 ## ML TODO:
 
-Bias-Variance [paper](https://arxiv.org/abs/1812.11118)
+PR Analysis done right, desktop
+
+Econometrics [here](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3365282)
+
+Multi-Horizon quantile regression [paper](https://arxiv.org/pdf/1711.11053.pdf)
+
+Tactical Investment algo [paper](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3459866)
+
+Bias-Variance [paper](https://arxiv.org/abs/1812.11118) DONE
 
 FB adaptive heads / all-attention layers
 

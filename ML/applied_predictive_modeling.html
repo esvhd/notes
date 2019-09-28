@@ -1771,6 +1771,8 @@ r &lt;- TP / (TP + FN)</code></pre>
 <p>The <code>FRP</code> number used by ROC for both methods above show small differences, whereas <strong>precision would show large differences</strong>.</p>
 <div id="precision-recall-gain-curve" class="section level3">
 <h3>Precision-Recall-Gain Curve</h3>
+<p><a href="https://github.com/meeliskull/prg">Code</a>, to install Python version run:</p>
+<pre><code>pip install pyprg</code></pre>
 <p>Some thoughts on PR-AUC curve based on this <a href="http://people.cs.bris.ac.uk/~flach/PRGcurves//PRcurves.pdf">paper</a>:</p>
 <p>Notation: <span class="math inline">\(\pi\)</span> - % of the positive class.</p>
 <ul>
@@ -1786,9 +1788,22 @@ r &lt;- TP / (TP + FN)</code></pre>
 <li>PR-AUC does not have these nice properties of ROC-AUC</li>
 <li>PR-AUC has an unachievable region at the lower right-hand side, the size of the area depends on the class distribution, see <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3858955/">this</a>.</li>
 </ul>
-<p>The paper proposes a <strong>Precision-Recal-Gain (PRG)</strong> curve, defined by:</p>
+<p>The paper proposes a <strong>Precision-Recall-Gain (PRG)</strong> curve, defined by:</p>
 <p><span class="math display">\[ \text{Precision-Gain} = \frac{precision - \pi}{(1 - \pi) \times precision} = 1 - \frac{\pi}{1 - \pi} \times \frac{FP}{TP} \]</span></p>
 <p><span class="math display">\[ \text{Recall-Gain} = \frac{recall - \pi}{(1 - \pi) \times recall} = 1 - \frac{\pi}{1 - \pi} \times \frac{FN}{TP} \]</span></p>
+<p>A similar definition for <code>F-score</code> is also given as Theorem 2 in the paper.</p>
+<p>First define <span class="math inline">\(F_\beta\)</span> as follows:</p>
+<p><span class="math display">\[ F_\beta = \frac{(1 + \beta^2) TP}{(1 + \beta^2)TP + FP + \beta^2 FN} \]</span></p>
+<p>With <span class="math inline">\(\beta = 1\)</span>, we have the <code>F1-score</code>.</p>
+<p>Define <code>F-Gain</code> / <span class="math inline">\(FG_\beta\)</span> as follows</p>
+<p><span class="math display">\[ precG + \beta^2 recG = (1 + \beta^2)FG_{\beta} \]</span></p>
+<p><span class="math display">\[ FG_{\beta} = \frac{F_\beta - \pi}{(1 - \pi) F_\beta} = 1 - \frac{\pi}{1 - \pi} \frac{FP + \beta^2 FN}{(1 + \beta^2)TP} \]</span></p>
+<p>Conclusions for the paper when doing PR-analysis:</p>
+<ol style="list-style-type: decimal">
+<li>Use <code>F-Gain</code> score instead to make sure baselines are taken into account.</li>
+<li>Use <strong>Precision-Recall-Gain</strong> curve instead of PR-curves.</li>
+<li>Use Area-Under-PRG instead of Area-Under-PR due to <strong>linear-interpolation</strong>, as expected <code>F-Gain</code> score and allow performance assessment over a range of operating points.</li>
+</ol>
 </div>
 </div>
 <div id="lift-charts" class="section level2">

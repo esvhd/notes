@@ -18,7 +18,8 @@
   - [Causal Impact](#causal-impact)
     - [Bayesian Structural Time Series](#bayesian-structural-time-series)
   - [Bayesian Credible Region (CR) vs Frequentist Confidence Interval (CI)](#bayesian-credible-region-cr-vs-frequentist-confidence-interval-ci)
-  - [Estimations for Time Series with Autocorrelation](#estimations-for-time-series-with-autocorrelation)
+  - [Variance Estimations for Time Series with Autocorrelation](#variance-estimations-for-time-series-with-autocorrelation)
+  - [RANSAC](#ransac)
 
 <!-- /MarkdownTOC -->
 
@@ -265,7 +266,6 @@ over a full cycle of $S$ seasons
 Also there is detailed discussion on seasonality in Brodersen's
 [paper](https://ai.google/research/pubs/pub41854), section 2.1.
 
-
 ## Bayesian Credible Region (CR) vs Frequentist Confidence Interval (CI)
 
 A great blog post by @jakevdp that had a more interesting comment section on
@@ -284,9 +284,28 @@ $X%$ chance that the true value of $\theta$ falls inside of the CI.
 But we are not interested in data of this kind, we are interested in what this
 piece of data tells us!
 
-
-## Estimations for Time Series with Autocorrelation
+## Variance Estimations for Time Series with Autocorrelation
 
 For a data set with $T$ observations, $\rho_l$ is the autocorrelation with $l$-lag, we have:
 
-$$ var(\hat{x}) = \big[ \frac{T + 2 \sum_{t=1}^T (T - l) \rho_l}{T} \big] \frac{1}{T} var(x_t) $$
+$$ var(\hat{x}) = \bigg[ \frac{T + 2 \sum_{t=1}^T (T - l) \rho_l}{T} \bigg] \frac{1}{T} var(x_t) $$
+
+## RANSAC
+
+`sklearn`'s doc has links to some [papers](https://scikit-learn.org/stable/modules/linear_model.html#ransac-regression).
+
+The user guide does a reasonable job explaining the algo.
+At high level, it's a **non-deterministic** algo that repeatedly samples a subset
+of the full data, fits a model and compare predicted values vs true lables,
+those samples with error below `residual_threshold` are marked **inliers**,
+those above are marked as **outliers**. The final model is the one that has
+the most **inlier** samples.
+
+An example comparing 3 robust linear methods [here](https://scikit-learn.org/stable/auto_examples/linear_model/plot_robust_fit.html#sphx-glr-auto-examples-linear-model-plot-robust-fit-py)
+is very good.
+
+Takeaway from this page is that RANSAC is good for strong outliers in the `y` direction.
+Other methods to consider are:
+
+- `TheilSenRegressor`: good for small outliers in both `X` and `y`, but beyond certain point it does worse than `OLS`.
+- `HuberRegressor`: Cannot compare scores directly with others. Does not ignore outliers, only lessens their effect.

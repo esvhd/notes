@@ -2,24 +2,24 @@
 
 <!-- MarkdownTOC levels='2,3' autolink="true" -->
 
-- [Notes on random stuff I read about...](#notes-on-random-stuff-i-read-about)
-  - [Heatmap Clustering](#heatmap-clustering)
-  - [Multi-Class Classification Scoring](#multi-class-classification-scoring)
+- [Heatmap Clustering](#heatmap-clustering)
+- [Multi-Class Classification Scoring](#multi-class-classification-scoring)
     - [Confusion Matrix - `sklearn` format](#confusion-matrix---sklearn-format)
     - [Macro Averaging](#macro-averaging)
     - [Micro Averaging](#micro-averaging)
     - [Comparison](#comparison)
-  - [Loss Functions](#loss-functions)
-    - [Mean Square Error (MSE), L2 Loss](#mean-square-error-mse-l2-loss)
-    - [Mean Absolute Error (MAE), L1 Loss](#mean-absolute-error-mae-l1-loss)
+- [Loss Functions](#loss-functions)
+    - [Mean Square Error \(MSE\), L2 Loss](#mean-square-error-mse-l2-loss)
+    - [Mean Absolute Error \(MAE\), L1 Loss](#mean-absolute-error-mae-l1-loss)
     - [Huber Loss](#huber-loss)
     - [Log-Cosh Loss](#log-cosh-loss)
     - [Quantile Loss](#quantile-loss)
-  - [Causal Impact](#causal-impact)
+- [Causal Impact](#causal-impact)
     - [Bayesian Structural Time Series](#bayesian-structural-time-series)
-  - [Bayesian Credible Region (CR) vs Frequentist Confidence Interval (CI)](#bayesian-credible-region-cr-vs-frequentist-confidence-interval-ci)
-  - [Variance Estimations for Time Series with Autocorrelation](#variance-estimations-for-time-series-with-autocorrelation)
-  - [RANSAC](#ransac)
+- [Bayesian Credible Region \(CR\) vs Frequentist Confidence Interval \(CI\)](#bayesian-credible-region-cr-vs-frequentist-confidence-interval-ci)
+- [Variance Estimations for Time Series with Autocorrelation](#variance-estimations-for-time-series-with-autocorrelation)
+- [RANSAC](#ransac)
+- [Statistics Done Wrong](#statistics-done-wrong)
 
 <!-- /MarkdownTOC -->
 
@@ -309,3 +309,53 @@ Other methods to consider are:
 
 - `TheilSenRegressor`: good for small outliers in both `X` and `y`, but beyond certain point it does worse than `OLS`.
 - `HuberRegressor`: Cannot compare scores directly with others. Does not ignore outliers, only lessens their effect.
+
+## Statistics Done Wrong
+
+Use power analysis when designing the experiment / research. Statistical power is affected by three things:
+
+- The size of the effect one is looking for
+- The sample size
+- Measurement error
+
+Use **assurance** instead of power when you need to measure an effect with precision.
+
+Use confidence intervals instead of just p-values.
+
+Adjust for confounding factors. 
+
+Watch out for **pseudoreplication**, such as taking separate measurements of the same subject over time (autocorrelation). Example, 1970 study claiming women's menstrual cycles can synchronise if they lived in close contact.
+
+Use methods such as **hierarchical models** and **clustered standard errors** to account for strong dependence between your measurements.
+
+p-value and base rate fallacy, i.e. detecting rare events. p-value tells us the probability of being surprised by data assuming no effect. It does **not** tell us the chance of the hypothesis is true.
+
+**Bonferroni** percedure implicitly assumes that **every** null hypothesis tested in multiple comparison is true. Use **Benjamini-Hochberg** procedure instead for multiple testing:
+
+1. Perform statistical tests and get p-value for each experiment. Make a list and sort it in ascending order.
+2. Choose a **false-discovery** rate and call it `q`. Call the number of statistical tests `m`.
+3. Find the largest `p` value such that $p \leq iq/m$ where $i$ is the p-value's order in the sorted list
+4. call that p-value and all smaller than it statistically significant.
+
+This procedure guarantees that out of all statistically significant results, **on average no more than $q$ percent will be false positives.**
+
+**Error bars** could represent three different things:
+
+1. 2x standard deviation of the measurement, 1x each side. Measures the spread of data.
+2. 95% confidence interval for the estimate
+3. 2x standard error for the estimate, 1x each side.
+
+2 & 3 both estimate how far the average of this sample might be from the **true** average.
+
+Non-overlapping standard errors do not suggest the difference between the two is **not** statistically significant. 
+
+Standard deviation do not give enough information to judge significance, whether they overlap or not.
+
+Don't arbitrarily split continuous variables into discrete groups unless you have good reasons.
+
+Don't choose the groups to maximise statistical significance.
+
+Also some bad examples using step-wise regression, which is essentially iteratively testing for parameter significance... Problems: multiple comparison, bound to produce false positives, no guarantees about the overall false positive rate, nor are they guaranteed to select the best features.
+
+Use random assignment to eliminate confounding variables / Simpson's paradox (some effect is declared by when controlling for some variable the effect can no longer be found, Berkerley female application acceptance rate example).
+

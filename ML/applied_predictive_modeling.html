@@ -481,7 +481,7 @@ f &lt;- as.formula(f)</code></pre>
 <p>Rule of thumb: ratio of highest and lowest values <strong>exceeds 20 indicates</strong> significant skewness.</p>
 <p>Or compute <strong>skewness statistics</strong> with <code>e1072::skewness()</code>.</p>
 <p>To resolve skewness in data, can apply either <strong>log, square root or inverse</strong>.</p>
-<p>Alternatively, use <strong>Box-Cox</strong> transformations <code>caret::BoxCoxTrans()</code>, which is more straightforward, less prone to numerical issues and just as effective as Box and Tidwell. Box-Cox is a family of transformations:</p>
+<p>Alternatively, use <strong>Box-Cox</strong> transformations <code>caret::BoxCoxTrans()</code>, which is more straightforward, less prone to numerical issues and just as effective as Box and Tidwell. It can only be applied to data that is <strong>strictly positive</strong>. Box-Cox is a family of transformations:</p>
 <p><span class="math display">\[
 \begin{aligned}
 x^* = \begin{cases}
@@ -494,6 +494,9 @@ x^* = \begin{cases}
 Ch1AreaTrans &lt;- BoxCoxTrans(segData$AreaCh1)
 # apply box-cox transform
 predict(Ch1AreaTrans, head(segData$AreaCh1))</code></pre>
+<p>The <strong>logit</strong> transformation could be used to sequeeze data into the values between 0 and 1.</p>
+<p><span class="math display">\[ logit(\pi) = \log \bigg( \frac{\pi}{1 - \pi} \bigg) \]</span></p>
+<p>Alterantive to logit is <strong>arcsine</strong> transform, which is primarily used on square root of proportions (e.g. <span class="math inline">\(y = arcsine(\sqrt{\pi})\)</span>)</p>
 </div>
 <div id="transformation-for-outliers-examples" class="section level2">
 <h2>Transformation for Outliers / Examples</h2>
@@ -511,14 +514,14 @@ predict(Ch1AreaTrans, head(segData$AreaCh1))</code></pre>
 <p>PCA is naturally drawn to summarizing predictors that have more variation, therefore <strong>centering and scaling</strong> is very important for PCA.</p>
 <p>When using scatter plot to show pairs of princial components, it is important for the charts to have the <strong>same scale</strong>. Otherwise the effects may be distorted by different scale graphically. Components / transformed values are stored in <code>precomp()</code> result as <code>x</code>.</p>
 <pre class="r"><code># pca for 2 predictors
-pr &lt;- prcomp(~ AvgIntenCh1 + EntropyIntenCh1, 
-             data = segTrainTrans, 
+pr &lt;- prcomp(~ AvgIntenCh1 + EntropyIntenCh1,
+             data = segTrainTrans,
              scale. = TRUE)
 
 # loadings
 pr$rotation
 # how to go from loadings to PC / score matrix
-x.rep &lt;- as.matrix(segTrainTrans[,c('AvgIntenCh1', 'EntropyIntenCh1')]) %*% 
+x.rep &lt;- as.matrix(segTrainTrans[,c('AvgIntenCh1', 'EntropyIntenCh1')]) %*%
   pr$rotation
 all.equal(pr$x, x.rep)
 
@@ -762,7 +765,7 @@ GermanCreditTest  &lt;- GermanCredit[-inTrain, ]
 # ipred::errorest()
 # Design::validate()
 
-svm.fit &lt;- caret::train(Class ~ ., 
+svm.fit &lt;- caret::train(Class ~ .,
                         data=GermanCreditTrain,
                         method='svmRadial',
                         preProc=c('center', 'scale'),
@@ -770,8 +773,8 @@ svm.fit &lt;- caret::train(Class ~ .,
                         tuneLength=10,
                         # by default bootstrap is used to evaluate performance
                         # use trainControl() to use k-fold CV.
-                        trControl=trainControl(method='repeatedcv', 
-                                               repeats = 5, 
+                        trControl=trainControl(method='repeatedcv',
+                                               repeats = 5,
                                                classProbs = TRUE))
 
 plot(svm.fit, scales=list(x=list(log=2)))
@@ -779,11 +782,11 @@ plot(svm.fit, scales=list(x=list(log=2)))
 glmProfile &lt;- train(Class ~ .,
                     data = GermanCreditTrain,
                     method = &quot;glm&quot;,
-                    trControl = trainControl(method = &quot;repeatedcv&quot;, 
+                    trControl = trainControl(method = &quot;repeatedcv&quot;,
                                              repeats = 5))
 
 
-# To compare models 
+# To compare models
 resamp &lt;- caret::resamples(list(SVM = svm.fit, Logistic = glmProfile))
 summary(resamp)
 
@@ -904,7 +907,7 @@ lmFit &lt;- rlm(Solubility ~ ., data=trainingData)
 # use 10-fold CV
 ctrl &lt;- trainControl(method = 'cv', number=10)
 set.seed(100)
-lmFit1 &lt;- train(x = solTrainXtrans, y = solTrainY, method='lm', 
+lmFit1 &lt;- train(x = solTrainXtrans, y = solTrainY, method='lm',
                 trControl = ctrl)
 
 # find highly correlated predictors and remove
@@ -935,9 +938,9 @@ scoreplot(plsFit)
 plot(plsFit)
 
 plsTune &lt;- train(x = solTrainXtrans, y = solTrainY,
-                 method='pls', 
+                 method='pls',
                  tuneLength = 20,
-                 trControl = trainControl(method = 'repeatedcv', 
+                 trControl = trainControl(method = 'repeatedcv',
                                           number = 10),
                  preProcess = c('center', 'scale'))</code></pre>
 <pre class="r"><code>library(elasticnet)
@@ -1002,19 +1005,19 @@ solTrainXtrans$solTrainY &lt;- solTrainY
 # supported kernels: rbfdot, polydot, vanilladot, etc.
 svmFit &lt;- ksvm(solTrainY ~ ., data = solTrainXtrans,
                # x = solTrainXtrans, y = solTrainY,
-               kernel = 'rbfdot', 
+               kernel = 'rbfdot',
                kpar = 'automatic',
                C = 1, epsilon = .1)
 
 # use train() to tune model. method parameter can take:
-# svmRadial, 
-# svmLinear, 
-# svmPoly 
+# svmRadial,
+# svmLinear,
+# svmPoly
 # to fit different kernels
 svmRTuned &lt;- train(solTrainY ~ ., data = solTrainXtrans,
                    method = 'svmRadial',
                    preProc = c('center', 'scale'),
-                   tuneLength = 14, 
+                   tuneLength = 14,
                    trControl = trainControl(method = 'cv'))
 
 # to choose the selected model:
@@ -1426,14 +1429,14 @@ nbCal &lt;- NaiveBayes(class ~ qda, data = trainProbs, usekernel = TRUE)
 ### We use relevel() here because glm() models the probability of the
 ### second factor level.
 # relevel() reorders so &quot;Class1&quot; becomes the second level for glm()
-lrCal &lt;- glm(relevel(class, &quot;Class2&quot;) ~ qda, data = trainProbs, 
+lrCal &lt;- glm(relevel(class, &quot;Class2&quot;) ~ qda, data = trainProbs,
              family = binomial)
 
 ### Now re-predict the test set using the modified class probability
 ### estimates
 # drop=FALSE here ensures that shape is not changed
 testing$qda2 &lt;- predict(nbCal, testing[, &quot;qda&quot;, drop = FALSE])$posterior[,1]
-testing$qda3 &lt;- predict(lrCal, testing[, &quot;qda&quot;, drop = FALSE], 
+testing$qda3 &lt;- predict(lrCal, testing[, &quot;qda&quot;, drop = FALSE],
                         type = &quot;response&quot;)
 
 
@@ -1444,20 +1447,20 @@ simulatedProbs$RandomForestClass &lt;-  predict(rfFit, testing)
 
 calData2 &lt;- calibration(class ~ qda + qda2 + qda3, data = testing)
 calData2$data$calibModelVar &lt;- as.character(calData2$data$calibModelVar)
-calData2$data$calibModelVar &lt;- ifelse(calData2$data$calibModelVar == &quot;qda&quot;, 
+calData2$data$calibModelVar &lt;- ifelse(calData2$data$calibModelVar == &quot;qda&quot;,
                                       &quot;QDA&quot;,
                                       calData2$data$calibModelVar)
-calData2$data$calibModelVar &lt;- ifelse(calData2$data$calibModelVar == &quot;qda2&quot;, 
+calData2$data$calibModelVar &lt;- ifelse(calData2$data$calibModelVar == &quot;qda2&quot;,
                                       &quot;Bayesian Calibration&quot;,
                                       calData2$data$calibModelVar)
 
-calData2$data$calibModelVar &lt;- ifelse(calData2$data$calibModelVar == &quot;qda3&quot;, 
+calData2$data$calibModelVar &lt;- ifelse(calData2$data$calibModelVar == &quot;qda3&quot;,
                                       &quot;Sigmoidal Calibration&quot;,
                                       calData2$data$calibModelVar)
 
 calData2$data$calibModelVar &lt;- factor(calData2$data$calibModelVar,
-                                      levels = c(&quot;QDA&quot;, 
-                                                 &quot;Bayesian Calibration&quot;, 
+                                      levels = c(&quot;QDA&quot;,
+                                                 &quot;Bayesian Calibration&quot;,
                                                  &quot;Sigmoidal Calibration&quot;))
 
 xyplot(calData2, auto.key = list(columns = 1))</code></pre>
@@ -1477,8 +1480,8 @@ xyplot(calData2, auto.key = list(columns = 1))</code></pre>
 <pre class="r"><code>library(caret)
 data(GermanCredit)
 
-## First, remove near-zero variance predictors then get rid of a few predictors 
-## that duplicate values. For example, there are two possible values for the 
+## First, remove near-zero variance predictors then get rid of a few predictors
+## that duplicate values. For example, there are two possible values for the
 ## housing variable: &quot;Rent&quot;, &quot;Own&quot; and &quot;ForFree&quot;. So that we don't have linear
 ## dependencies, we get rid of one of the levels (e.g. &quot;ForFree&quot;)
 
@@ -1501,7 +1504,7 @@ set.seed(1056)
 logisticReg &lt;- train(Class ~ .,
                      data = GermanCreditTrain,
                      method = &quot;glm&quot;,
-                     trControl = trainControl(method = &quot;repeatedcv&quot;, 
+                     trControl = trainControl(method = &quot;repeatedcv&quot;,
                                               repeats = 5))
 logisticReg
 
@@ -1509,8 +1512,8 @@ logisticReg
 creditResults &lt;- data.frame(obs = GermanCreditTest$Class)
 creditResults$prob &lt;- predict(logisticReg, GermanCreditTest, type = &quot;prob&quot;)[, &quot;Bad&quot;]
 creditResults$pred &lt;- predict(logisticReg, GermanCreditTest)
-creditResults$Label &lt;- ifelse(creditResults$obs == &quot;Bad&quot;, 
-                              &quot;True Outcome: Bad Credit&quot;, 
+creditResults$Label &lt;- ifelse(creditResults$obs == &quot;Bad&quot;,
+                              &quot;True Outcome: Bad Credit&quot;,
                               &quot;True Outcome: Good Credit&quot;)
 
 ### Plot the probability of bad credit
@@ -1526,7 +1529,7 @@ creditCalib &lt;- calibration(obs ~ prob, data = creditResults)
 xyplot(creditCalib)
 
 ### Create the confusion matrix from the test set.
-confusionMatrix(data = creditResults$pred, 
+confusionMatrix(data = creditResults$pred,
                 reference = creditResults$obs)</code></pre>
 </div>
 <div id="equivocal-zones" class="section level3">
@@ -1613,35 +1616,35 @@ mccSummary &lt;- function(data, lev = NULL, model = NULL) {
   if(is.null(lev))
     lev &lt;- levels(data$obs)
   num.classes = length(lev)
-  
+
   # convert to one hot format
   oh &lt;- dummyVars(~ obs, data = data)
   obs.oh &lt;- predict(oh, newdata = data)
-  
+
   # get class probabilities, make sure they are in the same column order
   # as target labels, mcc cannot take data.frame so need matrix as input
   pred.probs &lt;- as.matrix(data[, lev])
-  
-  out &lt;- ModelMetrics::mcc(actual = obs.oh, 
-                           predicted =pred.probs, 
+
+  out &lt;- ModelMetrics::mcc(actual = obs.oh,
+                           predicted =pred.probs,
                            cutoff = 1 / num.classes)
   auc &lt;- ModelMetrics::mauc(actual = obs.oh, predicted = pred.probs)
-  
+
   return(c(MCC=out, AUC=auc[['mauc']], num.classes=num.classes))
 }
 
-ctrl &lt;- trainControl(method='repeatedcv', 
-                     number = 10, 
-                     repeats = 5, 
-                     savePredictions = T, 
+ctrl &lt;- trainControl(method='repeatedcv',
+                     number = 10,
+                     repeats = 5,
+                     savePredictions = T,
                      classProbs = T,
                      summaryFunction = mccSummary)
 
 rf &lt;- train(x = iris[, 1:4], y=iris[, 5], method = 'rf',
-            metric = 'MCC', 
+            metric = 'MCC',
             tuneGrid = data.frame(mtry=c(2, 3, 4)),
             trControl = ctrl)
-rf 
+rf
 s &lt;- mccSummary(rf$pred)
 s
 
@@ -1696,7 +1699,7 @@ install.packages('MLmetrics')
 
 ctrl &lt;- trainControl(method = 'repeatedcv',
                      number = 10,
-                     repeats = 5, 
+                     repeats = 5,
                      savePredictions = T,
                      classProbs = T,
                      summaryFunction = multiClassSummary)
@@ -1835,7 +1838,7 @@ r &lt;- TP / (TP + FN)</code></pre>
 <pre class="r"><code>### Lift charts
 # creditResults is a data.frame
 # creditResults$obs are the actual classes
-# creditResults$prob are the predicted class probabilities 
+# creditResults$prob are the predicted class probabilities
 creditLift &lt;- caret::lift(obs ~ prob, data = creditResults)
 xyplot(creditLift)</code></pre>
 </div>
@@ -1867,12 +1870,12 @@ holdout2008 &lt;- year2008Data[test2008,]</code></pre>
 <p>Where <span class="math inline">\(p\)</span> is the number of predictors.</p>
 <p>Logistic regression produces <strong>linear</strong> boundaries, unless the predictors used in the model are non-linear versions of the data (e.g. squared features).</p>
 <p><code>rms</code> package has many relevant functions. See Harrell 2001 for details.</p>
-<pre class="r"><code>modelFit &lt;- glm(Class ~ Day, 
+<pre class="r"><code>modelFit &lt;- glm(Class ~ Day,
                 data=training[pre2008, ],
                 # binominal for logistic regression
                 family = binomial)
 
-# glm() treats the second factor level as the event of interest, 
+# glm() treats the second factor level as the event of interest,
 # so to get class 1 probabilities, use 1 - results
 successProb &lt;- 1 - predict(modelFit, type='response')
 
@@ -1883,10 +1886,10 @@ library(rms)
 rcsFit &lt;- lrm(Class ~ rcs(Day), data=training[pre2008, ])
 rcsFit
 
-dayProfile &lt;- rms::Predict(rcsFit, 
+dayProfile &lt;- rms::Predict(rcsFit,
                            # predict first 365 samples
-                           Day=0:365, 
-                           # flip the prediction to get the model for 
+                           Day=0:365,
+                           # flip the prediction to get the model for
                            # successful grants
                            fun=function(x) -x)
 
@@ -1898,13 +1901,13 @@ ctrl &lt;- trainControl(method = &quot;cv&quot;,
                      savePredictions = T)
 
 lrFull &lt;- train(training[, fullSet], y=training$Class,
-                method='glm', 
+                method='glm',
                 metric='ROC',
                 trControl = ctrl)
 
 # fiting with reduced set has higher AUC
 lrReduced &lt;- train(training[, reducedSet], y=training$Class,
-                method='glm', 
+                method='glm',
                 metric='ROC',
                 trControl = ctrl)
 lrReduced
@@ -1956,7 +1959,7 @@ lrImp &lt;- varImp(lrReduced, scale = F)
 <p>Authors recommends using <strong>PLSDA</strong> if there could be non-linear relationships but don’t know which predictors are involved.</p>
 <pre class="r"><code># fit LDA model
 set.seed(476)
-ldaFit &lt;- train(x = training[,reducedSet], 
+ldaFit &lt;- train(x = training[,reducedSet],
                 y = training$Class,
                 method = &quot;lda&quot;,
                 preProc = c(&quot;center&quot;,&quot;scale&quot;),
@@ -1986,7 +1989,7 @@ plot(ldaRoc, add=T, type='s')</code></pre>
 <p>Final output from PLS is converted to class probabilities with softmax. Alternative approach is to use Bayes’ rule to convert the original model output into class probabilities. This tends to yield more meaningful class probabilities, <strong>advantage</strong> is that prior probabilities can be specified.</p>
 <p>Feature importance values can be computed.</p>
 <pre class="r"><code>set.seed(476)
-plsFit &lt;- train(x = training[,fullSet], 
+plsFit &lt;- train(x = training[,fullSet],
                 y = training$Class,
                 method = &quot;pls&quot;,
                 tuneGrid = expand.grid(ncomp = 1:10),
@@ -2013,7 +2016,7 @@ bestPlsROC &lt;- plsFit$results[best(plsFit$results, &quot;ROC&quot;, maximize =
 plsCM &lt;- confusionMatrix(plsFit, norm = 'none')
 
 # now fit reduced set
-plsFit2 &lt;- train(x = training[,reducedSet], 
+plsFit2 &lt;- train(x = training[,reducedSet],
                  y = training$Class,
                  method = &quot;pls&quot;,
                  tuneGrid = expand.grid(ncomp = 1:10),
@@ -2071,7 +2074,7 @@ plot(plsImpGrant, top=20, scales = list(y = list(cex = .95)))</code></pre>
 glmnGrid &lt;- expand.grid(alpha = c(0,  .1,  .2, .4, .6, .8, 1),
                         lambda = seq(.01, .2, length = 40))
 set.seed(476)
-glmnFit &lt;- train(x = training[,fullSet], 
+glmnFit &lt;- train(x = training[,fullSet],
                  y = training$Class,
                  method = &quot;glmnet&quot;,
                  tuneGrid = glmnGrid,
@@ -2124,7 +2127,7 @@ plot(glmnetRoc, type = &quot;s&quot;, add = TRUE, legacy.axes = TRUE)</code></pr
 ## main function: sparseLDA::sda, tuning parameter lambda
 
 set.seed(476)
-spLDAFit &lt;- train(x = training[,fullSet], 
+spLDAFit &lt;- train(x = training[,fullSet],
                   y = training$Class,
                   &quot;sparseLDA&quot;,
                   tuneGrid = expand.grid(lambda = c(.1),
@@ -2147,11 +2150,11 @@ update(plot(spLDAFit, scales = list(x = list(log = 10))),
        ylab = &quot;ROC AUC (2008 Hold-Out Data)&quot;)
 
 plot(plsRoc2, type = &quot;s&quot;, col = rgb(.2, .2, .2, .2), legacy.axes = TRUE)
-plot(glmnetRoc, type = &quot;s&quot;, add = TRUE, col = rgb(.2, .2, .2, .2), 
+plot(glmnetRoc, type = &quot;s&quot;, add = TRUE, col = rgb(.2, .2, .2, .2),
      legacy.axes = TRUE)
-plot(ldaRoc, type = &quot;s&quot;, add = TRUE, col = rgb(.2, .2, .2, .2), 
+plot(ldaRoc, type = &quot;s&quot;, add = TRUE, col = rgb(.2, .2, .2, .2),
      legacy.axes = TRUE)
-plot(lrRoc, type = &quot;s&quot;, col = rgb(.2, .2, .2, .2), add = TRUE, 
+plot(lrRoc, type = &quot;s&quot;, col = rgb(.2, .2, .2, .2), add = TRUE,
      legacy.axes = TRUE)
 plot(spLDARoc, type = &quot;s&quot;, add = TRUE, legacy.axes = TRUE)</code></pre>
 </div>
@@ -2230,15 +2233,15 @@ ctrl &lt;- trainControl(method = &quot;LGOCV&quot;,
                      index = list(TrainSet = pre2008),
                      savePredictions = TRUE)
 
-# paper: 
+# paper:
 # Appearance-based object recognition using SVMs: which kernel should I use?
 # 2002
 sigmaRangeReduced &lt;- sigest(as.matrix(training[,reducedSet]))
 
 svmRGridReduced &lt;- expand.grid(sigma = sigmaRangeReduced[1],
                                C = 2^(seq(-4, 4)))
-                               
-svmRFitReduced &lt;- train(x = training[,reducedSet], 
+
+svmRFitReduced &lt;- train(x = training[,reducedSet],
                         y = training$Class,
                         method = &quot;svmRadial&quot;,
                         metric = &quot;ROC&quot;,
@@ -2293,9 +2296,9 @@ for(i in nbPredictors)
 {
   if(length(unique(training[,i])) &lt;= 15)
   {
-    nbTraining[, i] &lt;- factor(nbTraining[,i], 
+    nbTraining[, i] &lt;- factor(nbTraining[,i],
                               levels = paste(sort(unique(training[,i]))))
-    nbTesting[, i] &lt;- factor(nbTesting[,i], 
+    nbTesting[, i] &lt;- factor(nbTesting[,i],
                              levels = paste(sort(unique(training[,i]))))
   }
 }
@@ -2350,7 +2353,7 @@ ctrl &lt;- trainControl(method = &quot;LGOCV&quot;,
 
 set.seed(476)
 # for J48 and C5.0 tree use method='J48' or 'C5.0Tree'
-rpartFit &lt;- train(x = training[,fullSet], 
+rpartFit &lt;- train(x = training[,fullSet],
                   y = training$Class,
                   method = &quot;rpart&quot;,
                   tuneLength = 30,
@@ -2403,7 +2406,7 @@ G(p) &amp;= p_1 (1 - p_1) + p_2 (1 - p_2) \\
 <p><span class="math display">\[
 \begin{aligned}
 Gini(\text{after split}) &amp;= 2 \bigg( \frac{n_{+1}}{n} \times \frac{n_{11}}{n_{+1}}\frac{n_{12}}{n_{+1}} + \frac{n_{+2}}{n} \times \frac{n_{21}}{n_{+2}}\frac{n_{22}}{n_{+2}} \bigg) \\
-&amp;= 2 \bigg( \frac{n_{11}}{n}\frac{n_{12}}{n_{+1}} +  \frac{n_{21}}{n}\frac{n_{22}}{n_{+2}} \bigg) 
+&amp;= 2 \bigg( \frac{n_{11}}{n}\frac{n_{12}}{n_{+1}} +  \frac{n_{21}}{n}\frac{n_{22}}{n_{+2}} \bigg)
 \end{aligned}
 \]</span> Where:</p>
 <ul>
@@ -2445,7 +2448,7 @@ registerDoMC(10)
 
 # bagging trees
 set.seed(476)
-treebagFit &lt;- train(x = training[,fullSet], 
+treebagFit &lt;- train(x = training[,fullSet],
                     y = training$Class,
                     method = &quot;treebag&quot;,
                     nbagg = 50,
@@ -2463,7 +2466,7 @@ treebagRoc &lt;- roc(response = treebagFit$pred$obs,
 treebagRoc
 
 set.seed(476)
-treebagFactorFit &lt;- train(x = training[,factorPredictors], 
+treebagFactorFit &lt;- train(x = training[,factorPredictors],
                           y = training$Class,
                           method = &quot;treebag&quot;,
                           nbagg = 50,
@@ -2481,14 +2484,14 @@ treebagFactorRoc &lt;- roc(response = treebagFactorFit$pred$obs,
 treebagFactorRoc
 
 plot(rpartRoc, type = &quot;s&quot;, col = rgb(.2, .2, .2, .2), legacy.axes = TRUE)
-plot(j48FactorRoc, type = &quot;s&quot;, add = TRUE, col = rgb(.2, .2, .2, .2), 
+plot(j48FactorRoc, type = &quot;s&quot;, add = TRUE, col = rgb(.2, .2, .2, .2),
      legacy.axes = TRUE)
-plot(treebagRoc, type = &quot;s&quot;, add = TRUE, print.thres = c(.5), 
-     print.thres.pch = 3, legacy.axes = TRUE, print.thres.pattern = &quot;&quot;, 
+plot(treebagRoc, type = &quot;s&quot;, add = TRUE, print.thres = c(.5),
+     print.thres.pch = 3, legacy.axes = TRUE, print.thres.pattern = &quot;&quot;,
      print.thres.cex = 1.2,
      col = &quot;red&quot;, print.thres.col = &quot;red&quot;)
-plot(treebagFactorRoc, type = &quot;s&quot;, add = TRUE, print.thres = c(.5), 
-     print.thres.pch = 16, print.thres.pattern = &quot;&quot;, legacy.axes = TRUE, 
+plot(treebagFactorRoc, type = &quot;s&quot;, add = TRUE, print.thres = c(.5),
+     print.thres.pch = 16, print.thres.pattern = &quot;&quot;, legacy.axes = TRUE,
      print.thres.cex = 1.2)
 legend(.75, .2,
        c(&quot;Grouped Categories&quot;, &quot;Independent Categories&quot;),
@@ -2521,7 +2524,7 @@ legend(.75, .2,
 
 mtryValues &lt;- c(5, 10, 20, 32, 50, 100, 250, 500, 1000)
 set.seed(476)
-rfFit &lt;- train(x = training[,fullSet], 
+rfFit &lt;- train(x = training[,fullSet],
                y = training$Class,
                method = &quot;rf&quot;,
                ntree = 500,
@@ -2544,7 +2547,7 @@ gc()
 
 ## The randomForest package cannot handle factors with more than 32
 ## levels, so we make a new set of predictors where the sponsor code
-## factor is entered as dummy variables instead of a single factor. 
+## factor is entered as dummy variables instead of a single factor.
 
 sponsorVars &lt;- grep(&quot;Sponsor&quot;, names(training), value = TRUE)
 sponsorVars &lt;- sponsorVars[sponsorVars != &quot;SponsorCode&quot;]
@@ -2554,7 +2557,7 @@ rfPredictors &lt;- rfPredictors[rfPredictors != &quot;SponsorCode&quot;]
 rfPredictors &lt;- c(rfPredictors, sponsorVars)
 
 set.seed(476)
-rfFactorFit &lt;- train(x = training[,rfPredictors], 
+rfFactorFit &lt;- train(x = training[,rfPredictors],
                      y = training$Class,
                      method = &quot;rf&quot;,
                      ntree = 1500,
@@ -2575,14 +2578,14 @@ rfFactorRoc
 
 plot(treebagRoc, type = &quot;s&quot;, col = rgb(.2, .2, .2, .2), legacy.axes = TRUE)
 plot(rpartRoc, type = &quot;s&quot;, add = TRUE, col = rgb(.2, .2, .2, .2), legacy.axes = TRUE)
-plot(j48FactorRoc, type = &quot;s&quot;, add = TRUE, col = rgb(.2, .2, .2, .2), 
+plot(j48FactorRoc, type = &quot;s&quot;, add = TRUE, col = rgb(.2, .2, .2, .2),
      legacy.axes = TRUE)
-plot(rfRoc, type = &quot;s&quot;, add = TRUE, print.thres = c(.5), 
-     print.thres.pch = 3, legacy.axes = TRUE, print.thres.pattern = &quot;&quot;, 
+plot(rfRoc, type = &quot;s&quot;, add = TRUE, print.thres = c(.5),
+     print.thres.pch = 3, legacy.axes = TRUE, print.thres.pattern = &quot;&quot;,
      print.thres.cex = 1.2,
      col = &quot;red&quot;, print.thres.col = &quot;red&quot;)
-plot(rfFactorRoc, type = &quot;s&quot;, add = TRUE, print.thres = c(.5), 
-     print.thres.pch = 16, print.thres.pattern = &quot;&quot;, legacy.axes = TRUE, 
+plot(rfFactorRoc, type = &quot;s&quot;, add = TRUE, print.thres = c(.5),
+     print.thres.pch = 16, print.thres.pattern = &quot;&quot;, legacy.axes = TRUE,
      print.thres.cex = 1.2)
 legend(.75, .2,
        c(&quot;Grouped Categories&quot;, &quot;Independent Categories&quot;),
@@ -2618,7 +2621,7 @@ legend(.75, .2,
                        shrinkage = c(.01, .1))
 
 set.seed(476)
-gbmFit &lt;- train(x = training[,fullSet], 
+gbmFit &lt;- train(x = training[,fullSet],
                 y = training$Class,
                 method = &quot;gbm&quot;,
                 tuneGrid = gbmGrid,
@@ -2636,7 +2639,7 @@ gbmRoc &lt;- roc(response = gbmFit$pred$obs,
               levels = rev(levels(gbmFit$pred$obs)))
 
 set.seed(476)
-gbmFactorFit &lt;- train(x = training[,factorPredictors], 
+gbmFactorFit &lt;- train(x = training[,factorPredictors],
                       y = training$Class,
                       method = &quot;gbm&quot;,
                       tuneGrid = gbmGrid,
@@ -2646,7 +2649,7 @@ gbmFactorFit &lt;- train(x = training[,factorPredictors],
 gbmFactorFit
 
 # convert class probabilities to class prediction factor variables
-gbmPred &lt;- predict(gbmFactorFit, 
+gbmPred &lt;- predict(gbmFactorFit,
                    newdata = head(training[-pre2008,]),
                    type = 'response',
                    n.trees = 1400)
@@ -2664,25 +2667,25 @@ gbmFactorRoc &lt;- roc(response = gbmFactorFit$pred$obs,
 
 gbmROCRange &lt;- extendrange(cbind(gbmFactorFit$results$ROC,gbmFit$results$ROC))
 
-plot(gbmFactorFit, ylim = gbmROCRange, 
+plot(gbmFactorFit, ylim = gbmROCRange,
      auto.key = list(columns = 4, lines = TRUE))
 
 
-plot(gbmFit, ylim = gbmROCRange, 
+plot(gbmFit, ylim = gbmROCRange,
      auto.key = list(columns = 4, lines = TRUE))
 
 
 plot(treebagRoc, type = &quot;s&quot;, col = rgb(.2, .2, .2, .2), legacy.axes = TRUE)
-plot(rpartRoc, type = &quot;s&quot;, add = TRUE, col = rgb(.2, .2, .2, .2), 
+plot(rpartRoc, type = &quot;s&quot;, add = TRUE, col = rgb(.2, .2, .2, .2),
      legacy.axes = TRUE)
-plot(j48FactorRoc, type = &quot;s&quot;, add = TRUE, col = rgb(.2, .2, .2, .2), 
+plot(j48FactorRoc, type = &quot;s&quot;, add = TRUE, col = rgb(.2, .2, .2, .2),
      legacy.axes = TRUE)
-plot(rfFactorRoc, type = &quot;s&quot;, add = TRUE, col = rgb(.2, .2, .2, .2), 
+plot(rfFactorRoc, type = &quot;s&quot;, add = TRUE, col = rgb(.2, .2, .2, .2),
      legacy.axes = TRUE)
-plot(gbmRoc, type = &quot;s&quot;, print.thres = c(.5), print.thres.pch = 3, 
+plot(gbmRoc, type = &quot;s&quot;, print.thres = c(.5), print.thres.pch = 3,
      print.thres.pattern = &quot;&quot;, print.thres.cex = 1.2,
      add = TRUE, col = &quot;red&quot;, print.thres.col = &quot;red&quot;, legacy.axes = TRUE)
-plot(gbmFactorRoc, type = &quot;s&quot;, print.thres = c(.5), print.thres.pch = 16, 
+plot(gbmFactorRoc, type = &quot;s&quot;, print.thres = c(.5), print.thres.pch = 16,
      legacy.axes = TRUE, print.thres.pattern = &quot;&quot;, print.thres.cex = 1.2,
      add = TRUE)
 legend(.75, .2,
@@ -2722,7 +2725,7 @@ c50FactorRoc &lt;- roc(response = c50FactorFit$pred$obs,
 
 ###################################################################
 ### In the classification tree chapter, there is a different set
-### of predictors that use factor encodings of some of the 
+### of predictors that use factor encodings of some of the
 ### predictors
 
 factorPredictors &lt;- names(training)[names(training) != &quot;Class&quot;]
@@ -2877,8 +2880,8 @@ C5CostFit &lt;- train(training[, predictors],
 
 # or, use caret:filterVarImp
 library(caret)
-smoother &lt;- filterVarImp(x = SolContPred[, -ncol(SolContPred)], 
-                         y = solTrainY, 
+smoother &lt;- filterVarImp(x = SolContPred[, -ncol(SolContPred)],
+                         y = solTrainY,
                          nonpara = TRUE)
 smoother$Predictor &lt;- rownames(smoother)
 names(smoother)[1] &lt;- &quot;Smoother&quot;

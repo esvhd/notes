@@ -10,7 +10,7 @@ Some history here. Highlights:
 
 ## TODO
 
-1. study auction effect 
+1. study auction effect
 2. watch out for PMI and PPI release, real effect?
 3. non-parametric estimates of bond RV
 4. Carry and roll model
@@ -20,7 +20,7 @@ Some history here. Highlights:
 
 7 day repo vs front end CGB, policy bank. Stronger relationship with policy banks
 
-Muni converstion 23% of 2017 GDP, CNY1.5trn.
+Muni conversion 23% of 2017 GDP, CNY1.5trn.
 
 ### Credit Bonds
 
@@ -37,7 +37,7 @@ All credit bonds count as ~10% of corporate financing, vs 30% in the US.
 
 Policy bank bonds.
 
-### Green Bonds 
+### Green Bonds
 
 2017 issuance is 22% of world total.
 
@@ -50,3 +50,35 @@ Barclays index AUM USD2.5trn / WGBI USD 2-2.5trn / JPM EM $2.5trn
 ### PBOC Policy Rates
 
 OMO / 7-day repo / benchmark lending rate
+
+# Corporate Bond Market
+
+Fitch China corporate bond blue book
+
+Some stats for comparison.
+
+| Item | 2014 | 2018 |
+|------|------|------|
+| Corporate bond market | CNY 11.6trn | CNY 19.0 trn |
+| Exchange bond market | CNY 2.6trn | CNY 9trn |
+| Onshore default rate by issuer count | 0.17% | 1.03% |
+| LGFV outstanding as % of corporate bonds | - | 37.5% |
+| SOE (including LGFV) issuance amt | ~89% | 84.3% |
+| corp bond as % of TSF | 0.8% | 9.5% |
+| Exchange traded bonds as % of corp bonds | 6.5% | 29.4% |
+| Interbank corp bond market | CNY 10.8trn | CNY 13.2trn |
+
+Trading volume defined as annual trading amount / average amt outstanding,
+data as of end of 2018.
+
+| Trading Volume | Oshore corp | Exchange traded | Enterprise bonds | CP | MTN |
+|----------------|-------------|-----------------|------------------|----|-----|
+|       -        | 1.0x        | 1.5x | 5.7x | 40.8x | 14.1x |
+
+## Bond Docs
+
+Cross Default:
+
+- around half of existing US corporate bonds
+- Greater than 40% of China corp offshore bonds
+- 6.4% of onshore outstanding corp bonds as of 2018.

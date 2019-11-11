@@ -69,6 +69,7 @@ Some stats for comparison.
 | corp bond as % of TSF | 0.8% | 9.5% |
 | Interbank corp bond market | CNY 10.8trn | CNY 13.2trn |
 | Bond market as % of domestic bank loan base | - | 62.9% (vs 34% in 2004) |
+| Cross Default | - | 6.4% |
 
 Defaults between 2014 and 2018
 
@@ -91,3 +92,4 @@ Cross Default:
 - around half of existing US corporate bonds
 - Greater than 40% of China corp offshore bonds
 - 6.4% of onshore outstanding corp bonds as of 2018.
+- Grace period only available for bonds with cross-default language, typically max 10-15 days.

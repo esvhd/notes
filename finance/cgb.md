@@ -71,6 +71,7 @@ Some stats for comparison.
 | Bond market as % of domestic bank loan base | - | 62.9% (vs 34% in 2004) |
 
 Defaults between 2014 and 2018
+
 | Outcome | SOE | POE |
 |---------|-----|-----|
 | Finally paid in FULL | 44% | 23% |

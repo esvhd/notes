@@ -72,6 +72,7 @@ Some stats for comparison.
 
 Defaults between 2014 and 2018
 | Outcome | SOE | POE |
+|---------|-----|-----|
 | Finally paid in FULL | 44% | 23% |
 | Failed to repay | 58% | 77% |
 

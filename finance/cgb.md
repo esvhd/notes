@@ -60,6 +60,8 @@ Some stats for comparison.
 | Item | 2014 | 2018 |
 |------|------|------|
 | Corporate bond market | CNY 11.6trn | CNY 19.0 trn |
+| Interbank bonds market | - | CNY 75.3trn |
+| Interbank corp bond market | CNY 10.8trn | CNY 13.2trn |
 | Exchange bond market | CNY 2.6trn | CNY 9trn |
 | Exchange traded corp bonds | CNY 0.9trn | CNY 5.9trn |
 | Exchange traded bonds as % of corp bonds | 6.5% | 29.4% |
@@ -67,7 +69,6 @@ Some stats for comparison.
 | LGFV outstanding as % of corporate bonds | - | 37.5% |
 | SOE (including LGFV) issuance amt | ~89% | 84.3% |
 | corp bond as % of TSF | 0.8% | 9.5% |
-| Interbank corp bond market | CNY 10.8trn | CNY 13.2trn |
 | Bond market as % of domestic bank loan base | - | 62.9% (vs 34% in 2004) |
 | Cross Default | - | 6.4% |
 

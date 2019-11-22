@@ -55,7 +55,6 @@ Then, formal statistical inference can be done with the evaluation metrics from 
 
 **Tip**: follow up trends discovered in exploratory data analysis with "stress testing" / resampling to get an objective sense of whether the trend is likely to be real.
 
-
 ## Engineering Numeric Features
 
 ### Kernel PCA
@@ -77,3 +76,24 @@ PCA components are orthogonal / uncorrelated, they may not be **statistically in
 ICA creates new components that are linear combinations of the original
 variables, but in a way that the components are as **statistically independent**
 from one anther as possible. There is no unique ordering of the components.
+
+## Missing Data
+
+For smaller data sets, use:
+
+- Heatmap
+- Co-occurance plots
+
+For larger datasets, turn data matrix into indicator matrix (missing yes / no),
+then run PCA and plot the first and second scores (components).
+
+## Stats
+
+From probability theory, we know that:
+
+$$ Var[X-Y] = Var[X] + Var[Y] - 2 \times Cov[X, Y] $$
+
+Wickham and Grolemund (2016): "If you think of variation as a phenomenon that creates uncertainty,
+**covariance** is a phenomenon that reduces it."
+
+

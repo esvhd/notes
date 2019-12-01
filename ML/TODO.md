@@ -33,9 +33,23 @@ still need to get the code working. Filed issue on github.
 
 Need to write some code to label financial data.
 
+## RL
+
+https://arxiv.org/pdf/1911.08265.pdf
+
+[Alex Irpan's AlphaStar blog](https://www.alexirpan.com/2019/11/17/alphastar-update.html)
+
 ## ML TODO:
 
-PR Analysis done right, desktop
+Causal Inference [blog](https://fabiandablander.com/r/Causal-Inference.html)
+
+How to fool LIME and SHAP [blog](https://deeplearn.org/arxiv/101598/how-can-we-fool-lime-and-shap?-adversarial-attacks-on-post-hoc-explanation-methods)
+
+[UMAP blog](https://pair-code.github.io/understanding-umap/s)
+
+PR Analysis done right, desktop - Done.
+
+[Reformer](https://openreview.net/forum?id=rkgNKkHtvB) Some performance improvements over transformer
 
 Econometrics [here](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3365282)
 
@@ -130,8 +144,13 @@ Hinton showed that ReLU is approximately a stack of logistic units.
 
 Summarize Chan's book
 
+## Libraries
 
-### Other TODO
+- `ADTK` for time series anormaly detection.
+- `dtreeviz` for decision tree visuals
+
+
+## Other TODO
 
 Move rebal_freq to backtest.backtest(). Rebal freq should be a general case.
 
@@ -143,7 +162,7 @@ test credit strategy with mixed set of signals. binary + smoothed.
 transform distance with np.log(dist.abs() + 1e-8), then compute z-scores
 
 
-# Completed
+## Completed
 
 figure out package structure for zwl.pyblp & symbols subpackage.
 

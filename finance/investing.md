@@ -1,6 +1,6 @@
 # 积少成多
 
-# Common Factors in Corporate Bond Returns
+## Common Factors in Corporate Bond Returns
 
 **Four factors: carry, quality, momentum and value.**
 
@@ -12,14 +12,14 @@ Examined returns ~ 4 factors / combination of factors / macro factors, finds the
 
 Did not find that **broker-dealer leverage** can explain credit characteristic returns.
 
-Chordia et al. 2016 looked at factors that explain equity excess returns for bonds. But equity and credit risks are not identical, the paper only documents correlation. 
+Chordia et al. 2016 looked at factors that explain equity excess returns for bonds. But equity and credit risks are not identical, the paper only documents correlation.
 
 Jostova et al 2013 examined credit momentum to invest in HY.
 
 Frazzini Pedersen 2014 finds positive risk adjusted return to go long short duration higher rated paper vs short long duration lower rated paper.
 NG and Phelps 2014 finds this is sensitive to selected measure of risk.
 
-## Data
+### Data
 
 BAML monthly index return data. Filtering on the following:
 
@@ -34,7 +34,7 @@ Use S&P credit rating.
 
 **Age percent** = time since issuance / original tenor
 
-## Factors
+### Factors
 
 More detail in appendix Table A.1 in paper.
 
@@ -45,7 +45,7 @@ OAS problems: it represents carry IFF the credit curve is flat. But it's transpa
 **Defensive**:
 
 * Market leverage = net debt / (net debt + market value of equity), where net debt = (book debt + minority interest + preferred stocks - cash).
-* Gross profitability defined in Novy-Marx 2013. 
+* Gross profitability defined in Novy-Marx 2013.
 * Effective Duration (lower is more defensive)
 * Excluding: beta and vol (somewhat captured by DTS)
 
@@ -68,13 +68,13 @@ In more precise terms:
 * residual from  `log(OAS) ~ log(duration) + rating + 12-month_excess_return_vol`
 * residual from `log(OAS) ~ log(default_prob)`
 
-## Portfolio Construction
+### Portfolio Construction
 
-Factors are demeaned within 5 ex-ante beta quintiles with beta measured as DTS, excluding duration and carry. 
+Factors are demeaned within 5 ex-ante beta quintiles with beta measured as DTS, excluding duration and carry.
 
-Long short portfolio: Combine quintiles with inverse of risk weighted sum of all 4 factors. Weights are linear in rank (Asness et al, 2014). 
+Long short portfolio: Combine quintiles with inverse of risk weighted sum of all 4 factors. Weights are linear in rank (Asness et al, 2014).
 
-### Long Only Portfolio
+#### Long Only Portfolio
 
 Use equally weighted combination of 4 factors. Objective is to maximize portfolio weighted combined factor score, subject to constraints:
 
@@ -88,11 +88,11 @@ Use equally weighted combination of 4 factors. Objective is to maximize portfoli
 * rebalanced monthly.
 
 
-# Defensive Factor Timing
+## Defensive Factor Timing
 
 Kristin Fergis, Katelyn Gallagher, Philip Hodges, Ked Hogans - BlackRock, 2019
 
-## Risk Features
+### Risk Features
 
 Use macro indicators and market measures to develope two features:
 
@@ -105,9 +105,9 @@ Use macro indicators and market measures to develope two features:
     - $\sigma_i$ is the vol of asset $i$
     - $\sigma_p$ is the vol of the portfolio
 
-The paper used these two indicators to de-risk a macro-factor portfolio. 
+The paper used these two indicators to de-risk a macro-factor portfolio.
 
-## Macro Factors
+### Macro Factors
 
 Representative factors, not reflecting actual investment accounts. Portfolio allocates to each factor based on % of risk / vol budget.
 
@@ -117,7 +117,7 @@ The problem with this model here I see is that looking at the valuation metrics 
 
 * Long: equity futures, listed REITS, commodities
 * Short: cash
-* Valuation Indcator: 
+* Valuation Indcator:
     - variation of Shiller's CAPE: market-value weighted global CAPE then take inverse to compute earnings yield.
     - Difference between earnings yield and bond yields
 
@@ -152,21 +152,21 @@ The problem with this model here I see is that looking at the valuation metrics 
 
 * Long: Small-cap equity
 * Short: Large-cap equity, vol futures
-* Indicators: 
-    - Equity: Shiller earnings yield
-    - Vol: 
-        + carry implied by the VIX term structure
-        + ratio of current prices, spot VIX, to short-term realized vol of SPX index
+* Indicators:
+  * Equity: Shiller earnings yield
+  * Vol:
+      + carry implied by the VIX term structure
+      + ratio of current prices, spot VIX, to short-term realized vol of SPX index
 
 
-# Rethinking Alternative Data in Institutional Investment
+## Rethinking Alternative Data in Institutional Investment
 
 Describes a **defensive and defensible** strategy towards using alternative data.
 
 3 V's of big data + IBM's new V:
 
 * Volume
-* Velocity 
+* Velocity
 * Variety
 * Veracity - the degree of uncertainty around a dataset
 
@@ -179,11 +179,37 @@ Authors proposed 6 attributes to access alt-data:
 * Actionability
 * Scarcity
 
-Interesting point that if investors are paying 3rd parties for their alt-data capability, in the long run this is just subsidising the 3rd party in enhancing their capability. 
+Interesting point that if investors are paying 3rd parties for their alt-data capability, in the long run this is just subsidising the 3rd party in enhancing their capability.
 
+## Factors
 
-# Factors
-
-## Beta Against Beta (BAB)
+### Beta Against Beta (BAB)
 
 Aslo see related topic from [Low-Risk Anomalies in Global Fixed Income: Evidence from Major Broad Markets, Carvalho et al., 2014](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2321012)
+
+## Forecasting US HY Default / Portfolio construction
+
+Barclays published a report on 2020-01-02 (Jay Hyman and co) on a 5-factor logistic regression model to forecast bond default probabilities. The output is then used to aid portfolio construction.
+
+Portfolios are separated into 5 buckets, Q1 (worst) to Q5 (best), using two scoring methods:
+
+1. raw predicted default probabilities
+2. spread / predicted default probabilities
+
+Method 2 produced better result in a `Q5 - Q1` portfolio.
+
+The 5 factors are:
+
+1. Cross-sectionally normalised OAS levels
+2. VIX
+3. tbd
+4. Short term leverage (1yr debt maturities / equity MV)
+5. past 6-months equity momentum
+
+Observations:
+
+* OAS outright level isn't used. Since when yields reach high levels such as 10%+ many names seem to reach the point of no return. Also default waves only come in high yielding environments.
+  * Since this may be correlated with VIX and 6m equity performance, it might not be useful in this model setup.
+* What other fundamental metrics were tested?
+  * FCF / debt?
+  * ROE?

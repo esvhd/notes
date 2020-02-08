@@ -35,6 +35,10 @@ Need to write some code to label financial data.
 
 ## RL
 
+- [Distributional RL](http://proceedings.mlr.press/v70/bellemare17a/bellemare17a.pdf)
+- [stats and samples in distributional RL](https://arxiv.org/pdf/1902.08102v1.pdf)
+- [distributional code for dopamine](https://www.nature.com/articles/s41586-019-1924-6.epdf?shared_access_token=3Bcr-ZWATXBxuAME25rI7tRgN0jAjWel9jnR3ZoTv0OgnvLoVhK46-VND2gsGkjz89fNskUJsDZNDD1PQ0vP4GRakb69mL9k_JklOh9EofWr26Xzkg5xKBwi24XiemaDtez3u5DhPPuVfqxLmAcCIw%3D%3D)
+
 https://arxiv.org/pdf/1911.08265.pdf
 
 [Alex Irpan's AlphaStar blog](https://www.alexirpan.com/2019/11/17/alphastar-update.html)
@@ -52,6 +56,8 @@ PR Analysis done right, desktop - Done.
 [Reformer](https://openreview.net/forum?id=rkgNKkHtvB) Some performance improvements over transformer
 
 Econometrics [here](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3365282)
+
+Quantile Regression [here](http://www.econ.uiuc.edu/~roger/research/rq/QRJEP.pdf)
 
 Multi-Horizon quantile regression [paper](https://arxiv.org/pdf/1711.11053.pdf)
 

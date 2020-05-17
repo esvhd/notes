@@ -18,6 +18,8 @@ Cons:
 Also this allows us to compare models, the one with narrower distribution
 of residuals may be better.
 
+If what we are interested is the ranking / order of the prediction, it can be useful. (See [Beware of R2: simple, unambiguous assessment of the prediction accuracy of QSAR and QSPR models](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4530125/#FD1))
+
 ### Robust Metrics
 
 1. When order matters more than actual value: **spearman rank correlation**
@@ -95,5 +97,3 @@ $$ Var[X-Y] = Var[X] + Var[Y] - 2 \times Cov[X, Y] $$
 
 Wickham and Grolemund (2016): "If you think of variation as a phenomenon that creates uncertainty,
 **covariance** is a phenomenon that reduces it."
-
-

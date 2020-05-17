@@ -214,6 +214,27 @@ Observations:
   * FCF / debt?
   * ROE?
 
+
+### AQR Is Systematic Value Dead?
+
+Date: 2020-05-08
+
+Arguments against relevance of price to book ratio as a value measure in today's environment (2020):
+
+* Strong firms today have higher intangile assets than the past, which are not captured in price to book.
+* The best firms have more monopoly power today than in the past (winner takes all).
+* Index / passive funds pushing valuation up further for higher market cap stocks, therefore skewing the value spread measure.
+
+Additional measures to consider:
+
+* price to sales (author claims this is far more relevant when we remove industry bet)
+* 1yr trailing P/E ratio
+* 1yr forward P/E ratio
+
+Make these measures industry neutral - i.e. measuring within the industry and then take the average.
+
+Article used equal weight method to construct portfolio, stayed with the largest 1000 stocks for this reason.
+
 ## Credit
 
 ### Banks

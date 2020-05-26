@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 <meta name="author" content="zwl" />
@@ -270,7 +270,6 @@ code {
 }
 img {
   max-width:100%;
-  height: auto;
 }
 .tabbed-pane {
   padding-top: 12px;
@@ -332,6 +331,7 @@ summary {
   border: none;
   display: inline-block;
   border-radius: 4px;
+  background-color: transparent;
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li {
@@ -343,18 +343,6 @@ summary {
   display: none;
 }
 </style>
-
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-
-$(document).ready(function () {
-  $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
-  });
-});
-</script>
 
 <!-- code folding -->
 
@@ -693,8 +681,10 @@ caret::createMultiFolds(classes, k = 10, times=3)</code></pre>
 <p>As <code>k</code> gets <strong>larger</strong>, the difference in size between the training set and the resampling subset gets <strong>smaller</strong>, the <strong>bias</strong> of the technique <strong>decreases</strong>.</p>
 <p><code>k</code>-fold CV generally has <strong>high variance</strong> compared to other methods, might not be attractive. With large training sets, the potential issue with variance and bias become negligible.</p>
 </div>
-<div id="generalized-cv" class="section level3">
-<h3>Generalized CV</h3>
+<div id="generalized-cv-gcv" class="section level3">
+<h3>Generalized CV (GCV)</h3>
+<p>GCV is a statistic for approximating the leave-one-out CV error rate for linear regression models.</p>
+<p>Two models with the same MSE would have different GCV values if the complexities of the models were different.</p>
 <p><span class="math display">\[ GCV = \frac{1}{n} \sum^n_{i=1} \bigg( \frac{y_i - \hat{y}_i}{1 - df / n} \bigg)^2 \]</span></p>
 <p>Where <code>df</code> is degree of freedom / # of parameters estimated by the model.</p>
 </div>
@@ -709,13 +699,23 @@ caret::createMultiFolds(classes, k = 10, times=3)</code></pre>
 <div id="boootstrap" class="section level2">
 <h2>Boootstrap</h2>
 <p>Randomly resample data <strong>with replacement</strong>. Samples not selected are referred to as <strong>out-of-bag</strong> samples.</p>
-<p>Bootstrap error rates tend to have <strong>less uncertainty</strong> than k-fold CV. However, on average <strong>63.2%</strong> of the data in bootstrap is represented at least once, therefore this technique has <strong>bias similar</strong> to k-fold CV when <span class="math inline">\(k \approx 2\)</span>. This bias will decrease as data size becomes larger.</p>
+<p>Bootstrap error rates tend to have <strong>less uncertainty</strong> than k-fold CV. However, on average <strong>63.2%</strong> of the data in bootstrap is represented at least once, therefore this technique has <strong>bias similar</strong> to k-fold CV when <span class="math inline">\(k \approx 2\)</span>. This bias will decrease as training size becomes larger.</p>
 <div id="method" class="section level3">
 <h3>632 Method</h3>
-<p>To address the bias issue, the 632 method combines simple bootstrap estimate and the estimate from re-predicting the training set (aka. the <strong>apparent error rate</strong>).</p>
+<p>To address the bias issue, the 632 method combines simple bootstrap error estimate and the error estimate from re-predicting the training set (aka. the <strong>apparent error rate</strong>).</p>
 <p>632 error = 0.632 * simple bootstrap estimate + 0.368 * apparent error rate</p>
-<p>632 method reduces bias but can be unstable with small sample size. It can still result in unduly optimisitic results when the model <strong>severely</strong> overfits, i.e. <strong>apparent error rate is close to zero</strong>.</p>
-<p><strong>632+ method</strong> was created to address this severely overfit case.</p>
+<p>where <strong>apparent error rate = train data error rate</strong></p>
+<p>632 method reduces bias but can be unstable with small sample size. It can still result in unduly optimisitic results when the model <strong>severely</strong> overfits, i.e. <strong>apparent error rate is close to zero</strong>. Clearly, from mthe formula you can see that when apparent error rate is 0, 632 error would be downward biased.</p>
+<p><strong>632+ method</strong> was created to address this severely overfit case. Good <a href="https://stats.stackexchange.com/questions/96739/what-is-the-632-rule-in-bootstrapping">post</a>.</p>
+<p><span class="math display">\[ Err_{.632+} = (1 - w) err + w \times Err_{boot(1)} \]</span></p>
+<p>Where:</p>
+<ul>
+<li><span class="math inline">\(err\)</span> is the apparent error rate / training set error rate</li>
+<li><span class="math inline">\(Err_{boot(1)}\)</span> is the leave-one-out bootstrap error rate</li>
+<li><span class="math inline">\(w = \frac{0.632}{1 - 0.632 R}\)</span></li>
+<li><span class="math inline">\(R = \frac{Err_{boot(1)} - err}{\gamma - err}\)</span></li>
+<li><span class="math inline">\(\gamma = \frac{1}{N^2} \sum_{i=1}^{N} \sum_{j=1}^{N} L\big(y_i, f(x_i)\big)\)</span> is the no-information error rate</li>
+</ul>
 </div>
 </div>
 <div id="authors-recommendations" class="section level2">
@@ -810,7 +810,7 @@ head(predictedProbs)</code></pre>
 </div>
 <div id="bias-variance-trade-off" class="section level2">
 <h2>Bias-Variance Trade-off</h2>
-<p>For $MSE =  ^n_{i=1} (y_i - _i)^2, with <strong>assumptions</strong>:</p>
+<p>For <span class="math inline">\(MSE = \frac{1}{n} \sum^n_{i=1} (y_i - \hat{y}_i)^2\)</span>, with <strong>assumptions</strong>:</p>
 <ol style="list-style-type: decimal">
 <li>data points are statistiaclly independent</li>
 <li>residuals have a theoretical mean of zero and constant variance <span class="math inline">\(\sigma^2\)</span>, which is called the <strong>irreducible noise</strong>.</li>
@@ -959,7 +959,7 @@ elasticnet::enet(x = as.matrix(solTrainXtrans), y = solTrainY, lambda = .001)</c
 <h2>MARS</h2>
 <p>Advantages:</p>
 <ul>
-<li>the model automatically conducts feature selection</li>
+<li>the model automatically conducts feature selection (uses GCV statistic, see notes above).</li>
 <li>model equation is independent of the predictor variables that are not involved with any of the final model features.</li>
 <li>Interpretability</li>
 <li>Needs little pre-processing</li>
@@ -979,6 +979,7 @@ elasticnet::enet(x = as.matrix(solTrainXtrans), y = solTrainY, lambda = .001)</c
 <div id="svm" class="section level2">
 <h2>SVM</h2>
 <p>Book focuses on <strong><span class="math inline">\(\epsilon\)</span>-insensitive regression</strong>.</p>
+<p>One drawback with minimizing MSE is that it is very sensitive to large outliers.</p>
 <p>SVMs for regression use a function similar to the Huber function, but with difference.</p>
 <p>Given threshold <span class="math inline">\(\epsilon\)</span> give by user, data points with residuals <strong>within</strong> the threshold do not contribute to the regression fit, while data points with an absolute difference <strong>greater</strong> than the threshold contribute a linear-scale amount. <strong>Poorly predicted points define the line.</strong></p>
 <p>Consequence:</p>
@@ -1049,7 +1050,7 @@ fm@SVindex</code></pre>
 <ol style="list-style-type: decimal">
 <li>model instability, e.g. a small change in data can drastically change the structure of the tree.</li>
 <li>Less than optimal predictive performance, due to rectanglur decision boundries, which may not suit the data / true relationship.</li>
-<li>For a single tree, the number of possible predicted outcome from a tree is finite and is determined by the number of terminal nodes.</li>
+<li>For a single tree, the number of possible predicted outcome from a tree is <strong>finite</strong> and is determined by the number of terminal nodes.</li>
 <li>Trees suffer from <strong>selection bias</strong>: predictors with a higher number of distinct values are favoured over more granular predictors.</li>
 <li>As the number of missing values increase, the selection of predictors become more <strong>biased</strong>.</li>
 </ol>
@@ -1073,7 +1074,7 @@ fm@SVindex</code></pre>
 <h3>Feature Importance</h3>
 <p>One way is to measure importance is to keep track of the overal reduction ni the optimization criteria for each predictor.</p>
 <p><strong>Disadvantage</strong> of this approach: when some predictors are highly correlated, the choice of which to use in a split is somewhat random. Which results in more predictors being selected than those actually needed, affecting variable importance values.</p>
-<p>See Weakness sector for more disadvantages.</p>
+<p>See Weakness section for more disadvantages (last paragraph page 180).</p>
 <p><strong>Unbiased</strong> regression trees:</p>
 <ul>
 <li>GUIDE</li>
@@ -1081,8 +1082,8 @@ fm@SVindex</code></pre>
 </ul>
 <p>Packages: <code>rpart</code>, <code>party</code>, <code>partykit</code></p>
 </div>
-<div id="single-rree-code" class="section level3">
-<h3>Single Rree Code</h3>
+<div id="single-tree-code" class="section level3">
+<h3>Single Tree Code</h3>
 <ul>
 <li><code>rpart::rpart()</code> - fits w/ CART</li>
 <li><code>party::ctree()</code> - fits w/ conditional inference trees</li>
@@ -1112,7 +1113,7 @@ plot(rpartTree2)</code></pre>
 <p><code>RWeka::M5P()</code> for trees</p>
 <p><code>RWeka::M5Rules()</code> for rule based model.</p>
 <p><strong>Drawback</strong> for simple regression trees: each terminal node uses the <strong>average</strong> of the training set outcomes in the node for prediction.</p>
-<p><strong>Implication</strong>: the model may not do a good join in prediction outcomes that are extremely high or low.</p>
+<p><strong>Implication</strong>: the model may not do a good job in prediction outcomes that are extremely high or low.</p>
 <p>Alternatively, use a <strong>different estimator</strong> in the terminal node.</p>
 <p><strong>Model tree</strong> vs simple trees:</p>
 <ul>
@@ -3205,6 +3206,23 @@ $(document).ready(function () {
 
 
 </script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
 <script>

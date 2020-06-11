@@ -8,22 +8,21 @@ For basic vol metrics for portfolio, check out my code for risk parity.
 
 - CAPM
 - Risk Models
-    - Risk Attribution
-        - Position Marginal Contribution
-        - Factor Marginal Contribution
+  - Risk Attribution
+    - Position Marginal Contribution
+    - Factor Marginal Contribution
 - Exceptional Return / Value Added
-    - Utility Function
-    - Value Added
+  - Utility Function
+  - Value Added
 - Information Ratio
-    - Additivity
-    - Assumptions
-    - Performance Evaluation
+  - Additivity
+  - Assumptions
+  - Performance Evaluation
 - Portfolio Construction
-    - Dispersion
-    - Alpha Analysis
+  - Dispersion
+  - Alpha Analysis
 
 <!-- /MarkdownTOC -->
-
 
 # CAPM
 

@@ -35,6 +35,12 @@ $z_t = u_t / v_t$ denotes **trade weights**.
 
 $h^{+}_t = h_t + u_t$ denotes **post-trade portfolio**.
 
+$F_t \in \mathbb{R}^{(n+1) \times k}$ is the factor exposure matrix at time $t$.
+
+$F^T_{r_t}$ - factor return matrix.
+
+$\Sigma^f_t \in \mathbb{R}^{k \times k}$ is the factor covariance matrix of $F^T_{r_t}$.
+
 **Returns**: $r_t \in \mathbb{R}^{n+1}$ is the vector of **assets and cash** geometric returns from period $t$ to period $t+1$.
 
 We have: $h_{t+1} = (1 + r_t) \odot h^+_t$, i.e. next period $t+1$ portfolio is post-trade portfolio at time $t$ times return between time $t$ and $t+1$.
@@ -52,7 +58,6 @@ We have: $h_{t+1} = (1 + r_t) \odot h^+_t$, i.e. next period $t+1$ portfolio is 
 - $\phi^{trade}_t(0) = 0$, i.e. no t-cost when there is no trade.
 
 - $\phi^{trade}_t$ is **separable**, i.e. $\phi^{trade}_t(x) = \sum^{n}_{i=1} (\phi^{trade}_t)_i (x_i)$
-
 
 ## Transaction Cost Model
 
@@ -160,7 +165,7 @@ $$
 
 ## Single-Period Optimisation
 
-### Notation
+### SPO Notation
 
 **Predicted returns**: $\hat{r}_t$ for time period $t$.
 
@@ -192,7 +197,7 @@ Where:
 
 $$1^T z_t + \phi^{trade}_t(z_t) + \phi^{hold}_t (w_t + z_t) = 0$$
 
-This essentially says the trades plus t-cost and funding costs should not impact cash position. We can **simplify** this constraint to just:
+This essentially says the trades plus t-cost and funding costs should not impact cash position. This constraint in this format is **non-convex**. We can **simplify** this constraint to just:
 
 $$ 1^T z_t = 0 $$
 
@@ -239,3 +244,115 @@ $$ \psi_t(x) = \max_{i=1,\cdots,M} (x - w^b_t)^T \Sigma^{(i)}_t (x - w^b_t) $$
 Where $\Sigma^{(i)}_t$ is the covariance matrix for scenario $i$.
 
 ### Forecast Error Risk
+
+#### Return Forecast Error
+
+Can be modelled as Worst-case quadratic risk. I.e. given return forecast confidence interval $\rho$, we can have a risk model of:
+
+$$ \psi_t (x) = \rho^T |x - w^b_t| $$
+
+## Other Constraints
+
+### $\beta$ Neutral
+
+$$ (w^b_t)^T \Sigma_t (w_t + z_t) = 0 $$
+
+### Factor Neutral
+
+For a factor model, the estimated portfolio risk $\sigma^F_i$ for factor $i$ is given by:
+
+$$ \big( \sigma^F_i \big)^2 = (w_t + z_t)^T (F_t)_i (\Sigma^{f}_{t})_{ii} (F_t)^T_i (w_t + z_t) $$
+
+The constraint for the portfolio to be neutral for factor $i$ means $\sigma^F_i = 0$, hence:
+
+$$ (F_t)^T_i (w_t + z_t) = 0$$
+
+### Stress Constraints
+
+I.e. setting minimum **expected** return, $R^{min}$, for a set of scenarios.
+
+For each scenario $i$ with **predicted** return $c_i$:
+
+$$ c^T_i (w_t + z_t) \geq R^{min} $$
+
+### Non-convexity
+
+Some tricks for working around non-convex constraints.
+
+Avoid **small** trades, i.e. $|(z_t)_i| \geq \epsilon \; \text{for} \; (z_t)_i \neq 0$, can either use cost terms or the following:
+
+Solve SPO without this constraint, finding solution $\tilde{z}$. Based on this result, we then set a set of zero, negative, or positive constraints. Basically, for small trades in $\tilde{z}$, we set $(z_t)_i = 0$. This works well in practice.
+
+Another example is to solve for an max $K$ no. of trades problem. First, run SPO without the constraint. Find the largest $K$ trades, and set constraints to trade only those assets.
+
+## Multi-Period Optimization
+
+Define a horizon of $H$ time periods as:
+
+$$ t, t+1, \cdots, t + H - 1 $$
+
+Solve for trades for these periods: $z_t, z_{t+1}, \cdots, z_{t+H-1}$.
+
+$\hat{r}_{\tau | t}$ denotes return forecast predicted for time period $\tau$ at time period $t$. E.g. $\hat{r}_{t+2 | t}$ is the return forcast for time period $t+2$, predicted at time $t$.
+
+Natural objective is to maximize the sum of expected risk-adjusted return for this horizon:
+
+$$ \max \sum^{t+H-1}_{\tau = t} \big( \hat{r}^T_{\tau | t} w_\tau + \hat{r}^T_{\tau | t} z_\tau - \hat{\phi}^{trade}_\tau(z_\tau) - \hat{\phi}^{hold}_\tau (w_\tau + z_\tau) - \gamma_\tau \psi_\tau (w_\tau + z_\tau) \big) $$
+
+Here, $w_t$ is known (current portfolio weights), but $w_{t+1}, \cdots, w_{t+H-1}$ are not known, without these we **cannot** specify the objective. We need a simplification / approximation below.
+
+The paper suggests that we assume $r_t = 0$, and therefore $w_{t+1} = w_t + z_t$. This is a reasonable assumption if the period returns are small, i.e. we are ignoring *second-order* terms. This is a key assumption that allows us to propagate the portfolio forward.
+
+We must add constraint $1^T z_t = 0$ to ensured that weights sum to 1, i.e.
+
+$$ 1^T w_\tau = 1, \; \tau = t + 1, \cdots, t+H $$
+
+Otherwise, if $1^T w_t = 1$ and $1^T z_t \neq 0$, then in this approximation, we have $1^T w_{t+1} \gt 1$.
+
+Therefore, we need:
+
+$$ 1^T z_\tau = 0, \; \tau = t + 1, \cdots, t+H-1 $$
+
+With the assumption $w_{\tau+1} = w_\tau + z_\tau$, the MPO problem can be written as:
+
+$$
+\begin{aligned}
+\max \;\; &\sum^{t+H-1}_{\tau = t} \big( \hat{r}^T_{\tau | t} (w_\tau + z_\tau) - \hat{\phi}^{trade}_\tau(z_\tau) - \hat{\phi}^{hold}_\tau (w_\tau + z_\tau) - \gamma_\tau \psi_\tau (w_\tau + z_\tau) \big) \\
+\text{subject to} \;\; &1^T z_\tau = 0 \\
+&z_\tau \in \mathcal{Z_\tau} \\
+&w_\tau + z_\tau \in \mathcal{W_\tau} \\
+&w_{\tau+1} = w_\tau + z_\tau \\
+&\tau = t, t+1, \cdots, t + H - 1
+\end{aligned}
+$$
+
+Same notation as SPO here:
+
+- $\mathcal{Z_\tau}$ - trade constraints at period $\tau$
+- $\mathcal{W_\tau}$ - holding constriants at period $\tau$
+
+We ignore $\hat{r}^T_{t | t} w_t$ since $\hat{r}^T_{t | t} = constant$, return from time $t$ to $t$.
+
+We can future eliminate $z_\tau$ given $w_{\tau + 1} = w_\tau + z_\tau$, in the objective, i.e.:
+
+$$ \max \;\; \sum^{t+H-1}_{\tau = t} \big( \hat{r}^T_{\tau | t} w_{\tau + 1} - \hat{\phi}^{trade}_\tau(z_\tau) - \hat{\phi}^{hold}_\tau (w_{\tau + 1}) - \gamma_\tau \psi_\tau (w_{\tau + 1}) \big) $$
+
+Then by shifting start from $t$ to $t+1$:
+
+$$
+\begin{aligned}
+\max \;\; &\sum^{t+H}_{\tau = t+1} \big( \hat{r}^T_{\tau | t} w_\tau - \hat{\phi}^{trade}_\tau(w_\tau - w_{\tau-1}) - \hat{\phi}^{hold}_\tau (w_\tau) - \gamma_\tau \psi_\tau (w_\tau) \big) \\
+\text{subject to} \;\; &1^T w_\tau = 1 \\
+&w_\tau - w_{\tau-1} \in \mathcal{Z_\tau} \\
+&w_\tau \in \mathcal{W_\tau} \\
+&\tau = t+1, \cdots, t + H
+\end{aligned}
+$$
+
+Here, note that if we shift to $t+1$ start, we still have to solve for trades $z_t$. Therefore, $\hat{\phi}^{trade}_\tau(z_\tau)$ becomes $\hat{\phi}^{trade}_\tau(z_{\tau-1})$, and $z_{\tau-1} = w_\tau - w_{\tau-1}$. Also, we do not need $z_{t+H}$.
+
+### Terminal Constraints
+
+When we have a reasonably long horizon, we can add a terminal equality constraint. A reasonable example would be to converge to benchmark weights:
+
+$$ 1^T w_{t+H} = w^b $$

@@ -66,6 +66,8 @@ $F^T_{r_t}$ - factor return matrix.
 
 $\Sigma^f_t \in \mathbb{R}^{k \times k}$ is the factor covariance matrix of $F^T_{r_t}$.
 
+Factor covariance matrix: $\Sigma_t = F_t \Sigma^f_t F^T_t + D_t$, where $D_t \in \mathbb{R}^{(n+x)\times(n+1)}$ is a non-negative diagonal matrix aka. **idiosyncratic risk**.
+
 **Returns**: $r_t \in \mathbb{R}^{n+1}$ is the vector of **assets and cash** geometric returns from period $t$ to period $t+1$.
 
 We have: $h_{t+1} = (1 + r_t) \odot h^+_t$, i.e. next period $t+1$ portfolio is post-trade portfolio at time $t$ times return between time $t$ and $t+1$.

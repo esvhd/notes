@@ -1,7 +1,32 @@
-<!-- MarkdownTOC levels="1,2,3", autolink=true -->
+# `cvxportfolio`
+
+<!-- MarkdownTOC -->
+
+- Notation
+- Transaction Cost Model
+- Holding Cost
+- Returns
+    - Non-instance trading
+    - Multi-period price impact
+- Active and Excess Return
+- Single-Period Optimisation
+    - SPO Notation
+    - Optimization
+    - Risk Function $\psi_t$
+        - Transformed risk
+        - Worst-case quadratic risk
+    - Forecast Error Risk
+        - Return Forecast Error
+- Other Constraints
+    - $\beta$ Neutral
+    - Factor Neutral
+    - Stress Constraints
+    - Non-convexity
+- Multi-Period Optimization
+    - Terminal Constraints
+
 <!-- /MarkdownTOC -->
 
-# `cvxportfolio`
 
 Notes based on `cvxportfolio` paper on multi-period optimization.
 

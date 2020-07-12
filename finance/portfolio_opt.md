@@ -70,7 +70,10 @@ $\beta_p$ - portfolio beta to benchmark
 
 $N$ - no. of assets
 
-$X$ - asset factor exposure matrix, $N \times K$ matrix
+$X$ - asset factor exposure matrix, $N \times K$ matrix. Typically generated
+with a time series regression of `asset_return_t ~ factor_return_t` for `t`
+time period. With this method, the factor exposure generated measures the
+**average** exposure over the regression period.
 
 $b$ - factor returns, shape $K \times 1$
 

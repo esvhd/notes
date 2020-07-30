@@ -360,7 +360,7 @@ Same notation as SPO here:
 
 We ignore $\hat{r}^T_{t | t} w_t$ since $\hat{r}^T_{t | t} = constant$, return from time $t$ to $t$.
 
-We can future eliminate $z_\tau$ given $w_{\tau + 1} = w_\tau + z_\tau$, in the objective, i.e.:
+We can futher eliminate $z_\tau$ given $w_{\tau + 1} = w_\tau + z_\tau$, in the objective, i.e.:
 
 $$ \max \;\; \sum^{t+H-1}_{\tau = t} \big( \hat{r}^T_{\tau | t} w_{\tau + 1} - \hat{\phi}^{trade}_\tau(z_\tau) - \hat{\phi}^{hold}_\tau (w_{\tau + 1}) - \gamma_\tau \psi_\tau (w_{\tau + 1}) \big) $$
 

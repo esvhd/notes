@@ -2,24 +2,26 @@
 
 <!-- MarkdownTOC levels='2,3' autolink="true" -->
 
-- [Heatmap Clustering](#heatmap-clustering)
-- [Multi-Class Classification Scoring](#multi-class-classification-scoring)
+- [Notes on random stuff I read about...](#notes-on-random-stuff-i-read-about)
+  - [Heatmap Clustering](#heatmap-clustering)
+  - [Hirearchical Agglomerative Clustering](#hirearchical-agglomerative-clustering)
+  - [Multi-Class Classification Scoring](#multi-class-classification-scoring)
     - [Confusion Matrix - `sklearn` format](#confusion-matrix---sklearn-format)
     - [Macro Averaging](#macro-averaging)
     - [Micro Averaging](#micro-averaging)
     - [Comparison](#comparison)
-- [Loss Functions](#loss-functions)
-    - [Mean Square Error \(MSE\), L2 Loss](#mean-square-error-mse-l2-loss)
-    - [Mean Absolute Error \(MAE\), L1 Loss](#mean-absolute-error-mae-l1-loss)
+  - [Loss Functions](#loss-functions)
+    - [Mean Square Error (MSE), L2 Loss](#mean-square-error-mse-l2-loss)
+    - [Mean Absolute Error (MAE), L1 Loss](#mean-absolute-error-mae-l1-loss)
     - [Huber Loss](#huber-loss)
     - [Log-Cosh Loss](#log-cosh-loss)
     - [Quantile Loss](#quantile-loss)
-- [Causal Impact](#causal-impact)
+  - [Causal Impact](#causal-impact)
     - [Bayesian Structural Time Series](#bayesian-structural-time-series)
-- [Bayesian Credible Region \(CR\) vs Frequentist Confidence Interval \(CI\)](#bayesian-credible-region-cr-vs-frequentist-confidence-interval-ci)
-- [Variance Estimations for Time Series with Autocorrelation](#variance-estimations-for-time-series-with-autocorrelation)
-- [RANSAC](#ransac)
-- [Statistics Done Wrong](#statistics-done-wrong)
+  - [Bayesian Credible Region (CR) vs Frequentist Confidence Interval (CI)](#bayesian-credible-region-cr-vs-frequentist-confidence-interval-ci)
+  - [Variance Estimations for Time Series with Autocorrelation](#variance-estimations-for-time-series-with-autocorrelation)
+  - [RANSAC](#ransac)
+  - [Statistics Done Wrong](#statistics-done-wrong)
 
 <!-- /MarkdownTOC -->
 
@@ -34,6 +36,33 @@ Talked about 3 methods:
 1. Agglomerative clustering,
 2. Optimal Leaf Ordering (starts with agglomerative clustering output then reorder branches of the dendrogram so as to minimize the sum of dissimilarities between adjacent leaves),
 3. Traveling salesman (find the order of rows that minimizes the sum of dissmilarities, unconstrained by the clustering tree).
+
+## Hirearchical Agglomerative Clustering
+
+**Single vs Complete**-link clustering
+
+Good descriptions in [Information Retrival](https://nlp.stanford.edu/IR-book/html/htmledition/single-link-and-complete-link-clustering-1.html) book. Paragraphs from the book:
+
+"In single-link clustering or single-linkage clustering , the similarity of two clusters is the similarity of their
+most similar members (see Figure 17.3 (a)). This single-link merge criterion is **local**. We pay attention solely to
+the area where the two clusters come closest to each other. Other, more distant parts of the cluster and the clusters'
+overall structure are not taken into account."
+
+"In complete-link clustering or complete-linkage clustering , the similarity of two clusters is the similarity of their
+most dissimilar members (see Figure 17.3 (b)). This is equivalent to choosing the cluster pair whose merge has the
+smallest diameter. This complete-link merge criterion is **non-local**; the entire structure of the clustering can
+influence merge decisions. This results in a preference for compact clusters with small diameters over long, straggly
+clusters, but also causes sensitivity to outliers. A single document far from the center can increase diameters of
+candidate merge clusters dramatically and completely change the final clustering."
+
+`scipy.cluster.hierarchy.linkage()` function has good documentation of this also.
+
+`single-linkage` defines distance between cluster $u$ and $v$ as: $d(u, v) = min \big( dist(u[i], v[j]) \big)$ for all points $i$ in
+cluster $u$ and $j$ in cluster $v$.
+
+`complete-linkage` defines this distance as $d(u, v) = max\big( dist(u[i], v[j]) \big)$
+
+Other methods also exists, such as `average`, `weighted`, `centroid`, `median` and `ward`.
 
 ## Multi-Class Classification Scoring
 
@@ -67,7 +96,7 @@ Confusion matrix is computed **globally for all classes**.
 
 ### Comparison
 
-With **macro** averaging, the confusion matrix is each class is computed in a
+With **macro** averaging, the confusion matrix of each class is computed in a
 one-vs-other fashion. Then this is used to compute precision / recall / F1
 score for each class separately first. The overall metrics are simple / unweighted
 averages of the metrics for all classes.
@@ -322,7 +351,7 @@ Use **assurance** instead of power when you need to measure an effect with preci
 
 Use confidence intervals instead of just p-values.
 
-Adjust for confounding factors. 
+Adjust for confounding factors.
 
 Watch out for **pseudoreplication**, such as taking separate measurements of the same subject over time (autocorrelation). Example, 1970 study claiming women's menstrual cycles can synchronise if they lived in close contact.
 
@@ -347,7 +376,7 @@ This procedure guarantees that out of all statistically significant results, **o
 
 2 & 3 both estimate how far the average of this sample might be from the **true** average.
 
-Non-overlapping standard errors do not suggest the difference between the two is **not** statistically significant. 
+Non-overlapping standard errors do not suggest the difference between the two is **not** statistically significant.
 
 Standard deviation do not give enough information to judge significance, whether they overlap or not.
 
@@ -358,4 +387,3 @@ Don't choose the groups to maximise statistical significance.
 Also some bad examples using step-wise regression, which is essentially iteratively testing for parameter significance... Problems: multiple comparison, bound to produce false positives, no guarantees about the overall false positive rate, nor are they guaranteed to select the best features.
 
 Use random assignment to eliminate confounding variables / Simpson's paradox (some effect is declared by when controlling for some variable the effect can no longer be found, Berkerley female application acceptance rate example).
-

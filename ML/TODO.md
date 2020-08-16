@@ -51,6 +51,8 @@ RMSSE metrics
 
 Causal Inference [blog](https://fabiandablander.com/r/Causal-Inference.html)
 
+Doubly Robust Models in causal inference
+
 How to fool LIME and SHAP [blog](https://deeplearn.org/arxiv/101598/how-can-we-fool-lime-and-shap?-adversarial-attacks-on-post-hoc-explanation-methods)
 
 [UMAP blog](https://pair-code.github.io/understanding-umap/s)

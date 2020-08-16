@@ -8,22 +8,21 @@ For basic vol metrics for portfolio, check out my code for risk parity.
 
 - CAPM
 - Risk Models
-    - Risk Attribution
-        - Position Marginal Contribution
-        - Factor Marginal Contribution
+  - Risk Attribution
+    - Position Marginal Contribution
+    - Factor Marginal Contribution
 - Exceptional Return / Value Added
-    - Utility Function
-    - Value Added
+  - Utility Function
+  - Value Added
 - Information Ratio
-    - Additivity
-    - Assumptions
-    - Performance Evaluation
+  - Additivity
+  - Assumptions
+  - Performance Evaluation
 - Portfolio Construction
-    - Dispersion
-    - Alpha Analysis
+  - Dispersion
+  - Alpha Analysis
 
 <!-- /MarkdownTOC -->
-
 
 # CAPM
 
@@ -71,7 +70,10 @@ $\beta_p$ - portfolio beta to benchmark
 
 $N$ - no. of assets
 
-$X$ - asset factor exposure matrix, $N \times K$ matrix
+$X$ - asset factor exposure matrix, $N \times K$ matrix. Typically generated
+with a time series regression of `asset_return_t ~ factor_return_t` for `t`
+time period. With this method, the factor exposure generated measures the
+**average** exposure over the regression period.
 
 $b$ - factor returns, shape $K \times 1$
 

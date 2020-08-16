@@ -213,3 +213,58 @@ Observations:
 * What other fundamental metrics were tested?
   * FCF / debt?
   * ROE?
+
+
+### AQR Is Systematic Value Dead?
+
+Date: 2020-05-08
+
+Arguments against relevance of price to book ratio as a value measure in today's environment (2020):
+
+* Strong firms today have higher intangile assets than the past, which are not captured in price to book.
+* The best firms have more monopoly power today than in the past (winner takes all).
+* Index / passive funds pushing valuation up further for higher market cap stocks, therefore skewing the value spread measure.
+
+Additional measures to consider:
+
+* price to sales (author claims this is far more relevant when we remove industry bet)
+* 1yr trailing P/E ratio
+* 1yr forward P/E ratio
+
+Make these measures industry neutral - i.e. measuring within the industry and then take the average.
+
+Article used equal weight method to construct portfolio, stayed with the largest 1000 stocks for this reason.
+
+## Credit
+
+### Banks
+
+This is 2020, in the middle of the covid-19 pandemic crisis. I ran a simple model to access relative value in Euro LT2
+bank bonds. I used BAML data, so rating methodology was to use the lowest rating.
+
+A few relationships tested here are:
+
+`oas ~ roe + tier1_capital + effective_duration + equity_6m_vol + rating_bucket` - to my surprise, bank tier 1 capital has a positive coefficient. That was counter-intuitive. What it means I think is that market did not care about capital - because almost all banks had tons of capital. It was not what drove market. Plus we all know that with the difficulties the economy is facing, in the area of 10-15% GDP hits in many developed countries, bank capital would need to take a hit. **Return of equity**, however, had a negative coefficient, meaning the higher RoE is, the lower the spreads. That is intuitive, suggesting that market cares more about the pace in which capital can be rebuilt. We are not pricing a doomsday's environment, investors believed that banks can get through this.
+
+I also tried `oas ~ roe + tier1_capital + duration + rating_bucket`, `oas ~ roe + duration + equity_6m_vol`,
+and `oas ~ roe + duration + equity_6m_vol + rating_bucket`.
+
+Vol also did not matter, but rating buckets did. This made sense because in a non-doomsday world, investors are trying to predict where each layers of capital would land in the rating spectrum. That is the game right now.
+
+If this is the thesis, what I need is more robust validation.
+
+Effective duration - I'm not sure it truely represents the risk for LT2. Perhaps the best measure of potential extension risk is simply (maturity - next_call) measured in years.
+
+Question that should be asked:
+
+1. Is the market right in thinking that capital level isn't as important?
+2. Where do we forecast RoE to be for each bank?
+3. Where do we think ratings would land for each capital structure.
+
+This would help us to use the model to access where do we think spreads would end up and help us make relative choices.
+
+Validation strategy.
+
+1. Identify factors that could drive returns
+2. Run regression during different periods, compare the results.
+3. Use time series CV for model and feature selection, train on a period's data, have a 1 week embargo, assess MSE or MAE for the next period.

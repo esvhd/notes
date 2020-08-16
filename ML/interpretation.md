@@ -5,6 +5,7 @@
 - [Notes on Feature Importance and Interpretation](#notes-on-feature-importance-and-interpretation)
   - [Logistic Regression](#logistic-regression)
   - [Permutation Importance for Random Forest Feature Importance](#permutation-importance-for-random-forest-feature-importance)
+    - [Additional Notes](#additional-notes)
   - [Partial Dependency Plots (PDP)](#partial-dependency-plots-pdp)
   - [Individual Conditional Expectation (ICE) Plots](#individual-conditional-expectation-ice-plots)
   - [Shapley Adaptive Explanation (`SHAP`)](#shapley-adaptive-explanation-shap)
@@ -95,6 +96,32 @@ def dropcol_importances(rf, X_train, y_train):
     I = I.sort_values('Importance', ascending=True)
     return I
 ```
+
+### Additional Notes
+
+Lopez de prado pointed out some very practical considerations when using permutation importance in ML for AM book.
+
+**Subsititution Effets**: when two or multiple features share predictive info. Two identical features may be considered
+both unimportance in a Mean Decrese in Accuracy (**MDA**) metric such as permutation importance.
+
+**Co-dependence** of features results in subsititution effects, one solution to multicollinearity is to apply PCA
+on features first, and then use MDA.
+
+**Better** approach is to cluster similar features and apply feature importance analysis at the cluster level.
+
+**Silhouette coefficient**:
+
+Effectively this is a measure comparing intra-cluster distance and inter-cluster distance.
+
+$S_i = \frac{b_i - a_i}{\max\{a_i, b_i\}} \forall i = 1, \cdots, N$
+
+Where:
+
+- $a_i$ is the average distance between $i$ and all other elements in the same cluster, and
+
+- $b_i$ is the average distance between $i$ and all elements in the nearest cluster of which $i$ is not a member
+
+$S_i = 1$ means $i$ is clutered well, $S_i = -1$ means $i$ is clustered poorly.
 
 ## Partial Dependency Plots (PDP)
 

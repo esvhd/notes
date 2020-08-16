@@ -436,7 +436,13 @@ resampling subset gets **smaller**, the **bias** of the technique **decreases**.
 not be attractive. With large training sets, the potential issue with variance
 and bias become negligible.
 
-### Generalized CV
+### Generalized CV (GCV)
+
+GCV is a statistic for approximating the leave-one-out CV error rate for linear
+regression models.
+
+Two models with the same MSE would have different GCV values if the complexities
+of the models were different.
 
 $$ GCV = \frac{1}{n} \sum^n_{i=1} \bigg( \frac{y_i - \hat{y}_i}{1 - df / n} \bigg)^2 $$
 
@@ -465,21 +471,36 @@ to as **out-of-bag** samples.
 Bootstrap error rates tend to have **less uncertainty** than k-fold CV. However,
 on average **63.2%** of the data in bootstrap is represented at least once,
 therefore this technique has **bias similar** to k-fold CV when $k \approx 2$.
-This bias will decrease as data size becomes larger.
+This bias will decrease as training size becomes larger.
 
 ### 632 Method
 
-To address the bias issue, the 632 method combines simple bootstrap estimate
-and the estimate from re-predicting the training set (aka. the **apparent
+To address the bias issue, the 632 method combines simple bootstrap error estimate
+and the error estimate from re-predicting the training set (aka. the **apparent
 error rate**).
 
 632 error = 0.632 * simple bootstrap estimate + 0.368 * apparent error rate
 
+where **apparent error rate =  train data error rate**
+
 632 method reduces bias but can be unstable with small sample size. It can
 still result in unduly optimisitic results when the model **severely** overfits,
-i.e. **apparent error rate is close to zero**.
+i.e. **apparent error rate is close to zero**. Clearly, from mthe formula
+you can see that when apparent error rate is 0, 632 error would be downward
+biased. 
 
-**632+ method** was created to address this severely overfit case.
+**632+ method** was created to address this severely overfit case. 
+Good [post](https://stats.stackexchange.com/questions/96739/what-is-the-632-rule-in-bootstrapping).
+
+$$ Err_{.632+} = (1 - w) err + w \times Err_{boot(1)} $$
+
+Where:
+
+* $err$ is the apparent error rate / training set error rate
+* $Err_{boot(1)}$ is the leave-one-out bootstrap error rate
+* $w = \frac{0.632}{1 - 0.632 R}$
+* $R = \frac{Err_{boot(1)} - err}{\gamma - err}$
+* $\gamma = \frac{1}{N^2} \sum_{i=1}^{N} \sum_{j=1}^{N} L\big(y_i, f(x_i)\big)$ is the no-information error rate
 
 ## Author's recommendations
 
@@ -592,7 +613,7 @@ calculated. `corr(..., method='spearman')`
 
 ## Bias-Variance Trade-off
 
-For $MSE = \frac{1}{n} \sum^n_{i=1} (y_i - \hat{y}_i)^2, with **assumptions**:
+For $MSE = \frac{1}{n} \sum^n_{i=1} (y_i - \hat{y}_i)^2$, with **assumptions**:
 
 1. data points are statistiaclly independent
 2. residuals have a theoretical mean of zero and constant variance $\sigma^2$,
@@ -791,7 +812,8 @@ elasticnet::enet(x = as.matrix(solTrainXtrans), y = solTrainY, lambda = .001)
 
 Advantages:
 
-* the model automatically conducts feature selection
+* the model automatically conducts feature selection (uses GCV statistic, see
+notes above).
 * model equation is independent of the predictor variables that are not involved
 with any of the final model features.
 * Interpretability
@@ -815,6 +837,8 @@ marsTune <- train(x = solTrainXtrans, y = solTrainY,
 ## SVM
 
 Book focuses on **$\epsilon$-insensitive regression**.
+
+One drawback with minimizing MSE is that it is very sensitive to large outliers.
 
 SVMs for regression use a function similar to the Huber function, but with
 difference.
@@ -923,7 +947,7 @@ structure of the tree.
 2. Less than optimal predictive performance, due to rectanglur decision
 boundries, which may not suit the data / true relationship.
 3. For a single tree, the number of possible predicted outcome from a tree is
-finite and is determined by the number of terminal nodes.
+**finite** and is determined by the number of terminal nodes.
 4. Trees suffer from **selection bias**: predictors with a higher number of
 distinct values are favoured over more granular predictors.
 5. As the number of missing values increase, the selection of predictors become
@@ -967,7 +991,7 @@ the choice of which to use in a split is somewhat random. Which results in
 more predictors being selected than those actually needed, affecting variable
 importance values.
 
-See Weakness sector for more disadvantages.
+See Weakness section for more disadvantages (last paragraph page 180).
 
 **Unbiased** regression trees:
 
@@ -976,7 +1000,7 @@ See Weakness sector for more disadvantages.
 
 Packages: `rpart`, `party`, `partykit`
 
-### Single Rree Code
+### Single Tree Code
 
 * `rpart::rpart()` - fits w/ CART
 * `party::ctree()` - fits w/ conditional inference trees
@@ -1011,7 +1035,7 @@ plot(rpartTree2)
 **Drawback** for simple regression trees: each terminal node uses the
 **average** of the training set outcomes in the node for prediction.
 
-**Implication**: the model may not do a good join in prediction outcomes
+**Implication**: the model may not do a good job in prediction outcomes
 that are extremely high or low.
 
 Alternatively, use a **different estimator** in the terminal node.

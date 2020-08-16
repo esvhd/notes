@@ -52,3 +52,22 @@ Decision trees love orthogonal decision boundaries, therefore they are prone to
 training set rotation. Running PCA prior to decision tree often limits this
 issue.
 
+Tuning parameters:
+
+- `min_samples_split`
+- `min_samples_leave`
+- `min_weight_fraction_leaf`
+- `max_leaf_node`
+- `max_features`
+
+## Bagging
+
+`BaggingClassifier` - set `oob_score=True` to request an automatic **out-of-bag**
+evaluation after training.
+
+## Boosting
+
+### AdaBoost
+
+`sklearn` uses `SAMME.R` algo by default, which replies on class probabilities
+rather than predictions and generally performs better than `SAMME`.

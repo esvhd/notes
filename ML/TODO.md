@@ -45,6 +45,10 @@ https://arxiv.org/pdf/1911.08265.pdf
 
 ## ML TODO:
 
+Tweedie loss function: [blog](https://towardsdatascience.com/tweedie-loss-function-for-right-skewed-data-2c5ca470678f)
+
+RMSSE metrics
+
 Causal Inference [blog](https://fabiandablander.com/r/Causal-Inference.html)
 
 How to fool LIME and SHAP [blog](https://deeplearn.org/arxiv/101598/how-can-we-fool-lime-and-shap?-adversarial-attacks-on-post-hoc-explanation-methods)

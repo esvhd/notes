@@ -8,6 +8,7 @@
     - [Additional Notes](#additional-notes)
   - [Partial Dependency Plots (PDP)](#partial-dependency-plots-pdp)
   - [Individual Conditional Expectation (ICE) Plots](#individual-conditional-expectation-ice-plots)
+  - [Drawback of Permutation Importance / PDP / ICE Plots](#drawback-of-permutation-importance--pdp--ice-plots)
   - [Shapley Adaptive Explanation (`SHAP`)](#shapley-adaptive-explanation-shap)
     - [Notation](#notation)
     - [Additive Feature Attribution Methods](#additive-feature-attribution-methods)
@@ -155,6 +156,18 @@ Jeremy Howard showed some interesting python packages for interpreting results i
 This is similar to PDP. ICE measures that dependency of a model on $X_C$, whereas PDP measures the average marginal effect of $X_C$ for the model.
 
 Instead of holding $X_C$ constant, ICE chooses and example $x^{(i)}$, fixes $x^{(i)}_S$ constant and iterates through all possible values of $X_C$.
+
+## Drawback of Permutation Importance / PDP / ICE Plots
+
+Methods such as permutation importance can be misleading when features are
+correlated. The intuition here is that, if `x1` and `x2` are correlated, even
+when `x1` is permuted, the model may still do ok with `x2` intact.
+
+[Don't Permute-and-Predict](https://arxiv.org/abs/1905.03151) discusses the
+effects here.
+
+Lopez de Prado also proposed using clustering to find correlated features,
+then permute the group as a whole.
 
 ## Shapley Adaptive Explanation (`SHAP`)
 

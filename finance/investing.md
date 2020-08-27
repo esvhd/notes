@@ -268,3 +268,43 @@ Validation strategy.
 1. Identify factors that could drive returns
 2. Run regression during different periods, compare the results.
 3. Use time series CV for model and feature selection, train on a period's data, have a 1 week embargo, assess MSE or MAE for the next period.
+
+## Recession Forecast
+
+I've seen many of these research paper coming out from sell side houses. All of these publications show some sort of recession probablity chart over a super long horizon, e.g. 50 years. The problem is, a chart like this is bound to look good. But you need more details than a good looking chart. Specifically, test set performance evaluation results for with metrics suitable for imbalanced data. I rarely see these paper publish such results.
+
+Some papers on this stuff.
+
+### ML for Recession Prediction and Dynamic AA
+
+[paper](https://jfds.pm-research.com/content/1/3/41)
+
+This paper only uses classification error as a metric for evaluating a SVM model.
+
+Features:
+
+1. monthly log diff in non-farm payroll
+2. log diff in average monthly SPX
+3. ISM Manufacturing Production index.
+4. 10-year UST yield - Fed Funds rate
+5. 11 lags for all of the above 4, ie. 1yr's data, 48 total features.
+
+Data revision is only visible after the date it's made.
+
+### ML Prediction of Recessions
+
+[link](https://jfds.pm-research.com/content/early/2020/08/21/jfds.2020.1.040)
+
+This one at least has some proper ML metrics for evaluation.
+
+NBER recession dataset from 1959 to 2019. 732 monthly data points, of which 101 (~14%) are flagged as recessions. So this indicates that a naive strategy of prediction no-recession all the time would have ~14% classification error.
+
+Used down-sampling to handle imbalanced data.
+
+Features:
+
+<img src='img/yazdani_features.png' width=600/>
+
+Performance:
+
+<img src='img/yazdani.png' width=600/>

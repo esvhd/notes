@@ -153,7 +153,7 @@ Shape is $(N \times N \cdot N \times 1 ) / (1 \times 1) = N \times 1$
 
 $h_{PR} = h_p - \beta_p \times h_B$ - **residual holding vector**, shape $N \times 1$
 
-Marginal Contribution to Residual Risk, **MCRR**, with hape $N \times 1$:
+Marginal Contribution to Residual Risk, **MCRR**, with shape $N \times 1$:
 
 $$ MCRR = \frac{VR \times h_p}{w_p} = \frac{V \times h_{PR}}{w_p} $$
 
@@ -208,13 +208,38 @@ A simple utility function to maximize is to trade residual return versus residua
 
 $$ U_p = \alpha_p - \lambda_R \times w^2_p = f_p - \lambda_T \times \sigma^2_p$$
 
-Where $\lambda_R$ is a measure of risk aversion to residual risk.
+Where $\lambda_R$ is a measure of **risk aversion** to residual risk.
 
 When we have **no information**, $f_p = \mu_B$, with rearranging the utility function above, we see that the level of risk aversion that leads us to choose the benchmark is:
 
 $$ \lambda_T = \frac{\mu_B}{2\sigma^2_B} $$
 
 E.g. for $\mu_B = 6\%$ and $\sigma_B = 20\%$, we have $\lambda_T = .06 / (2 \times .2^2) \approx .75$.
+
+### Utility and $\alpha$ 2nd Edition {#utility}
+
+In the recent edition of the book, we connect utility and $\alpha$ as:
+
+$$
+\begin{aligned}
+U &= h^T \cdot \alpha - \lambda h^T \cdot V \cdot h \\
+&= \alpha_p - \lambda w^2_p
+\end{aligned}
+$$
+
+Where $\lambda$ is a risk-aversion parameter capturing investor preferences.
+
+To find the maximum of $U$, we take the derivate w.r.t. $h$:
+
+$$
+\begin{aligned}
+\frac{\partial U}{\partial h} &= \alpha - 2 \lambda \cdot V \cdot h = 0\\
+\alpha_p &= 2 \lambda \cdot V \cdot h \\
+h_{max} &= \frac{\alpha}{2\lambda \cdot V}
+\end{aligned}
+$$
+
+From the optimal portoflio would vary with risk aversion parameter.
 
 ## Value Added
 
@@ -280,9 +305,9 @@ The following simple formula gives an **approximation** of the $IR$:
 
 $$ IR \approx IC \times \sqrt{BR} $$
 
-$IC$ - **Information Coefficient**, measure the **correlation** between predicted returns and realized returns.
+$IC$ - **Information Coefficient**, measure the **correlation** between predicted returns and realized returns. In finance an $IC$ of 0.05 is good, 0.10 would be seen as great.
 
-$BR$ - **Breath**, defined as the number of independent predictions of **exceptional returns** made per year. See p328, $BR$ is more difficult to measure than either $IC$ or $IR$.
+$BR$ - **Breath**, defined as the number of independent predictions of **exceptional returns** made per year. See p328, $BR$ is more difficult to measure than either $IC$ or $IR$. Note also that it is a **rate**, not a number, so the no. of assets in a portfolio isn't the right measure.
 
 See derivation of this and assumptions made in Grinold & Kahn p166-p168.
 
@@ -290,7 +315,7 @@ Hence, with the above **optimal residual risk** formula:
 
 $$ w^* = \frac{IR}{2\lambda_R} = \frac{IC \times \sqrt{BR}}{2\lambda_R} $$
 
-Therefore, the desired level of risk has a linear relationship with $IR$ and $\sqrt{BR}$.
+Therefore, the desired level of risk has a **linear relationship** with $IR$ and $\sqrt{BR}$.
 
 The Value Added is:
 
@@ -410,3 +435,94 @@ My thoughts on this is that the material and maths used hevily rely on the assum
 These assumption most likely won't hold in practice especially looking at a corporate bond or equity market risk model.
 
 The technical appendix also has a section on the impact of **covariance matrix estimation error**. Worth a read.
+
+
+# 2nd Edition
+
+## Breath
+
+Given an **information turnover rate**, $\gamma$, that captures both old info decay rate and new info arrival rate. When these two processes are in balance,
+we show that the breath of this forecast for $N$ assets is:
+
+$$ BR = \gamma \cdot N $$
+
+## Transfer Coefficient
+
+p52 of the book.
+
+The transfer coefficient measures the correlation between the return of an optimal portfolio without constraints and t-costs, and the actual portfolio that is run.
+It is a measure of **implementation efficiency**.
+
+With reference to the [Utility](#utility-and-alpha-2nd-edition-utility) section,
+given an optimal portfolio, $Q$, we have:
+
+$$ \alpha - 2 \lambda \cdot V \cdot h_Q = 0 $$
+
+The total alpha for this portfolio is: $\alpha_Q = h_Q^T \cdot \alpha$.
+Subsitituting $\alpha$ from above, we have:
+
+$$
+\begin{aligned}
+\alpha_Q &= 2 \lambda \cdot h_Q^T \cdot V \cdot h_Q \\
+&= 2 \lambda \sigma_Q^2
+\end{aligned}
+$$
+
+Where $\sigma_Q^2$ is the portfolio residual variance for $Q$. In other parts of this note, we also use $\omega$ to represent residual variance.
+
+The information ratio therefore is:
+
+$$ IR_Q = \frac{\alpha_Q}{\sigma_Q} = 2 \lambda \cdot \sigma_Q $$
+
+In practice, investors don't hold this optimal portfolio due to constraints,
+they hold portfolio $P$ instead. Therefore, by subsitituting $\alpha$ from
+earlier we have:
+
+$$
+\begin{aligned}
+\alpha_P &= h_P^T \cdot \alpha \\
+&= 2 \lambda \cdot h_P^T \cdot V \cdot h_Q \\
+&= 2 \lambda \cdot Covariance(P, Q) \\
+&= 2 \lambda \cdot \sigma_P \cdot \sigma_Q \cdot \rho_{PQ}
+\end{aligned}
+$$
+
+Where $\rho_{PQ}$ is the correlation of portfolio $P$ and $Q$. Also, from
+standard Pearson correlation coefficient formula:
+
+$$ \rho_{PQ} = \frac{Cov(P, Q)}{\sigma_P \sigma_Q} \therefore Cov(P, Q) = \sigma_P \cdot \sigma_Q \cdot \rho_{PQ} $$
+
+Therefore, the information ratio for $P$ is:
+
+$$ IR_P = \frac{\alpha_P}{\sigma_P} = 2 \lambda \cdot \sigma_Q \cdot \rho_{PQ} = IR_Q \cdot \rho_{PQ}$$
+
+The best we can do when chosing $\sigma_P$ for $P$ from above, is to set:
+
+$$ \sigma_P = \sigma_Q \cdot \rho_{PQ} = \sigma_Q \cdot TC_P $$
+
+Therefore, the improved fundamental law of active management is:
+
+$$ IR_P = IC \cdot \sqrt{BR} \cdot TC_P $$
+
+Another result from this is that, the **value-add** can be described as:
+
+$$ VA_P \leq TC_P^2 \cdot VA_Q $$
+
+The interpretation is that value-add for a practical portfolio with constraints
+is related to the square of transfer coefficient. If $TC_P = 0.7$, we'd lose
+nearly 50% of the value-add of the optimal portfolio, before other costs & fees!
+
+Constraints can have a large impact on IR. Books examined the long-only constraint.
+Results showed that with such constraints, IR frontier flattens out, i.e. for each additional unit of risk, expected alpha increases less and less.
+
+Another side effect in a long-only portfolio is that, in a benchmark, for assets
+with smaller weights, underweight is more constrainted vs assets with larger
+weights.
+
+The conclusion is that we are better off running long-only portfolios with low
+residual risk, and use long-short implementations when we wish to run higher
+residual risk portfolios.
+
+Some research showed that by relaxing the long-only constraint just slightly,
+this can improve the transfer coefficient significantly. Similar to the 80/20 rule,
+where the first 20% shorts allowed, provided 80% of the benefits.

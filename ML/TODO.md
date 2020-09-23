@@ -7,6 +7,10 @@
 3. Kahn book
 4. Fabozzi robust portfolio optimization book
 
+Fixed Income - Credit
+
+Given skew in upside / downside, does it make sense to use different model for forecasting up and downside returns?
+
 ## AWD LSTM
 
 Notebook: `awd-lstm-ts`

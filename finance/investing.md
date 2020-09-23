@@ -214,7 +214,6 @@ Observations:
   * FCF / debt?
   * ROE?
 
-
 ### AQR Is Systematic Value Dead?
 
 Date: 2020-05-08
@@ -234,6 +233,81 @@ Additional measures to consider:
 Make these measures industry neutral - i.e. measuring within the industry and then take the average.
 
 Article used equal weight method to construct portfolio, stayed with the largest 1000 stocks for this reason.
+
+### Co-momentum
+
+Dong Lou & Chris Polk July 2020.
+
+The idea is to come up with a measure that can indicate when momentum arbitrage activity is high or low, and whether this can help to forecast subsequent returns.
+
+Methodology using stocks as an example.
+
+1. At the end of each month, sort all stocks into deciles based on their past 12-month return (except the most recent month), therefore 11-month.
+
+2. Compute pairwise **partial correlation** using 52 weekly returns for all stocks in each decile in the portfolio ranking period.
+
+3. Use Fama-French 3-factor model to control for known risk factors when computing partial correlations. I.e. the correlation of 3-factor residual returns, grouped by each decile. Hence why this is a partial correlation.
+
+4. **Loser momentum**, $comom^{L}$, is the average pairwise partial correlation for the loser decile. **Winner momentum** ,$comom^{W}$, is the opposite, ie. average of the winner decile.
+
+$$
+\begin{aligned}
+comom^L &= \frac{1}{N^L} \sum_{i=1}^{N^L} partialCorr(r_i^L, r_{-i}^L \mid mktr, smb, hml) \\
+comom^W &= \frac{1}{N^W} \sum_{i=1}^{N^W} partialCorr(r_i^W, r_{-i}^W \mid mktr, smb, hml)
+\end{aligned}
+$$
+
+Where:
+
+* $r_i^W$ / $r_i^L$ : weekly return of stock $i$ in the winner / loser decile
+* $r_{-i}^W$: weekly return of the equally weighted extreme winner decile excluding stock $i$
+* $N^L$ is the number of stocks in the extreme loser decile.
+
+Based on this method, the authors than group all months based on their comomentum scores into 5 buckets, from high to low. Performance stats for the high minus low group are shown.
+
+### Implied Volatility
+
+Swiss Finance Institute research paper no. 19-75: Implied Volatility Changes and Corporate Bond Returns. July 2020. [link](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3400694)
+
+Defines Implied Vol as `(call_vol + put_vol) / 2`.
+
+Some results the paper claims:
+
+* changes in implied vol ($\Delta CallVol$ or $\Delta PutVol$) predicts high or low corporate bond future returns (also not working for stock returns).
+* $\Delta ImpVol = (\Delta CallVol + \Delta PutVol) / 2$
+* changes in call/put implied vol spread (call - put vol), does **not** predict future return, i.e. $\Delta CallVol - \Delta PutVol$.
+* Suggests that implied vol market carries different info for stocks and bonds.
+
+Thoughts on bond data:
+
+* Not using index / valuation prices.
+* Bond data is from enhanced TRACE data, between 2012-07 and 2017-08. Daily prices are volume weighted averages of intraday prices, with some conventional filters. This clearly isn't the best, large price moves may come with low volume, and it's clealy not always reflecting latest in time.
+* eod of month - using last observation during the last five trading days - clearly it's not lining up data.
+* Return to be predicted is total return, not excess return.
+
+Options Data:
+
+Implied vol surface data from OptionMetrics.
+
+"We obtain daily implied volatility data from the volatility surface data in OptionMetrics.
+OptionMetrics provides interpolated volatility surface for each stock on each day, using a kernel
+smoothing algorithm and options with various strike prices and maturities. Implied volatilities are
+calculated based on the industry-standard Cox-Ross-Rubinstein binomial tree model. This model
+can accommodate underlying securities with either discrete dividend payments or a continuous
+dividend yield, and American style stock options with early exercise features. This volatility surface dataset contains information of volatilities with various maturities and deltas. An implied
+volatility is only included if there exists enough option price data on that date to accurately
+interpolate the required values. One advantage of using the volatility surface data is that the
+maturities and deltas are fixed for each trading day, and hence there is no need to control for
+variations in expiration dates and strike prices."
+
+* For the paper, 50% delta / 1yr expiry used for calls and puts. This isn't using the smile? also 1yr expiry in my view is just too long. How did they arrive at the conclusion that (call - put vol) wasn't useful?
+* Use vol data 1 day before bond prices, which probably make sense to avoid data leaks.
+
+Analysis: traditional regression based. Not obvious to me any ML type of assessment was done.
+
+Portfolios are formed using the usual decile approach.
+
+Sorting by \Delta CallVol - \Delta PutVol$ did not produce signifcant results.
 
 ## Credit
 

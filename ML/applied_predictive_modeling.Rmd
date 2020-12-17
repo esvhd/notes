@@ -485,11 +485,11 @@ where **apparent error rate =  train data error rate**
 
 632 method reduces bias but can be unstable with small sample size. It can
 still result in unduly optimisitic results when the model **severely** overfits,
-i.e. **apparent error rate is close to zero**. Clearly, from mthe formula
+i.e. **apparent error rate is close to zero**. Clearly, from the formula
 you can see that when apparent error rate is 0, 632 error would be downward
-biased. 
+biased.
 
-**632+ method** was created to address this severely overfit case. 
+**632+ method** was created to address this severely overfit case.
 Good [post](https://stats.stackexchange.com/questions/96739/what-is-the-632-rule-in-bootstrapping).
 
 $$ Err_{.632+} = (1 - w) err + w \times Err_{boot(1)} $$

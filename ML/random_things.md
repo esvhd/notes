@@ -22,6 +22,7 @@
   - [Variance Estimations for Time Series with Autocorrelation](#variance-estimations-for-time-series-with-autocorrelation)
   - [RANSAC](#ransac)
   - [Statistics Done Wrong](#statistics-done-wrong)
+  - [Time Series Prediction Tools](#time-series-prediction-tools)
 
 <!-- /MarkdownTOC -->
 
@@ -387,3 +388,13 @@ Don't choose the groups to maximise statistical significance.
 Also some bad examples using step-wise regression, which is essentially iteratively testing for parameter significance... Problems: multiple comparison, bound to produce false positives, no guarantees about the overall false positive rate, nor are they guaranteed to select the best features.
 
 Use random assignment to eliminate confounding variables / Simpson's paradox (some effect is declared by when controlling for some variable the effect can no longer be found, Berkerley female application acceptance rate example).
+
+## Time Series Prediction Tools
+
+- `sktime`
+- `pytorch-forecast`
+- FaceBook `Prophet`
+- `tslearn`
+- `tsfresh`
+
+Great list [here on Quora](https://www.quora.com/What-is-the-most-useful-Python-library-for-time-series-and-forecasting).

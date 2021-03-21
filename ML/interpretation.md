@@ -39,7 +39,11 @@ Edge case: logistic regression can suffer from **complete separation**: if there
 
 See this [post](http://parrt.cs.usfca.edu/doc/rf-importance/index.html), [github](https://github.com/parrt/random-forest-importances)
 
-`sklearn` Random Forest feature importance and `R`'s default Randome Forest feature importance strategies are **biased**.
+`sklearn` Random Forest feature importance and `R`'s default Randome Forest feature importance strategies based on **minimum decrease in impurity** are **biased**,
+i.e. it tends to inflate the importance of continuous or high-cardinality
+categorical variables. Example in the articule showed an example with a random
+value feature being ranked more important than actual features, with regression
+tree.
 
 Solution is to compute **permutation importance** from Breiman and Cutler. Existing packages:
 
@@ -97,6 +101,20 @@ def dropcol_importances(rf, X_train, y_train):
     I = I.sort_values('Importance', ascending=True)
     return I
 ```
+
+In 2019 a [paper](https://arxiv.org/pdf/1905.03151.pdf) published argued for
+not using permutation importance - because they favour correlated features.
+This issue was also highlighted by Marcos Lopez de Prado in his books.
+Marcos also proposed a method to permute features based on correlation clusters.
+
+Other alternavies include:
+
+- Drop column and retrain, measure performance differences.
+- Permutate data and retrain,
+- Conditionally generate / permute features conditioned on other features.
+  Similar to permuting groups of features
+- SHAP
+
 
 ### Additional Notes
 

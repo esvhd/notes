@@ -4,6 +4,7 @@
 
 - [Notes on random stuff I read about...](#notes-on-random-stuff-i-read-about)
   - [Heatmap Clustering](#heatmap-clustering)
+  - [Clustering](#clustering)
   - [Hirearchical Agglomerative Clustering](#hirearchical-agglomerative-clustering)
   - [Multi-Class Classification Scoring](#multi-class-classification-scoring)
     - [Confusion Matrix - `sklearn` format](#confusion-matrix---sklearn-format)
@@ -38,6 +39,41 @@ Talked about 3 methods:
 2. Optimal Leaf Ordering (starts with agglomerative clustering output then reorder branches of the dendrogram so as to minimize the sum of dissimilarities between adjacent leaves),
 3. Traveling salesman (find the order of rows that minimizes the sum of dissmilarities, unconstrained by the clustering tree).
 
+## Clustering
+
+Some notes based on ESL.
+
+Notes on Combinatorial algorithms for clustering, for the formula on page 508.
+
+Equation `14.28` has three loops:
+
+```
+# this code computes within cluster average distance metric
+# K clusters
+dist = 0
+for each cluster in K:
+  for each data sample i in cluster k:
+    for each data sample i' in cluster k:
+      dist += distance(x_i, x_i')
+dist = dist / 2
+```
+
+Equation `14.29` computes between cluster average distance:
+
+```
+# this code computes between cluster average distance metric
+# K clusters
+dist = 0
+for each cluster in K:
+  for each data sample i in cluster k:
+    for each data sample i' NOT in cluster k:
+      # computes distance between sample i and other samples not in its cluster
+      dist += distance(x_i, x_i')
+dist = dist / 2
+```
+
+**Total point** is the sum of within and between cluster distances.
+
 ## Hirearchical Agglomerative Clustering
 
 **Single vs Complete**-link clustering
@@ -58,12 +94,33 @@ candidate merge clusters dramatically and completely change the final clustering
 
 `scipy.cluster.hierarchy.linkage()` function has good documentation of this also.
 
-`single-linkage` defines distance between cluster $u$ and $v$ as: $d(u, v) = min \big( dist(u[i], v[j]) \big)$ for all points $i$ in
+`single-linkage` defines distance between cluster $u$ and $v$ as:
+$d(u, v) = min \big( dist(u[i], v[j]) \big)$ for all points $i$ in
 cluster $u$ and $j$ in cluster $v$.
 
 `complete-linkage` defines this distance as $d(u, v) = max\big( dist(u[i], v[j]) \big)$
 
 Other methods also exists, such as `average`, `weighted`, `centroid`, `median` and `ward`.
+
+ESL has a good section discussing the pros and cons of each method. Let's define
+cluster diameter $D_G$ as the max dissimilarity within a cluster:
+
+$$ D_G = max_{i \in G, i' \in G} d_{ii'} $$
+
+- Single-linkage (SL)
+  - tends to produce clusters with large diameter
+  - can violate "compactness" property, members in the same group can be quite
+    different to others in the same group.
+- Complete-linkage (CL)
+  - tends to produce compact groups with small diameter
+  - can violate the "closeness" property - some observations in a group may
+    look more like members of other clusters.
+- Group Average
+  - a compromise of the two above.
+  - result is sensitive to the numerical scale on which dissmilarities are
+    computed, wherease SL & CL results are invariant as long as the ranking
+    of dissmiliarities are the same.
+  - Nicer statistical consistency property.
 
 ## Multi-Class Classification Scoring
 
@@ -309,7 +366,7 @@ Typically from the data given, we are interested in what the **given data**
 tells us. That's what Bayesian CR tells us.
 
 Frequentist CI tells us, if you repeatedly see **data of this kind**, there is
-$X%$ chance that the true value of $\theta$ falls inside of the CI.
+$X$% chance that the true value of $\theta$ falls inside of the CI.
 
 But we are not interested in data of this kind, we are interested in what this
 piece of data tells us!

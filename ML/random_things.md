@@ -6,6 +6,7 @@
   - [Heatmap Clustering](#heatmap-clustering)
   - [Clustering](#clustering)
   - [Hirearchical Agglomerative Clustering](#hirearchical-agglomerative-clustering)
+    - [Accessment of Hierarchical Clustering](#accessment-of-hierarchical-clustering)
   - [Multi-Class Classification Scoring](#multi-class-classification-scoring)
     - [Confusion Matrix - `sklearn` format](#confusion-matrix---sklearn-format)
     - [Macro Averaging](#macro-averaging)
@@ -121,6 +122,17 @@ $$ D_G = max_{i \in G, i' \in G} d_{ii'} $$
     computed, wherease SL & CL results are invariant as long as the ranking
     of dissmiliarities are the same.
   - Nicer statistical consistency property.
+- Ward: minimises total within-cluster variance.
+
+### Accessment of Hierarchical Clustering
+
+Cophenetic correlation coefficient can be used to asset how well the clustering
+result matched the original distance matrix.
+
+This can be done by first computing **Cophenetic distance** with
+`scipy.cluster.hierarchy.cophenet` and then measure the (spearman) correlation
+bewteen the upper triangle of the pairwise distance matrix and the
+upper triangle of the Cophenetic distance matrix.
 
 ## Multi-Class Classification Scoring
 

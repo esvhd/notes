@@ -1,5 +1,7 @@
 # Kalman Filter
 
+Excellent [videos](https://www.youtube.com/playlist?list=PLX2gX-ftPVXU3oUFNATxGXY90AULiqnWT)
+
 ## Elements & High Level Flow
 
 Given some values (aka **state**) we want to track, the key items are:

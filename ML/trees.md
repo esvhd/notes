@@ -327,7 +327,6 @@ Parameter tuning [guide](https://lightgbm.readthedocs.io/en/latest/Parameters-Tu
 * `min_data_in_leaf`, 100s or 1000s for large data set is often enough.
 * `max_depth`
 
-
 Also a section on GPU
 [Tuning](https://lightgbm.readthedocs.io/en/latest/GPU-Performance.html#how-to-achieve-good-speedup-on-gpu).
 
@@ -377,3 +376,35 @@ time / in the same sample. Therefore they can be *bundled* together. However,
 finding the most efficient bundle is NP-hard... `lightgbm` uses an
 approximating algo to tolerat a certain degree of overlap $\gamma$ within
 a feature bundle.
+
+## GOSS - Gradient-based One-Side Sampling
+
+Data instances that have large gradient contribute to larger information gain.
+An instance with smaller gradient implies that the error is small and therefore
+the model is well trained w.r.t. this instance.
+
+Therefore, when down-sampling the data, in order to retain the accuracy of info
+gain estimation, we should prefer to keep those instances with larger gradients
+ (pre-defined level, or top percentile), and only randomly drop those instances
+ with small gradients.
+
+ We cannot simply drop all instances with small gradients, since this changes
+ the data distribution.
+
+ Specifically, GOSS firstly sorts the data samples based on `abs(gradient)`
+ and selects the top `a * 100%`. Then it randomly samples `b * 100%` from the
+ rest of the data. After that, GOSS amplifies the sampled data with small
+ gradients by a constant of $\frac{1-a}{b}$ when calculating the info gain.
+
+## EFB - Exclusive Feature Bundling
+
+In sparse feature space, many features are mutually exclusive, i.e. they never
+take nonzero values simultaneously. We can safely bundle exclusive features
+into a single feature. This is called EFB.
+
+With this, the complexity of histogram building changes from `O(#data * #features)`
+to `O(#data * #bundles)`.
+
+However, `lightgbm` paper showed that partitioning features into a smallest
+number of exclusive bundles is NP-hard. EFB uses a greedy algo that works well
+in practice. Time complexity of this algo is $O(\#features^2)$.

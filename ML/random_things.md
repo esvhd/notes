@@ -7,6 +7,7 @@
   - [Clustering](#clustering)
   - [Hirearchical Agglomerative Clustering](#hirearchical-agglomerative-clustering)
     - [Accessment of Hierarchical Clustering](#accessment-of-hierarchical-clustering)
+    - [Other Clustering Stuff](#other-clustering-stuff)
   - [Multi-Class Classification Scoring](#multi-class-classification-scoring)
     - [Confusion Matrix - `sklearn` format](#confusion-matrix---sklearn-format)
     - [Macro Averaging](#macro-averaging)
@@ -94,6 +95,13 @@ clusters, but also causes sensitivity to outliers. A single document far from th
 candidate merge clusters dramatically and completely change the final clustering."
 
 `scipy.cluster.hierarchy.linkage()` function has good documentation of this also.
+Format of the output from `linkage()`:
+
+- returns the linkage matrix `Z`
+- each row is in the format of `[idx1, idx2, distance, num_sample_in_cluster]`
+  where `idx1` & `idx2` are indices of the samples merged into a sub-cluster
+- indices can be **more** than the no. of samples, in which case it starts to
+  refer to `Z[i]`, i.e. merged clusters.
 
 `single-linkage` defines distance between cluster $u$ and $v$ as:
 $d(u, v) = min \big( dist(u[i], v[j]) \big)$ for all points $i$ in
@@ -133,6 +141,11 @@ This can be done by first computing **Cophenetic distance** with
 `scipy.cluster.hierarchy.cophenet` and then measure the (spearman) correlation
 bewteen the upper triangle of the pairwise distance matrix and the
 upper triangle of the Cophenetic distance matrix.
+
+### Other Clustering Stuff
+
+Great [blog](https://joernhees.de/blog/2015/08/26/scipy-hierarchical-clustering-and-dendrogram-tutorial/) that explains many
+topics.
 
 ## Multi-Class Classification Scoring
 

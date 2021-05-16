@@ -85,6 +85,10 @@ Where $\max DCT @ T$ is defined as the best DCG possible, i.e. the score achieve
 by perfect prediction. To comupte this, we simply sort by true label and compute
 DCG.
 
+Thanks to this [answer](https://stats.stackexchange.com/questions/303385/how-does-xgboost-lightgbm-evaluate-ndcg-metric-for-ranking), `LightGBM`
+assigns missing queries (a query with no returned result)
+with $\max DCT @ T=1$.
+
 NDCG Limitations:
 [here](https://www.geeksforgeeks.org/normalized-discounted-cumulative-gain-multilabel-ranking-metrics-ml/)
 
@@ -104,6 +108,11 @@ when the returned results are large in nubmers. Think 1k, e.g. $2^{1000} - 1$.
 Therefore, an alternative implementation uses:
 
 $$ DCG @ T = \sum_{i=1}^T \frac{l_i}{\log_2(1 + i)}  $$
+
+Some open source libs for ranking evaluation:
+
+- [`rank_eval`](https://github.com/AmenRa/rank_eval)
+- [`rankeval`](https://github.com/hpclab/rankeval)
 
 **ERR** = Expected Reciprocal Rank
 

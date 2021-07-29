@@ -7,6 +7,7 @@
   - [Permutation Importance for Random Forest Feature Importance](#permutation-importance-for-random-forest-feature-importance)
     - [Additional Notes](#additional-notes)
   - [Partial Dependency Plots (PDP)](#partial-dependency-plots-pdp)
+    - [Drawbacks for PDP](#drawbacks-for-pdp)
   - [Individual Conditional Expectation (ICE) Plots](#individual-conditional-expectation-ice-plots)
   - [ALE (Accumulated Local Effects)](#ale-accumulated-local-effects)
     - [Comparison](#comparison)
@@ -171,7 +172,7 @@ Jeremy Howard showed some interesting python packages for interpreting results i
 - `Skater` - python
 - `R`: `iml` or `DALEX`
 
-**Drawbacks for PDP**
+### Drawbacks for PDP
 
 - Some regions of plots are not realistic when features are correlated.
 - **Heterogeneous effects**: when a feature has non-linear effects, e.g. half of larger value results in larger prediction,
@@ -229,7 +230,6 @@ ALE packages:
 | ICE | Max 1| N | Y |
 | ALE | | | |
 | Shap | | | |
-
 
 ## Drawback of Permutation Importance
 

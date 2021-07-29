@@ -8,7 +8,9 @@
     - [Additional Notes](#additional-notes)
   - [Partial Dependency Plots (PDP)](#partial-dependency-plots-pdp)
   - [Individual Conditional Expectation (ICE) Plots](#individual-conditional-expectation-ice-plots)
-  - [Drawback of Permutation Importance / PDP / ICE Plots](#drawback-of-permutation-importance--pdp--ice-plots)
+  - [ALE (Accumulated Local Effects)](#ale-accumulated-local-effects)
+    - [Comparison](#comparison)
+  - [Drawback of Permutation Importance](#drawback-of-permutation-importance)
   - [Shapley Adaptive Explanation (`SHAP`)](#shapley-adaptive-explanation-shap)
     - [Notation](#notation)
     - [Additive Feature Attribution Methods](#additive-feature-attribution-methods)
@@ -115,7 +117,6 @@ Other alternavies include:
   Similar to permuting groups of features
 - SHAP
 
-
 ### Additional Notes
 
 Lopez de prado pointed out some very practical considerations when using permutation importance in ML for AM book.
@@ -158,7 +159,8 @@ $$ \bar{f}_S (X_S) = \frac{1}{N} \sum_{i=1}^{N} f(X_S, x^{(i)}_C) $$
 
 where $x^{(i)}_C$ is the $i$th example out of $N$ observations in the complement $C$ set, i.e. use $X_S$ and $x^{(i)}_C$ to form a new dataset (for features in $C$ we use values of $x^{(i)}_C$), then pass through the model, repeat $N$ times (using each of the $N$ examples), then take the average.
 
-Alternatively, for each unique value of $X_S$, create a new dataset with $X_C$, run prediction and take average.
+In other words, for each unique value of $X_S$, create a new dataset with $X_C$ (i.e. N passes), run prediction and take average.
+Complexity = $nunique(X_S) \times N$. Realistically, some sampling is done here instead of using unique values of $X_S$.
 
 This is computationally intensive. Fortunately, for trees, this can be done efficiently without reference to the data.
 
@@ -166,6 +168,16 @@ Jeremy Howard showed some interesting python packages for interpreting results i
 
 - `pdpbox` (`R` package `pdp`)
 - `treeinterpreter`
+- `Skater` - python
+- `R`: `iml` or `DALEX`
+
+**Drawbacks for PDP**
+
+- Some regions of plots are not realistic when features are correlated.
+- **Heterogeneous effects**: when a feature has non-linear effects, e.g. half of larger value results in larger prediction,
+  but for the other half smaller values results in larger prediction. PDP could show a straight line because the effect
+  cancels each other on average, and the feature can be interpreted as having no effect on prediction. Solution?
+  use **ICE** plots.
 
 ## Individual Conditional Expectation (ICE) Plots
 
@@ -173,9 +185,53 @@ Jeremy Howard showed some interesting python packages for interpreting results i
 
 This is similar to PDP. ICE measures that dependency of a model on $X_C$, whereas PDP measures the average marginal effect of $X_C$ for the model.
 
-Instead of holding $X_C$ constant, ICE chooses and example $x^{(i)}$, fixes $x^{(i)}_S$ constant and iterates through all possible values of $X_C$.
+Instead of holding $X_C$ constant, ICE chooses an example $x^{(i)}$, fixes $x^{(i)}_S$ constant and iterates through all possible values of $X_C$. I.e. for each data sample, hold $X_C$, compute for all values of $X_S$.
 
-## Drawback of Permutation Importance / PDP / ICE Plots
+The average of ICE lines for $x_S$ corresponds to the PDP line for $x_S$.
+
+Packages:
+
+- `R`: `ml`, `ICEBox`, `pdp`
+- Python: `condvis`
+
+## ALE (Accumulated Local Effects)
+
+To make up for the fact that some regions of PDP plots may not be realistic due to correlation between features,
+ALE uses a nice trick to isoluate the effects on prediction for local regions of a feature.
+
+M-plots (marginal plots) - for a given feature $S$ and value $V_S$, compute predictions for all samples with value $V_S$
+(or similiar), take the average. The problem with M-plots is that then there are other features which are correlated
+with $S$, this correlation would not be discovered - because when we iterate different values of $S$ and finding
+samples for each value, these correlation cannot be isolated.
+
+What do we do then? ALE uses a nice trick to block the effects of other features. Steps:
+
+1. Divide the value range for feature $S$ into intervals with equal # of samples.
+2. For each interval $i$, find samples that below to this internal.
+3. For each sample $k$, compute $d_{i, k} = f_k(V_{i, max}) - f_k(V_{i, max})$
+4. Compute average of $d_{i} = \frac{1}{N} \sum_{k=1}^{N} d_{i, k}$
+
+**By taking the difference, the effect of other features are blocked.**
+
+When deciding on the interval for a features, `qcut` is used to make sure all intervals have the same number of data
+samples. The disadvantage here is that the intervals can have different length.
+
+ALE packages:
+
+- `R`: `iml` and `ALEPlot`
+- `python`: `alibi`
+
+### Comparison
+
+| Method | No. features | Handle Correlated Features | Reveal Heterogeneous effects |
+| --- |:---:|:---:|:---:|
+| PDP | Max 2| N | N |
+| ICE | Max 1| N | Y |
+| ALE | | | |
+| Shap | | | |
+
+
+## Drawback of Permutation Importance
 
 Methods such as permutation importance can be misleading when features are
 correlated. The intuition here is that, if `x1` and `x2` are correlated, even

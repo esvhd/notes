@@ -301,6 +301,8 @@ the dataset.
 Some data that has very little variation can be removed. `caret::nearZeroVar()`
 method can help to identify those columns / predictors.
 
+FES book also has a section on imputation, using KNN, trees and linear methods.
+
 
 ## Collinearity / Multicollinearity
 

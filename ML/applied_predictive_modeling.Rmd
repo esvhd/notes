@@ -1611,6 +1611,11 @@ Code: `caret::confustionMatrix()`
 * Event: TP, FP
 * Non-event: FN, TN
 
+| | Event (Truth) | Non-Event (Truth) |
+|:---:|:---:|:---:|
+|Event (Predicted) | TP | FP |
+|Non-Event (Predicted) | FN | TN |
+
 Diagnol cells denote cases of correct predictions.
 
 Ground truth # of events = TP + FN
@@ -1779,7 +1784,7 @@ types of mis-classifications.
 It's important to take into account of **prevalence** of classes.
 
 Holte (2000) provides an outline for measuring costs with performance metrics
-for two-class problems. The define **probability-cost function (PCF)**,
+for two-class problems. They define **probability-cost function (PCF)**,
 which measures the proportion of the total costs assicated with false-positive
 samples.
 
@@ -2005,16 +2010,26 @@ For two-class problems (event vs non-event), rank samples by their **scores**
 as more samples are evaludated.
 
 When model is **non-informative**, the highest-ranked X% of the data would
-contain on average X events.
+contain on average X% of all events (True class), e.g. a 45-dgree diagonal 
+line.
 
 The **lift** is the number of samples detected by a model above a completely
 random selection of samples.
 
-Lift chart plots the cumulative gain / lift against the cumulative % of samples
+For a perfect 2-class classifier, at 50% class probability level, 100% of the 
+events (aka True classes) should be identified. I.e. 50% of the all 
+samples would rank above this 50% threshold, and by definition of a perfect
+classifier, all of them should be the event class.
+
+Lift chart plots the **cumulative gain / lift** against the cumulative % of samples
 that have been / need to be screened. E.g. a lift chart for a random forest
 model can be used to determine that in order to find `Y%` (y-axis) of those of
 the event class with this model, `X%` (x-axis) of the population need to be
 sampled.
+
+In this perfect example, if we start with the top 10% of the data, we should 
+be finding 20% of the events, because all 10% should be the events, therefore,
+`10% / 50% = 20%`. The gain / lift here is 10% vs a random classifier.
 
 Steps:
 
@@ -2041,7 +2056,7 @@ Some related [material](http://saedsayad.com/model_evaluation_c.htm).
 2. split this set into percentiles / deciles
 3. for each percentile / decile group, calculate the % of events predicted
 4. compute the cumulative % of events predicted. This is the **Gain**.
-5. gain devided by the cumulative % of data gives the **cumulative lift**.
+5. gain divided by the cumulative % of data gives the **cumulative lift**.
 
 ```{r lift_chart, eval=F}
 ### Lift charts

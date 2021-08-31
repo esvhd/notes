@@ -7,7 +7,7 @@
   - [Clustering](#clustering)
   - [Hirearchical Agglomerative Clustering](#hirearchical-agglomerative-clustering)
     - [Accessment of Hierarchical Clustering](#accessment-of-hierarchical-clustering)
-    - [Other Clustering Stuff](#other-clustering-stuff)
+    - [`scipy.cluster.hierarchy` Explained](#scipyclusterhierarchy-explained)
   - [Multi-Class Classification Scoring](#multi-class-classification-scoring)
     - [Confusion Matrix - `sklearn` format](#confusion-matrix---sklearn-format)
     - [Macro Averaging](#macro-averaging)
@@ -142,10 +142,44 @@ This can be done by first computing **Cophenetic distance** with
 bewteen the upper triangle of the pairwise distance matrix and the
 upper triangle of the Cophenetic distance matrix.
 
-### Other Clustering Stuff
+### `scipy.cluster.hierarchy` Explained
 
 Great [blog](https://joernhees.de/blog/2015/08/26/scipy-hierarchical-clustering-and-dendrogram-tutorial/) that explains many
 topics.
+
+This blog is so good that I printed a PDF version of it [here](./pdf/scipy_cluster.pdf).
+
+`linkage()` function returns `Z` - the format of `Z` is explained here:
+
+- each row of `Z[i]` is in the form of `[idx1, idx2, dist, sample_count]`,
+  meaning: index position for node 1 and 2, then the distance between these
+  two nodes, then the number of nodes in this cluster.
+
+- Where there are `N` unique samples, in a hierarcical tree, there will `N-1`
+  clusters of pairs.
+
+- But when leaf clusters (i.e. each pair) are merged together, `idx1` and `idx2`
+  can be greater than `N-1` (with indexing start at 0). When this happens,
+  these indices refer to `Z[idx - N]`, i.e., they tell you how leaf clusters
+  are combined all the way up to the top of the tree.
+
+`dendrogram()` function:
+
+- `color_threshold` if not given, it's set to `0.7 * max(Z[:, 2])`, i.e.,
+  70% of max distance between two merged clusters.
+- Other useful parameters:
+  - `truncate_mode='lastp'` - to condense the chart and collapse some lower
+    levels.
+  - `show_leaf_counts=True`
+  - `show_contracted=True`
+  - `mad_d=` - to draw a line acorss distance axis to visualise different
+    sub-clusters.
+
+`inconsistency()` function return format:
+`[mean, stdev, num_of_links, inconsistency_metric]`. This metric is quite
+sensitivy to the `depth=` parameter.
+
+`inconsistency = (h - avg) / stdev`
 
 ## Multi-Class Classification Scoring
 

@@ -1351,6 +1351,27 @@ confusionMatrix(data = creditResults$pred,
 <li>Event: TP, FP</li>
 <li>Non-event: FN, TN</li>
 </ul>
+<table>
+<thead>
+<tr class="header">
+<th align="center"></th>
+<th align="center">Event (Truth)</th>
+<th align="center">Non-Event (Truth)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">Event (Predicted)</td>
+<td align="center">TP</td>
+<td align="center">FP</td>
+</tr>
+<tr class="even">
+<td align="center">Non-Event (Predicted)</td>
+<td align="center">FN</td>
+<td align="center">TN</td>
+</tr>
+</tbody>
+</table>
 <p>Diagnol cells denote cases of correct predictions.</p>
 <p>Ground truth # of events = TP + FN</p>
 <p><strong>Sum of columns</strong> show total number of ground truth for each class.</p>
@@ -1465,7 +1486,7 @@ mccr(act, pred)</code></pre>
 <h2>Non-Accuracy-Based Criteria</h2>
 <p>Models should be fit for purpose. Need to consider the impact of the different types of mis-classifications.</p>
 <p>It’s important to take into account of <strong>prevalence</strong> of classes.</p>
-<p>Holte (2000) provides an outline for measuring costs with performance metrics for two-class problems. The define <strong>probability-cost function (PCF)</strong>, which measures the proportion of the total costs assicated with false-positive samples.</p>
+<p>Holte (2000) provides an outline for measuring costs with performance metrics for two-class problems. They define <strong>probability-cost function (PCF)</strong>, which measures the proportion of the total costs assicated with false-positive samples.</p>
 <p>TODO: emailed Max Kuhn about potential error for the denominator.</p>
 <p><span class="math display">\[ PCF = \frac{P \times C(+|-)}{P \times C(-|+) + (1 - P) \times C(+|-)} \]</span> Where:</p>
 <ul>
@@ -1617,9 +1638,11 @@ r &lt;- TP / (TP + FN)</code></pre>
 <h2>Lift Charts</h2>
 <p><code>caret::lift()</code></p>
 <p>For two-class problems (event vs non-event), rank samples by their <strong>scores</strong> (using the event class probabilities) and determine the cumulative event rate as more samples are evaludated.</p>
-<p>When model is <strong>non-informative</strong>, the highest-ranked X% of the data would contain on average X events.</p>
+<p>When model is <strong>non-informative</strong>, the highest-ranked X% of the data would contain on average X% of all events (True class), e.g. a 45-dgree diagonal line.</p>
 <p>The <strong>lift</strong> is the number of samples detected by a model above a completely random selection of samples.</p>
-<p>Lift chart plots the cumulative gain / lift against the cumulative % of samples that have been / need to be screened. E.g. a lift chart for a random forest model can be used to determine that in order to find <code>Y%</code> (y-axis) of those of the event class with this model, <code>X%</code> (x-axis) of the population need to be sampled.</p>
+<p>For a perfect 2-class classifier, at 50% class probability level, 100% of the events (aka True classes) should be identified. I.e. 50% of the all samples would rank above this 50% threshold, and by definition of a perfect classifier, all of them should be the event class.</p>
+<p>Lift chart plots the <strong>cumulative gain / lift</strong> against the cumulative % of samples that have been / need to be screened. E.g. a lift chart for a random forest model can be used to determine that in order to find <code>Y%</code> (y-axis) of those of the event class with this model, <code>X%</code> (x-axis) of the population need to be sampled.</p>
+<p>In this perfect example, if we start with the top 10% of the data, we should be finding 20% of the events, because all 10% should be the events, therefore, <code>10% / 50% = 20%</code>. The gain / lift here is 10% vs a random classifier.</p>
 <p>Steps:</p>
 <ol style="list-style-type: decimal">
 <li>Predict validation or test set samples</li>
@@ -1637,7 +1660,7 @@ r &lt;- TP / (TP + FN)</code></pre>
 <li>split this set into percentiles / deciles</li>
 <li>for each percentile / decile group, calculate the % of events predicted</li>
 <li>compute the cumulative % of events predicted. This is the <strong>Gain</strong>.</li>
-<li>gain devided by the cumulative % of data gives the <strong>cumulative lift</strong>.</li>
+<li>gain divided by the cumulative % of data gives the <strong>cumulative lift</strong>.</li>
 </ol>
 <pre class="r"><code>### Lift charts
 # creditResults is a data.frame

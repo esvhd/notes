@@ -715,3 +715,24 @@ say $d-b$, then they are said to be co-integrated of order $CI(d, b)$.
 
 If the linear combination can be written as $\alpha X_t$, where $X^T_t = (X_{1t}, X_{2t})$,
 then the vector $\alpha$ is called a **co-integrating vector**.
+
+### VECM
+
+VECM model is used when all variables are non-stationary in level, and there may
+be some co-integrations in levels. Nice blog [here](https://kiandlee.blogspot.com/2021/12/vector-error-correction-model-vecm.html) and [here](https://www.r-econometrics.com/timeseries/vecintro/).
+
+The model form is:
+
+$$ \Delta X_t = \Pi X_{t-1} + \sum_{i=1}^{p-1} \Gamma_i \Delta X_{t-i} + C D_t + \epsilon_t $$
+
+Where:
+
+- $N$ is the number of target variables to model
+- $\Delta x$ is the first difference of $x$, $\Delta X_t \in R^{N \times 1}$
+- $\Pi$ is the co-integaring matrix, $Pi \in R^{N \times N}$
+- $\Gamma_i$ is a coefficient matrix, $Gamma_i \in R^{N \times N}$
+- $C$ is a coefficient matrix of a vector of deterministic terms $d_t$,
+  $C \in R^{N \times 2}$
+- $D_t \in R^{2 \times 1} = (1, d_t)^T$
+- $\epsilon_t$ is an error term with zero mean and covariance matrix $\Sigma$,
+  $\epsilon_t \in R^{N \times 1}$

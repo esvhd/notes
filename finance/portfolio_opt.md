@@ -4,25 +4,27 @@ Some notes based on Active Portfolio Management (APM) 2nd edition by Grinold and
 
 For basic vol metrics for portfolio, check out my code for risk parity.
 
-<!-- MarkdownTOC levels="1,2,3", autolink=true -->
-
-- CAPM
-- Risk Models
-  - Risk Attribution
-    - Position Marginal Contribution
-    - Factor Marginal Contribution
-- Exceptional Return / Value Added
-  - Utility Function
-  - Value Added
-- Information Ratio
-  - Additivity
-  - Assumptions
-  - Performance Evaluation
-- Portfolio Construction
-  - Dispersion
-  - Alpha Analysis
-
-<!-- /MarkdownTOC -->
+- [Portfolio Optimisation](#portfolio-optimisation)
+- [CAPM](#capm)
+- [Risk Models](#risk-models)
+  - [Risk Attribution](#risk-attribution)
+    - [Position Marginal Contribution](#position-marginal-contribution)
+    - [Factor Marginal Contribution](#factor-marginal-contribution)
+- [Exceptional Return / Value Added](#exceptional-return--value-added)
+  - [Utility Function](#utility-function)
+    - [Utility and $\alpha$ 2nd Edition {#utility}](#utility-and-alpha-2nd-edition-utility)
+  - [Value Added](#value-added)
+- [Information Ratio](#information-ratio)
+  - [Additivity](#additivity)
+  - [Assumptions](#assumptions)
+  - [Performance Evaluation](#performance-evaluation)
+- [Portfolio Construction](#portfolio-construction)
+  - [Dispersion](#dispersion)
+  - [Alpha Analysis](#alpha-analysis)
+- [Maximum Sharpe Ratio Portfolio](#maximum-sharpe-ratio-portfolio)
+- [2nd Edition](#2nd-edition)
+  - [Breath](#breath)
+  - [Transfer Coefficient](#transfer-coefficient)
 
 # CAPM
 
@@ -436,6 +438,26 @@ These assumption most likely won't hold in practice especially looking at a corp
 
 The technical appendix also has a section on the impact of **covariance matrix estimation error**. Worth a read.
 
+# Maximum Sharpe Ratio Portfolio
+
+$N$ assets with return vector R, and covariance matrix $\sigma^2$, weight vector $w$
+
+portfoio return: $R_p = w^T R$
+
+portfolio risk: $\sigma^2_p = w^T \sigma^2 w$
+
+So sharpe ratio is $S_p = \frac{R_p}{\sigma_p}$
+
+To find the max we solve for $\frac{\partial{S_p}}{\partial w} = 0$.
+
+Assume 2 assets, and covariance is $\sigma_{1,2}$, we have:
+
+$$ S_p = \frac{w R_1 + (1-w) R_2}{\sqrt{w^2 \sigma^2_1 + (1-w)^2 \sigma^2_2 + 2w(1-w)\sigma_{1,2}}} $$
+
+Thanks for the calcs in this [video](https://www.youtube.com/watch?v=IhYhVW6IO7I),
+the optimial weight is:
+
+$$ w^* = \frac{R_1 \sigma^2_2 - R_2 \sigma_{1,2}}{R_1 \sigma^2_2 + R_2 \sigma^2_1 - (R_1 + R_2)\sigma_{1,2}} $$
 
 # 2nd Edition
 

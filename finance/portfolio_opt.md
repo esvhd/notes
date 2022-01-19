@@ -21,6 +21,9 @@ For basic vol metrics for portfolio, check out my code for risk parity.
 - [Portfolio Construction](#portfolio-construction)
   - [Dispersion](#dispersion)
   - [Alpha Analysis](#alpha-analysis)
+- [Performance Attribution Models](#performance-attribution-models)
+  - [Brinson Hood Beebower (BHB) Attribution](#brinson-hood-beebower-bhb-attribution)
+  - [Brinson-Fachler (BF) Model](#brinson-fachler-bf-model)
 - [Maximum Sharpe Ratio Portfolio](#maximum-sharpe-ratio-portfolio)
 - [2nd Edition](#2nd-edition)
   - [Breath](#breath)
@@ -437,6 +440,67 @@ My thoughts on this is that the material and maths used hevily rely on the assum
 These assumption most likely won't hold in practice especially looking at a corporate bond or equity market risk model.
 
 The technical appendix also has a section on the impact of **covariance matrix estimation error**. Worth a read.
+
+# Performance Attribution Models
+
+## Brinson Hood Beebower (BHB) Attribution
+
+Given portfolio of assets $i \in 1, \cdots, N$, $P$ to denote portfolio, $B$ to denote benchmark:
+
+- individual asset weights - $w^P_i$, $w^B_i$ for portfolio and benchmark
+- asset returns $r_i$
+- portfolio sector weight $W^P_j = \sum_{i \in j} w^P_i$
+- sector average return $R^P_j = \frac{\sum_{i \in j} w^P_i r_i}{W^P_j}$
+- $R^{B}_j$ - benchmark return for sector $j$
+- $R^{P}_j$ - portfolio return for sector $j$
+- portfolio return $R^P = \sum_{i} w^P_j r_i = \sum_{j} W^P_j R^P_j$
+- benchmark return $R^B = \sum_{i} w^B_j r_i = \sum_{j} W^B_j R^B_j$
+
+Therefore, we have Brinson attribtion as follows:
+
+- Active return $R_{active} = R^P - R^B = \sum_{j} W^P_j R^P_j - \sum_{j} W^B_j R^B_j$
+- Allocation effect $R_{allocation} = \sum_j (W^P_j - W^B_j) R^B_j$ - bench return is the baseline, allocation shows up in sector weights
+- Selection effect $R_{selection} = \sum_j W^B_j (R^P_j - R^B_J)$ - selection is reflected in sector average return, weighted by bench weight
+- Interaction effect $R_{interaction} = R_{active} - R_{allocation} - R_{selection} = \sum_j (W^P_j - W^B_j)(R^P_j - R^B_j)$
+
+**Drawback of BHB**
+
+1. the number of terms grows expoentially with the no. of groups. Hard to understand beyond 2 groups.
+2. For a sector with positive return, overweight in portfolio would generate positive allocation effect,
+  **even if the sector return is lower than overall benchmark**
+
+## Brinson-Fachler (BF) Model
+
+BF model is designed to address BHB's drawback no. 2.
+
+**Drawback for BF** is still that with different ways of grouping portfolios, allocation / selection effect can be
+very different.
+
+- Allocation effect $R_{allocation} = \sum_j (W^P_j - W^B_j) (R^B_j - R^B)$
+- No change to other terms
+
+To derive this, **provided there is no leverage**, we have:
+$$
+\begin{aligned}
+\sum_j W^P_j = \sum_j W^B_j &= 1 \\
+\therefore \sum_j W^P_j - 1 &= 0 \\
+\sum_j W^P_j - \sum_j W^B_j &= 0 \\
+\therefore \sum_j (W^P_j - W^B_J) &= 0
+\end{aligned}
+$$
+
+Start with BHB $R_{allocation}$, given $R^B$ is a constant, we have:
+$$
+\begin{aligned}
+R_{allocation} &= \sum_j (W^P_j - W^B_j) R^B_j - \sum_j (W^P_j - W^B_j) R^B + \sum_j (W^P_j - W^B_j) R^B \\
+&= \sum_j (W^P_j - W^B_j)(R^B_j - R^B) + \sum_j (W^P_j - W^B_j) R^B \\
+&= \sum_j (W^P_j - W^B_j)(R^B_j - R^B) + R^B \sum_j (W^P_j - W^B_j)\\
+&= \sum_j (W^P_j - W^B_j)(R^B_j - R^B) + R^B \times 0\\
+&= \sum_j (W^P_j - W^B_j)(R^B_j - R^B)
+\end{aligned}
+$$
+
+If leverage is allowed, then the allocation effect should have another term, i.e. $+\sum_j (W^P_j - W^B_j) R^B$.
 
 # Maximum Sharpe Ratio Portfolio
 

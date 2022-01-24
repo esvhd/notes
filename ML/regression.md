@@ -729,7 +729,7 @@ Where:
 
 - $N$ is the number of target variables to model
 - $\Delta x$ is the first difference of $x$, $\Delta X_t \in R^{N \times 1}$
-- $\Pi$ is the co-integaring matrix, $Pi \in R^{N \times N}$
+- $\Pi$ is the co-integaring matrix, $\Pi \in R^{N \times N}$
 - $\Gamma_i$ is a coefficient matrix, $Gamma_i \in R^{N \times N}$
 - $C$ is a coefficient matrix of a vector of deterministic terms $d_t$,
   $C \in R^{N \times 2}$

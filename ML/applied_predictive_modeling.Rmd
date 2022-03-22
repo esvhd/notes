@@ -1887,7 +1887,7 @@ plot(creditROC, legacy.axes = TRUE)
 recall on the y-axis.
 
 Goal is to have a model at the upper right corner, i.e. **high precision**,
-**low recall**. In the extreme case or precision == 1 and recall == 1,
+**high recall**. In the extreme case or precision == 1 and recall == 1,
 we have a classifier that has **only true positives, no false positives, **
 **no false negatives**.
 

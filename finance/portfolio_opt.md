@@ -28,6 +28,9 @@ For basic vol metrics for portfolio, check out my code for risk parity.
 - [2nd Edition](#2nd-edition)
   - [Breath](#breath)
   - [Transfer Coefficient](#transfer-coefficient)
+  - [Dynamic Portfolio Management](#dynamic-portfolio-management)
+    - [Notation](#notation)
+    - [Signal Weighting](#signal-weighting)
 
 # CAPM
 
@@ -88,7 +91,7 @@ Hence we decompose return as: $r = X \times b + u$. (shape: $N \times K \cdot K 
 
 $F$ - factor covariance matrix, $K \times K$
 
-$\Delta$ - specific return variance, $N \times N$ diagonal matrix.
+$\Delta$ - specific return variance, $N \times N$ diagonal matrix, assumption here is they are uncorrelated.
 
 $V$ - $N \times N$ covariance matrix, $V = X \cdot F \cdot X^T + \Delta$
 
@@ -244,7 +247,7 @@ h_{max} &= \frac{\alpha}{2\lambda \cdot V}
 \end{aligned}
 $$
 
-From the optimal portoflio would vary with risk aversion parameter.
+From the optimal portfolio would vary with risk aversion parameter.
 
 ## Value Added
 
@@ -298,7 +301,7 @@ $IR$ measures the **annual** $\alpha_p$ (residual return) relative to $w_p$ (std
 
 By definition, benchmark and risk free assets have 0 IR, since they have 0 $\alpha_p$.
 
-Subsitituting into the utility function above:
+Subsitituting into the utility function above (intuitively, maximise return / alpha vs risk):
 
 $$ U_p = w_p \times IR_p - \lambda_R \times w^2_p $$
 
@@ -612,3 +615,46 @@ residual risk portfolios.
 Some research showed that by relaxing the long-only constraint just slightly,
 this can improve the transfer coefficient significantly. Similar to the 80/20 rule,
 where the first 20% shorts allowed, provided 80% of the benefits.
+
+
+## Dynamic Portfolio Management
+
+### Notation
+
+- $IR_Q$ - potential information ratio
+- $\lambda$ - risk penalty
+- $HLY$ - half life in years
+- $\chi$ - level of transaction cost
+
+- $\alpha = {\alpha_1, \alpha_2, \cdots, \alpha_N}$ - forecast of excess return, $N \times 1$
+- $p$ position weights for portfolio $P$
+- $\alpha_P = \alpha^T \cdot p$ - expected alpha of portfolio $P$
+- $\sigma_P$ or $\omega_P$ - risk of portfolio $P$, $\sigma_P = \sqrt{p^T \cdot V \cdot p}$
+- $IR_P = \frac{\alpha_P}{\omega_P}$ - portfolio $P$ information ratio
+- $c_P$ - expected annual -cost of $P$
+- $O_P = {\alpha_P - c_P} - \frac{\lambda}{2}\sigma_P^2$  - the objective value of portfolio $P$
+- $ACIR_P = \frac{\alpha_P - c_P}{\sigma_P}$ - the after cost information ratio of portfolio $P$
+
+- Zeor-Cost portfolio $Q$ - no transaction portfolio with holdings $q(t)$, or just $q$
+- $d$ - trade rate
+- Target portfolio $M$ - with t-cost, has positions $m(t)$
+
+- $N$ - no. of assets
+- $V$ - covariance matrix for $N$ assets, $N \times N$
+- **Uncertainty equivalent alpha** for $P$: $U_P = \alpha_P - \frac{\lambda}{2} \cdot \omega_P^2$, i.e. return - expected risk.
+
+To maximise $U_P$ w.r.t. position size $p$, we have:
+
+$$
+\begin{aligned}
+U_P &=  \alpha^T p - \frac{\lambda}{2} \cdot p^T \cdot V \cdot p \\
+\frac{\partial{U_P}} {\partial{p}} &=  \alpha^T - \lambda \cdot V \cdot p \\
+\therefore & \alpha - \lambda \cdot V \cdot p = 0 \\
+\alpha &= \lambda \cdot V \cdot p & N \times 1
+\end{aligned}
+$$
+
+For optimal portfolio $Q$ with position $q$, we have $\alpha = \lambda \cdot V \cdot q$.
+
+
+### Signal Weighting
